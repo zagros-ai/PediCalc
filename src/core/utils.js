@@ -20,8 +20,23 @@ export function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+/**
+ * Compare two finite numbers for practical (dose-level) equality, tolerating the
+ * tiny rounding error inherent in IEEE-754 floating point (e.g. 0.1 + 0.2).
+ * Used instead of `===` when deciding whether a min/max dose pair collapses to a
+ * single value, so display logic never diverges because of a 1e-15 difference.
+ * @param {number} a
+ * @param {number} b
+ * @param {number} [epsilon] absolute tolerance (default 1e-9)
+ * @returns {boolean}
+ */
+export function nearlyEqual(a, b, epsilon = 1e-9) {
+    return Math.abs(a - b) < epsilon;
+}
+
 export const Utils = {
     escapeHtml,
+    nearlyEqual,
 
     getIntervalText(hours) {
         if (hours === 0) return 'Single Dose / As needed';

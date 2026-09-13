@@ -5,7 +5,7 @@
 // warnings/alerts and the formula HTML. Pure computation + HTML string output;
 // no direct DOM manipulation.
 
-import { Utils, escapeHtml } from './utils.js';
+import { Utils, escapeHtml, nearlyEqual } from './utils.js';
 import { ValidationEngine } from './validation.js';
 import { AdvancedClinicalEngine } from './clinical-engine.js';
 
@@ -204,7 +204,7 @@ export class DrugDoseCalculator {
             result.minDose = parsedMin;
             result.maxDose = parsedMax;
             let unitLabel = this.drug.doseUnit || 'mg';
-            if (parsedMin === parsedMax) {
+            if (nearlyEqual(parsedMin, parsedMax)) {
                 result.calculatedFixedDose = `${parsedMin} ${unitLabel}`;
             } else {
                 result.calculatedFixedDose = `${parsedMin} to ${parsedMax} ${unitLabel}`;
@@ -223,8 +223,14 @@ export class DrugDoseCalculator {
     }
 
     _calculateWeightBased(result) {
-        let activeMin = this.selectedIndication ? this.selectedIndication.minMgPerKg : this.drug.minMgPerKg;
-        let activeMax = this.selectedIndication ? this.selectedIndication.maxMgPerKg : this.drug.maxMgPerKg;
+        // Per-kg dose source. NOTE: the historical field name is `minMgPerKg` /
+        // `maxMgPerKg`, but the VALUE is expressed in the drug's own `doseUnit`
+        // (mg, mcg, Units, mEq or g) — it is NOT always milligrams. New drug
+        // entries may instead use the unit-neutral aliases `minDosePerKg` /
+        // `maxDosePerKg`; both are read here so the two can coexist.
+        const source = this.selectedIndication || this.drug;
+        let activeMin = source.minDosePerKg !== undefined ? source.minDosePerKg : source.minMgPerKg;
+        let activeMax = source.maxDosePerKg !== undefined ? source.maxDosePerKg : source.maxMgPerKg;
 
         if (this.neonatalOverrideDose !== null && this.neonatalOverrideDose !== undefined) {
             activeMin = this.neonatalOverrideDose;
@@ -300,7 +306,7 @@ export class DrugDoseCalculator {
             result.severity = 'high';
         }
 
-        if (activeMin === activeMax || result.minDose === result.maxDose) {
+        if (nearlyEqual(activeMin, activeMax) || nearlyEqual(result.minDose, result.maxDose)) {
             result.displayResult = this._formatNum(result.minDose);
         } else {
             result.displayResult = `${this._formatNum(result.minDose)} to ${this._formatNum(result.maxDose)}`;
@@ -370,15 +376,15 @@ export class DrugDoseCalculator {
             `;
         }
 
-        const isCappedMin = (this.drug.maxSingleDoseMg && result.minDose === this.drug.maxSingleDoseMg) || (result.minDose < this.activeMin * this.calcWeight);
-        const isCappedMax = (this.drug.maxSingleDoseMg && result.maxDose === this.drug.maxSingleDoseMg) || (result.maxDose < this.activeMax * this.calcWeight);
+        const isCappedMin = (this.drug.maxSingleDoseMg && nearlyEqual(result.minDose, this.drug.maxSingleDoseMg)) || (result.minDose < this.activeMin * this.calcWeight);
+        const isCappedMax = (this.drug.maxSingleDoseMg && nearlyEqual(result.maxDose, this.drug.maxSingleDoseMg)) || (result.maxDose < this.activeMax * this.calcWeight);
 
         const min = this.activeMin;
         const max = this.activeMax;
 
         const weightStr = this.usedIBW ? `AdjBW (${this.ibwVal.toFixed(1)}kg)` : `Wt (${this.calcWeight}kg)`;
 
-        if (min === max || result.minDose === result.maxDose) {
+        if (nearlyEqual(min, max) || nearlyEqual(result.minDose, result.maxDose)) {
             return `
                 <div class="formula-box">
                     <div class="formula-title"><i class="fas fa-square-root-variable"></i> Formula:</div>
