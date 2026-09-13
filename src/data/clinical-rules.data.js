@@ -1,11 +1,12 @@
-// clinical-rules.js
-(function(window) {
-    'use strict';
+// src/data/clinical-rules.data.js
+// Pure data module: the clinical rules database (IV guidelines, organ-impairment
+// adjustments, cross-allergy classes, drug-interaction matrix, neonatal PMA protocols).
+// The behavioural logic that consumes this data lives in src/core/clinical-engine.js.
 
-    // ============================================================
-    //  CLINICAL RULES DATABASE (Comprehensive Local Edition)
-    // ============================================================
-    const ClinicalRulesDB = {
+// ============================================================
+//  CLINICAL RULES DATABASE (Comprehensive Local Edition)
+// ============================================================
+export const ClinicalRulesDB = {
 
         // 1. IV Administration & Dilution Guidelines
         ivGuidelines: {
@@ -1034,116 +1035,7 @@
         }
     };
 
-    // ============================================================
-    //  ADVANCED CLINICAL ENGINE (Functions)
-    // ============================================================
-    const AdvancedClinicalEngine = {
-
-        checkIVGuidelines: function(drugName) {
-            const guideline = ClinicalRulesDB.ivGuidelines[drugName];
-            if (!guideline) return null;
-            return {
-                title: 'IV Infusion Guidelines',
-                rate: guideline.rate || 'Standard',
-                maxConc: guideline.maxConcentration || 'N/A',
-                warning: guideline.warning || ''
-            };
-        },
-
-        checkOrganImpairment: function(drugName, impairmentType) {
-            const adjustment = ClinicalRulesDB.adjustments[drugName];
-            if (adjustment && adjustment.type === impairmentType) {
-                return {
-                    alert: `Requires ${impairmentType === 'renal' ? 'Renal' : 'Hepatic'} Dose Adjustment`,
-                    message: adjustment.warning
-                };
-            }
-            return null;
-        },
-
-        checkAllergyRisk: function(drugName, patientAllergies) {
-            const risks = [];
-            patientAllergies.forEach(allergyClass => {
-                const drugsInClass = ClinicalRulesDB.crossAllergies[allergyClass];
-                if (drugsInClass && drugsInClass.includes(drugName)) {
-                    risks.push({
-                        severity: 'critical',
-                        message: `Absolute Contraindication! Patient is allergic to ${allergyClass} class.`
-                    });
-                } else if (allergyClass === 'Penicillin' && ClinicalRulesDB.crossAllergies['Cephalosporin'].includes(drugName)) {
-                    risks.push({
-                        severity: 'high',
-                        message: `Caution: Patient is allergic to Penicillin. There is a 3-5% risk of cross-reactivity with Cephalosporins (${drugName}).`
-                    });
-                } else if (allergyClass === 'Cephalosporin' && ClinicalRulesDB.crossAllergies['Penicillin'].includes(drugName)) {
-                    risks.push({
-                        severity: 'high',
-                        message: `Caution: Patient is allergic to Cephalosporins. There is a risk of cross-reactivity with Penicillins (${drugName}).`
-                    });
-                }
-            });
-            return risks;
-        },
-
-        checkInteractions: function(currentDrug, activePrescriptionList) {
-            const foundInteractions = [];
-
-            // Helper to match drugs flexibly (e.g. ignoring ' (Apotel)' suffix)
-            const getBaseName = (name) => name.split(' (')[0].trim();
-            const currentBase = getBaseName(currentDrug);
-            const activeBases = activePrescriptionList.map(getBaseName);
-
-            // Mapper to expand drug classes into array of specific drugs if defined in crossAllergies
-            const getExpandedList = (name) => {
-                const base = getBaseName(name);
-                if (ClinicalRulesDB.crossAllergies[name]) {
-                    return [base, ...ClinicalRulesDB.crossAllergies[name].map(getBaseName)];
-                }
-                return [base];
-            };
-
-            ClinicalRulesDB.interactions.forEach(interaction => {
-                const sideA_expanded = getExpandedList(interaction.drugs[0]);
-                const sideB_expanded = getExpandedList(interaction.drugs[1]);
-
-                let interactingActiveDrug = null;
-
-                if (sideA_expanded.includes(currentBase)) {
-                    interactingActiveDrug = activeBases.find(b => sideB_expanded.includes(b));
-                } else if (sideB_expanded.includes(currentBase)) {
-                    interactingActiveDrug = activeBases.find(b => sideA_expanded.includes(b));
-                }
-
-                if (interactingActiveDrug) {
-                    const activeOriginalName = activePrescriptionList.find(d => getBaseName(d) === interactingActiveDrug);
-                    foundInteractions.push({
-                        interactingWith: activeOriginalName || interactingActiveDrug,
-                        severity: interaction.severity,
-                        message: interaction.message
-                    });
-                }
-            });
-            return foundInteractions;
-        },
-
-        getNeonatalProtocol: function(drugName, pmaWeeks) {
-            const protocols = ClinicalRulesDB.neonatalProtocols[drugName];
-            if (!protocols || !pmaWeeks) return null;
-
-            for (let i = 0; i < protocols.length; i++) {
-                const rule = protocols[i];
-                if (rule.minPMA && rule.maxPMA) {
-                    if (pmaWeeks >= rule.minPMA && pmaWeeks <= rule.maxPMA) return { interval: rule.interval, dose: rule.dose };
-                } else if (rule.minPMA && !rule.maxPMA) {
-                    if (pmaWeeks >= rule.minPMA) return { interval: rule.interval, dose: rule.dose };
-                } else if (!rule.minPMA && rule.maxPMA) {
-                    if (pmaWeeks <= rule.maxPMA) return { interval: rule.interval, dose: rule.dose };
-                }
-            }
-            return null;
-        }
-    };
-
-    window.AdvancedClinicalEngine = AdvancedClinicalEngine;
-
-})(window);
+    // Backward-compatible global for any non-module consumers.
+    if (typeof window !== 'undefined') {
+        window.ClinicalRulesDB = ClinicalRulesDB;
+    }
