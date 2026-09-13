@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0284c7" />
+    <meta name="description" content="PediCalc - Pediatric Drug Dose Calculator" />
+    <title>PediCalc - Pediatric Dose Calculator</title>
+
+    <!-- فراخوانی آفلاین فونت آسام -->
+    <link rel="stylesheet" href="fontawesome/css/all.min.css" />
+
+    <!-- فراخوانی آفلاین فونت وزیرمتن -->
+    <link rel="stylesheet" href="vazirmatn/Vazirmatn-font-face.css" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="app" class="app-container">
+
+    <header id="appHeader" class="app-header">
+        <div class="header-content">
+            <button id="menuBtn" class="header-btn" aria-label="Menu">
+                <img src="assets/my-menu-icon.png" alt="Menu" style="width: 24px; height: 24px; object-fit: contain; display: block;" />
+            </button>
+
+            <div class="brand">
+                <!-- جایگذاری آیکون PNG شخصی شما -->
+                <img src="assets/your-icon.png" alt="PediCalc Logo" style="width: 28px; height: 28px; object-fit: contain;" />
+                <h1 class="brand-name">Pedi<span>Calc</span></h1>
+            </div>
+            <div class="header-actions">
+                <!-- آیکون‌های ستاره و علامت سوال حذف شدند -->
+            </div>
+        </div>
+    </header>
+
+    <main id="mainContent" class="main-content" role="main">
+
+        <section id="categorySection" class="section category-section-styled" data-section="main">
+            <div class="category-header">
+                <h2><i class="fas fa-layer-group"></i> Drug Categories</h2>
+                <span class="badge" id="drugCount">Loading...</span>
+            </div>
+            <div class="category-grid" id="categoryGrid" role="tablist">
+            </div>
+        </section>
+
+        <section id="searchSection" class="section" data-section="main">
+            <div class="search-box">
+                <label for="searchInput" class="sr-only">Search drugs</label>
+                <input type="text" id="searchInput" placeholder="Search drug name, indication, or form..." autocomplete="off" />
+                <button id="clearSearch" class="clear-btn" aria-label="Clear search" hidden>
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            </div>
+        </section>
+
+        <section id="drugSection" class="section" data-section="main">
+            <div class="drug-header">
+                <h3><i class="fas fa-list-ul"></i> Select Drug</h3>
+                <span class="badge" id="resultCount">0 items</span>
+            </div>
+            <div id="drugList" class="drug-list">
+            </div>
+        </section>
+
+    </main>
+
+    <!-- مدال توافقنامه و سلب مسئولیت حقوقی (اولین ورود) -->
+    <div id="disclaimerModal" class="modal-overlay" aria-hidden="true" role="dialog" style="z-index: 1000;">
+        <div class="modal-container" style="max-height: 85vh; display: flex; flex-direction: column;">
+            <div class="modal-head" style="background: var(--surface-bg);">
+                <h3 style="color: var(--danger-800); font-size: 0.95rem; font-weight: 800;">
+                    <i class="fas fa-gavel"></i> توافقنامه و سلب مسئولیت پزشکی
+                </h3>
+            </div>
+            <div class="modal-body" id="disclaimerBody" style="direction: rtl; text-align: right; overflow-y: auto; flex: 1; font-family: 'Vazirmatn', system-ui, sans-serif; font-size: 0.8rem; line-height: 1.8; color: var(--text-primary); padding: 16px;">
+                <p style="margin-bottom: 12px; font-weight: 700; color: var(--text-secondary);">
+                    لطفاً پیش از استفاده از این نرم‌افزار، شرایط زیر را با دقت مطالعه کنید. استفاده از این اپلیکیشن به منزله پذیرش کامل این شرایط و سلب مسئولیت قانونی از سازنده است:
+                </p>
+
+                <div style="margin-bottom: 12px; background: var(--surface-bg); padding: 10px; border-radius: var(--radius-sm); border-right: 3px solid var(--primary-500);">
+                    <strong style="color: var(--primary-700); display: block; margin-bottom: 4px;">🎯 مخاطب هدف:</strong>
+                    این اپلیکیشن منحصراً به عنوان یک ابزار کمک‌محاسباتی برای پزشکان، پرستاران و کادر درمان دارای صلاحیت طراحی شده است و به هیچ وجه برای استفاده عموم افراد یا مقاصد خوددرمانی مناسب نیست.
+                </div>
+
+                <div style="margin-bottom: 12px; background: var(--surface-bg); padding: 10px; border-radius: var(--radius-sm); border-right: 3px solid var(--warning-600);">
+                    <strong style="color: var(--warning-800); display: block; margin-bottom: 4px;">🧠 عدم جایگزینی قضاوت بالینی:</strong>
+                    نتایج، دوزها و محاسبات ارائه‌شده در این نرم‌افزار صرفاً جنبه راهنما دارند. این اطلاعات به هیچ عنوان نباید جایگزین قضاوت بالینی، ارزیابی دقیق شرایط فیزیولوژیک بیمار و تصمیم‌گیری نهایی درمانگر شوند.
+                </div>
+
+                <div style="margin-bottom: 12px; background: var(--surface-bg); padding: 10px; border-radius: var(--radius-sm); border-right: 3px solid #0ea5e9;">
+                    <strong style="color: #0369a1; display: block; margin-bottom: 4px;">🔍 الزام به بررسی مضاعف (Double-Check):</strong>
+                    با وجود تمام تلاش‌های صورت‌گرفته برای تطابق محاسبات با رفرنس‌های معتبر علمی و دارویی، همواره احتمال بروز خطاهای نرم‌افزاری، باگ‌های سیستمی یا تفاوت در پروتکل‌های درمانی وجود دارد. کاربر صراحتاً می‌پذیرد که وظیفه دارد پیش از هرگونه اقدام درمانی یا تجویز دارو، دوز محاسبه‌شده را با منابع معتبر پزشکی و شرایط اختصاصی بیمار تطبیق داده و شخصاً آن را بررسی و تایید نماید.
+                </div>
+
+                <div style="margin-bottom: 12px; background: #fef2f2; padding: 10px; border-radius: var(--radius-sm); border-right: 3px solid var(--danger-500);">
+                    <strong style="color: var(--danger-800); display: block; margin-bottom: 4px;">⚖️ سلب مسئولیت کامل حقوقی و کیفری:</strong>
+                    توسعه‌دهنده، برنامه‌نویس و تیم نظارت علمی این نرم‌افزار، هیچ‌گونه مسئولیتی در قبال خطاهای محاسباتی احتمالی، عوارض جانبی دارویی، قصور پزشکی، آسیب‌های جانی یا مالی و یا هرگونه پیامد مستقیم و غیرمستقیم ناشی از اتکا به اطلاعات این اپلیکیشن را نمی‌پذیرند. مسئولیت نهایی تجویز دارو و حفظ ایمنی بیمار، قانوناً و شرعاً بر عهده فرد درمانگر است.
+                </div>
+
+                <p id="scrollNotice" style="text-align: center; color: var(--danger-500); font-weight: bold; font-size: 0.75rem; margin-top: 15px; padding: 6px; background: #fff5f5; border-radius: 6px;">
+                    👇 برای فعال‌سازی دکمه تایید، متن را تا انتها اسکرول کنید
+                </p>
+            </div>
+            <div style="padding: 12px 16px; background: var(--surface-bg); border-top: 1px solid var(--border-light); flex-shrink: 0;">
+                <button id="acceptDisclaimerBtn" disabled style="width: 100%; padding: 12px; font-size: 0.9rem; font-weight: 800; font-family: inherit; color: white; background: var(--text-tertiary); border: none; border-radius: var(--radius-md); cursor: not-allowed; transition: all 0.3s ease;">
+                    مطالعه کردم و می‌پذیرم
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="helpModal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="modalTitle">
+        <div class="modal-container">
+            <div class="modal-head">
+                <h3 id="modalTitle"><i class="fas fa-info-circle"></i> App Guide</h3>
+                <button id="modalClose" class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="guide-item">
+                    <div class="guide-icon"><i class="fas fa-user-md"></i></div>
+                    <div class="guide-text">
+                        <strong>Scientific Pediatric Dosing</strong>
+                        <p>Doses are calculated based on the latest pediatric references (Nelson) and accurate patient weight and age.</p>
+                    </div>
+                </div>
+                <div class="guide-item">
+                    <div class="guide-icon"><i class="fas fa-house-medical"></i></div>
+                    <div class="guide-text">
+                        <strong>Transparent Calculations</strong>
+                        <p>The exact calculation formula is displayed for each patient to ensure accuracy of values.</p>
+                    </div>
+                </div>
+                <div class="guide-item">
+                    <div class="guide-icon"><i class="fas fa-chevron-down"></i></div>
+                    <div class="guide-text">
+                        <strong>Dropdown Mode</strong>
+                        <p>Click the calculate dose button to open the calculator directly under the selected drug.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- مُدال درباره ما -->
+    <div id="aboutModal" class="modal-overlay" aria-hidden="true" role="dialog" aria-labelledby="aboutModalTitle">
+        <div class="modal-container about-modal-content">
+            <div class="modal-head">
+                <h3 id="aboutModalTitle"><i class="fas fa-info-circle"></i> درباره ما</h3>
+                <button id="aboutModalClose" class="modal-close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <p class="about-desc">
+                    این نرم‌افزار با تمرکز ویژه بر مراقبت‌های بالینی اطفال، با هدف تسهیل در محاسبات دقیق و حساس دارویی کودکان و دسترسی سریع به پروتکل‌های درمانی به‌روز، طراحی و توسعه یافته است. هدف اصلی این مجموعه، فراهم کردن ابزاری هوشمند و قابل اتکا برای کادر درمان است تا بتوانند با اطمینان، دقت و سرعت بیشتری، بهترین سطح از مراقبت‌های پزشکی را به بیماران خردسال ارائه دهند.
+                </p>
+
+                <div class="about-credits">
+                    <div class="credit-item">
+                        <i class="fas fa-user-md"></i>
+                        <div>
+                            <strong>ناظر علمی:</strong>
+                            <span>دکتر امیر سالاری (مدرس اورژانس و مراقبت‌های ویژه دانشگاه تهران)</span>
+                        </div>
+                    </div>
+                    <div class="credit-item">
+                        <i class="fas fa-code"></i>
+                        <div>
+                            <strong>کدنویسی و توسعه‌دهنده:</strong>
+                            <span>توکل پیری (پرستار بیمارستان امام خمینی تهران)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="about-disclaimer">
+                    <h4><i class="fas fa-exclamation-triangle"></i> سلب مسئولیت پزشکی (Medical Disclaimer)</h4>
+                    <p>
+                        این اپلیکیشن صرفاً به عنوان یک ابزار کمک‌آموزشی و راهنمای بالینی برای کادر درمان طراحی شده است و به هیچ عنوان جایگزین قضاوت بالینی، تشخیص و دستورات مستقیم پزشک معالج نمی‌باشد.
+                        با وجود اینکه تمامی داده‌ها، دوزهای دارویی (به‌ویژه محاسبات حساس وزنی و سنی مربوط به کودکان) و قوانین بالینی موجود در این نرم‌افزار بر اساس منابع معتبر علمی گردآوری و تنظیم شده‌اند، اما پیش از هرگونه تجویز، آماده‌سازی یا تزریق دارو، بررسی مجدد مقادیر و تطبیق آن‌ها با شرایط اختصاصی بیمار، عملکرد ارگان‌ها و پروتکل‌های رسمی مرکز درمانی الزامی است.
+                        توسعه‌دهنده و ناظر علمی این اپلیکیشن هیچ‌گونه مسئولیتی در قبال خطاهای احتمالی ناشی از کاربری، تداخلات دارویی پیش‌بینی‌نشده، یا هرگونه آسیب و عواقب ناشی از اتکای صرف به اطلاعات و محاسبات این نرم‌افزار را نمی‌پذیرند. مسئولیت نهایی مدیریت درمان تماماً بر عهده کاربر (کادر درمان) می‌باشد.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ساید منو -->
+    <div id="navOverlay" class="nav-overlay" aria-hidden="true"></div>
+    <nav id="sideNav" class="side-nav">
+        <div class="nav-header">
+            <div class="brand">
+                <!-- جایگذاری آیکون PNG شخصی شما در ساید‌منو -->
+                <img src="assets/your-icon.png" alt="PediCalc Logo" style="width: 28px; height: 28px; object-fit: contain;" />
+                <h2 class="brand-name">Pedi<span>Calc</span></h2>
+            </div>
+            <button id="closeNavBtn" class="header-btn" aria-label="Close Menu">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- لیست اسکرول‌شونده برای لینک‌ها -->
+        <ul class="nav-links">
+            <li>
+                <a href="http://cafebazaar.ir/app/?id=ir.bloodgasexpert.pkg&ref=share" target="_blank" rel="noopener noreferrer">
+                    <img src="assets/ABGg.png" alt="Home" style="width: 24px; height: 24px; object-fit: contain;" />
+                    BLOOD GAS EXPERT App
+                </a>
+            </li>
+            <li>
+                <a href="http://cafebazaar.ir/app/?id=ir.medmate.app&ref=share" target="_blank" rel="noopener noreferrer">
+                    <img src="assets/medmate.png" alt="Download" style="width: 24px; height: 24px; object-fit: contain;" />
+                    Medmate App
+                </a>
+            </li>
+            <li>
+                <a href="#" id="disclaimerNavBtn">
+                    <img src="assets/about.png" alt="Terms" style="width: 24px; height: 24px; object-fit: contain;" />
+                    Terms & Disclaimer
+                </a>
+            </li>
+            <li>
+                <a href="#" id="aboutBtn">
+                    <img src="assets/about.png" alt="About Us" style="width: 24px; height: 24px; object-fit: contain;" />
+                    About Us
+                </a>
+            </li>
+        </ul>
+
+        <!-- Independent Contact Us section fixed to the bottom -->
+        <div class="nav-contact-wrapper">
+            <div class="nav-section-title">Contact Us</div>
+
+            <div class="contact-nav-item">
+                <div class="contact-person">
+                    <img src="assets/teacher.png" alt="icon" class="person-png-icon" />
+                    Dr. Amir Salari
+                </div>
+                <div class="contact-links">
+                    <a href="https://wa.me/989124065510" target="_blank" rel="noopener noreferrer" class="nav-social-btn whatsapp">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.487-1.761-1.66-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51h-.57c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp
+                    </a>
+                    <a href="https://instagram.com/amirsalari2136" target="_blank" rel="noopener noreferrer" class="nav-social-btn instagram">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm5.838-10.427a1.44 1.44 0 10-2.88 0 1.44 1.44 0 002.88 0z"/></svg> Instagram
+                    </a>
+                </div>
+            </div>
+
+            <div class="contact-nav-item">
+                <div class="contact-person">
+                    <img src="assets/programmer.png" alt="icon" class="person-png-icon" />
+                    Tavakol Piri
+                </div>                <div class="contact-links">
+                <a href="https://wa.me/989905415680" target="_blank" rel="noopener noreferrer" class="nav-social-btn whatsapp">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.487-1.761-1.66-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51h-.57c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp
+                </a>
+                <a href="https://instagram.com/medmate_ir" target="_blank" rel="noopener noreferrer" class="nav-social-btn instagram">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm5.838-10.427a1.44 1.44 0 10-2.88 0 1.44 1.44 0 002.88 0z"/></svg> Instagram
+                </a>
+            </div>
+            </div>
+        </div>
+    </nav>
+
+</div>
+
+<script src="data.js"></script>
+<script src="clinical-rules.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
