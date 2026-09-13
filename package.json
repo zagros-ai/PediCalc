@@ -1,0 +1,12 @@
+{
+  "name": "pedicalc",
+  "version": "1.0.0",
+  "description": "PediCalc — a pediatric drug dose calculator (offline, vanilla ES-module web app).",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test",
+    "smoke": "node tests/boot.smoke.mjs"
+  },
+  "license": "MIT"
+}

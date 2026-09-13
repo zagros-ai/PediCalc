@@ -1,5 +1,8 @@
-// data.js
-window.categoriesDB = [
+// src/data/drugs.data.js
+// Pure data module: drug categories and the pediatric drug database.
+// Exported as ES modules; also mirrored onto `window` for the Android WebView bridge.
+
+export const categoriesDB = [
     { id: 'all', name: 'All', icon: 'fa-layer-group', image: 'assets/categories/all.png' },
     { id: 'syrup', name: 'Syrup', icon: 'fa-wine-bottle', image: 'assets/categories/syrup.png' },
     { id: 'drop', name: 'Drop', icon: 'fa-tint', image: 'assets/categories/drop.png' },
@@ -16,7 +19,7 @@ window.categoriesDB = [
     { id: 'sachet', name: 'Sachet', icon: 'fa-envelope', image: 'assets/categories/sachet.png' }
 ];
 
-window.drugsDB = [
+export const drugsDB = [
     // ==========================================
     // SYRUPS & SUSPENSIONS
     // ==========================================
@@ -886,3 +889,10 @@ window.drugsDB = [
     { id: 1304, name: 'Montelukast', form: 'Sachet 4mg', category: 'sachet', fixedDose: '4 mg daily', intervalHours: 24, doseUnit: 'mg', indications: ['Asthma', 'Allergic Rhinitis'], warning: 'For children 6 months to 5 years.' },
     { id: 1607, name: 'Omeprazole', form: 'Sachet 10mg / Capsule', category: 'sachet', minMgPerKg: 1, maxMgPerKg: 1, intervalHours: 24, doseUnit: 'mg', maxSingleDoseMg: 40, maxDailyDoseMg: 40, indications: ['GERD', 'Peptic Ulcer'] }
 ];
+
+
+// Backward-compatible globals for the Android WebView bridge and any non-module consumers.
+if (typeof window !== 'undefined') {
+    window.categoriesDB = categoriesDB;
+    window.drugsDB = drugsDB;
+}
