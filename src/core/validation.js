@@ -3,6 +3,7 @@
 // calculator and the calculator UI. No DOM access.
 
 import { Utils } from './utils.js';
+import { t } from './i18n.js';
 
 export const ValidationEngine = {
     weightRanges: {
@@ -30,10 +31,10 @@ export const ValidationEngine = {
 
     getRecommendedForm(drug, weight) {
         if (weight < 10 && drug.category === 'syrup') {
-            return { preferred: 'Drop', message: 'For infants, drop or suspension form is more suitable.' };
+            return { preferred: t('form.drop'), message: t('form.dropBetter') };
         }
         if (weight >= 10 && weight < 20 && drug.category === 'drop') {
-            return { preferred: 'Syrup', message: 'For older children, syrup form is more convenient.' };
+            return { preferred: t('form.syrup'), message: t('form.syrupBetter') };
         }
         return null;
     },
@@ -44,34 +45,34 @@ export const ValidationEngine = {
 
         if (requiresWeight) {
             if (weight === undefined || weight === null || weight === '') {
-                errors.push({ field: 'weight', message: 'Please enter the weight.' });
+                errors.push({ field: 'weight', message: t('val.weightRequired') });
             } else {
                 const w = Number(weight);
                 if (isNaN(w) || w <= 0) {
-                    errors.push({ field: 'weight', message: 'Weight must be a valid positive number.' });
+                    errors.push({ field: 'weight', message: t('val.weightPositive') });
                 } else if (w < 0.5) {
-                    errors.push({ field: 'weight', message: 'Weight is too low (minimum 0.5 kg).' });
+                    errors.push({ field: 'weight', message: t('val.weightTooLow') });
                 } else if (w > 150) {
-                    errors.push({ field: 'weight', message: 'Weight is too high (maximum 150 kg).' });
+                    errors.push({ field: 'weight', message: t('val.weightTooHigh') });
                 } else if (w < 2.5) {
-                    warnings.push({ field: 'weight', message: 'Neonatal weight (<2.5kg) requires extreme precision.' });
+                    warnings.push({ field: 'weight', message: t('val.neonatalPrecision') });
                 } else if (w > 35) {
-                    warnings.push({ field: 'weight', message: 'Weight above 35kg - patient may be adolescent or adult.' });
+                    warnings.push({ field: 'weight', message: t('val.aboveAdult') });
                 }
             }
         }
 
         if (requiresAge) {
             if (age === undefined || age === null || age === '') {
-                errors.push({ field: 'age', message: 'Please enter the age (this drug requires age).' });
+                errors.push({ field: 'age', message: t('val.ageRequired') });
             } else {
                 const a = Number(age);
                 if (isNaN(a) || a < 0) {
-                    errors.push({ field: 'age', message: 'Age must be a valid positive number.' });
+                    errors.push({ field: 'age', message: t('val.agePositive') });
                 } else if (a > 18) {
-                    errors.push({ field: 'age', message: 'Age above 18 years - this drug is for children.' });
+                    errors.push({ field: 'age', message: t('val.ageTooHigh') });
                 } else if (a < 0.5 && requiresAge) {
-                    warnings.push({ field: 'age', message: 'Age under 6 months - requires physician consultation.' });
+                    warnings.push({ field: 'age', message: t('val.ageUnder6mo') });
                 }
             }
         }
@@ -79,9 +80,9 @@ export const ValidationEngine = {
         if (height !== null && height !== '') {
             const h = Number(height);
             if (isNaN(h) || h <= 0) {
-                errors.push({ field: 'height', message: 'Height must be a valid positive number.' });
+                errors.push({ field: 'height', message: t('val.heightPositive') });
             } else if (h < 30 || h > 250) {
-                errors.push({ field: 'height', message: 'Height must be between 30 and 250 cm.' });
+                errors.push({ field: 'height', message: t('val.heightRange') });
             }
         }
 
@@ -93,9 +94,9 @@ export const ValidationEngine = {
         let ageCategory = 'Unknown';
 
         if (requiresWeight) {
-            if (weight < 0.5) issues.push({ type: 'error', message: 'Weight entered is very low! Please recheck.', severity: 'critical' });
-            if (weight < 2.5) issues.push({ type: 'warning', message: 'Neonatal weight (<2.5kg) requires extreme precision.', severity: 'high' });
-            if (weight > 35) issues.push({ type: 'info', message: 'Weight above 35kg - patient may be adolescent or adult.', severity: 'low' });
+            if (weight < 0.5) issues.push({ type: 'error', message: t('val.weightVeryLow'), severity: 'critical' });
+            if (weight < 2.5) issues.push({ type: 'warning', message: t('val.neonatalPrecision'), severity: 'high' });
+            if (weight > 35) issues.push({ type: 'info', message: t('val.aboveAdult'), severity: 'low' });
 
             ageCategory = 'Neonate';
             for (const [key, range] of Object.entries(ValidationEngine.weightRanges)) {

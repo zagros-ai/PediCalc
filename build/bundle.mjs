@@ -23,6 +23,8 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 // Dependency order: a module must appear AFTER everything it depends on.
 const MODULE_ORDER = [
+    'src/core/i18n.js',
+    'src/data/translations.fa.js',
     'src/core/utils.js',
     'src/data/drugs.data.js',
     'src/data/clinical-rules.data.js',
@@ -36,6 +38,7 @@ const MODULE_ORDER = [
     'src/ui/disclaimer.js',
     'src/ui/renderers.js',
     'src/ui/events.js',
+    'src/ui/i18n-dom.js',
     'src/main.js'
 ];
 
