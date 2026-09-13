@@ -3,6 +3,8 @@
 // dose-unit resolution, interval formatting, the home administration guide,
 // and small DOM/UX helpers.
 
+import { t } from './i18n.js';
+
 /**
  * Escape a value for safe interpolation into innerHTML.
  * Every dynamic value (drug names, warnings, interaction messages, user input)
@@ -39,9 +41,8 @@ export const Utils = {
     nearlyEqual,
 
     getIntervalText(hours) {
-        if (hours === 0) return 'Single Dose / As needed';
-        const map = { 24: 'Every 24 hours', 12: 'Every 12 hours', 8: 'Every 8 hours', 6: 'Every 6 hours', 4: 'Every 4 hours' };
-        return map[hours] || `Every ${hours} hours`;
+        if (hours === 0) return t('interval.single');
+        return t('interval.hours', { h: hours });
     },
 
     generateHomeGuide(drug, minDose, maxDose, validation, customConc) {
@@ -57,7 +58,7 @@ export const Utils = {
                 baseConc = drug.mgPerMl;
             }
             const activeConc = parseFloat(customConc !== null ? customConc : baseConc);
-            if (!activeConc || activeConc <= 0) return `<strong style="color: var(--danger-500);"><i class="fas fa-exclamation-triangle"></i> Error: Concentration cannot be zero.</strong>`;
+            if (!activeConc || activeConc <= 0) return `<strong style="color: var(--danger-500);"><i class="fas fa-exclamation-triangle"></i> ${escapeHtml(t('guide.concZero'))}</strong>`;
 
             const minCc = parseFloat((minDose / activeConc).toFixed(2)).toString();
             const maxCc = parseFloat((maxDose / activeConc).toFixed(2)).toString();
@@ -69,7 +70,7 @@ export const Utils = {
             return `<strong>${escapeHtml(validation.calculatedFixedDose)}</strong> ${escapeHtml(intervalText)}`;
         }
 
-        return `Use as prescribed by physician.`;
+        return escapeHtml(t('guide.asPrescribed'));
     },
 
     // Single source of truth for dose-unit resolution (used by the calculator, formula/formatting

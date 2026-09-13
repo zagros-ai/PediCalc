@@ -1307,3 +1307,48 @@ body {
 .focus-calc-panel .weight-input-group input::placeholder {
     font-size: 0.6rem; /* اندازه فونت فقط برای متن راهنما */
 }
+
+
+
+/* ============================================================
+   RTL (Persian) OVERRIDES
+   Only applied when <html dir="rtl">. Mirrors the handful of
+   direction-specific rules so the Persian layout is not broken,
+   while leaving the default LTR layout completely untouched.
+   ============================================================ */
+[dir="rtl"] body,
+[dir="rtl"] .app-container {
+    direction: rtl;
+    font-family: 'Vazirmatn', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Search clear button moves to the left edge in RTL */
+[dir="rtl"] .clear-btn { right: auto; left: var(--space-2); }
+
+/* Close-card button moves to the top-left corner */
+[dir="rtl"] .close-card-btn { right: auto; left: 8px; }
+[dir="rtl"] .lock-icon-btn { right: auto !important; left: 12px; }
+
+/* Card left accent border -> right side */
+[dir="rtl"] .drug-list-card { border-left: none; border-right: 4px solid var(--primary-500); }
+
+/* Drug details padding flips */
+[dir="rtl"] .drug-details { padding-right: 0; padding-left: var(--space-2); }
+
+/* Left accent borders -> right */
+[dir="rtl"] .patient-validation { border-left: none; border-right: 3px solid var(--primary-500); }
+[dir="rtl"] .drug-contraindication.high { border-left: none; border-right: 3px solid var(--danger-500); }
+[dir="rtl"] .drug-contraindication.medium { border-left: none; border-right: 3px solid var(--warning-600); }
+[dir="rtl"] .drug-home-guide { border-left: none; border-right: 3px solid var(--accent-500); }
+
+/* Formula/description lines read right-to-left */
+[dir="rtl"] .f-desc { text-align: right; }
+
+/* Side navigation slides in from the right in RTL */
+[dir="rtl"] .side-nav { left: auto; right: 0; transform: translateX(100%); }
+[dir="rtl"] .side-nav.active { transform: translateX(0); }
+
+/* Category tooltip triangle stays centered (uses translateX(-50%) already, fine) */
+
+/* Nav link icons: keep natural order, just ensure the row reads RTL */
+[dir="rtl"] .nav-links li a { text-align: right; }

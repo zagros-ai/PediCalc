@@ -6,11 +6,1038 @@
 (function () {
     'use strict';
 
+    // ===== src/core/i18n.js =====
+    // src/core/i18n.js
+    // Lightweight, dependency-free internationalization (i18n) for PediCalc.
+    //
+    // - Two languages: 'en' (default) and 'fa' (Persian, RTL).
+    // - UI strings live in the STRINGS dictionary below, keyed by a dotted id.
+    // - Data-attached translations (drug names, clinical messages, ...) are NOT
+    //   here; they live next to their data as `*Fa` fields and are resolved with
+    //   `localized()` so English is always a safe fallback.
+    // - Units and formula math tokens are intentionally NOT translated.
+    //
+    // Usage:
+    //   import { t, getLang, setLang, onLangChange, localized, applyLanguage } from './i18n.js';
+    //   t('search.placeholder')                 -> current-language UI string
+    //   t('cart.count', { n: 3 })               -> with interpolation
+    //   localized(drug, 'name')                 -> drug.nameFa (fa) or drug.name (fallback)
+
+    const STORAGE_KEY = 'pedicalc_lang';
+    const DEFAULT_LANG = 'en';
+    const SUPPORTED = ['en', 'fa'];
+
+    let currentLang = DEFAULT_LANG;
+    const listeners = new Set();
+
+    // Read any previously persisted choice (guarded for non-browser/test contexts).
+    try {
+        if (typeof localStorage !== 'undefined') {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved && SUPPORTED.includes(saved)) currentLang = saved;
+        }
+    } catch { /* ignore storage errors */ }
+
+    // ============================================================
+    //  UI STRING DICTIONARY  (en is the source of truth / fallback)
+    // ============================================================
+    const STRINGS = {
+        // Brand / header
+        'app.title':            { en: 'PediCalc - Pediatric Dose Calculator', fa: 'پدی‌کلک - محاسبه‌گر دوز کودکان' },
+        'app.description':      { en: 'PediCalc - Pediatric Drug Dose Calculator', fa: 'پدی‌کلک - محاسبه‌گر دوز داروی کودکان' },
+        'header.menu':          { en: 'Menu', fa: 'منو' },
+        'header.lang':          { en: 'فارسی', fa: 'English' }, // label shows the OTHER language to switch to
+        'header.langAria':      { en: 'Switch to Persian', fa: 'تغییر به انگلیسی' },
+
+        // Categories section
+        'categories.title':     { en: 'Drug Categories', fa: 'دسته‌بندی داروها' },
+        'categories.loading':   { en: 'Loading...', fa: 'در حال بارگذاری...' },
+
+        // Search
+        'search.label':         { en: 'Search drugs', fa: 'جستجوی داروها' },
+        'search.placeholder':   { en: 'Search drug name, indication, or form...', fa: 'جستجوی نام دارو، اندیکاسیون یا شکل دارویی...' },
+        'search.clear':         { en: 'Clear search', fa: 'پاک کردن جستجو' },
+
+        // Drug list
+        'drugs.title':          { en: 'Select Drug', fa: 'انتخاب دارو' },
+        'drugs.count':          { en: '{n} Drugs', fa: '{n} دارو' },
+        'drugs.items':          { en: '{n} items', fa: '{n} مورد' },
+        'drugs.none.title':     { en: 'No Drug Found', fa: 'دارویی یافت نشد' },
+        'drugs.none.body':      { en: 'Please change the category or search term.', fa: 'لطفاً دسته‌بندی یا عبارت جستجو را تغییر دهید.' },
+        'drugs.calculate':      { en: 'Calculate Dose', fa: 'محاسبه دوز' },
+        'drugs.unlock':         { en: 'Unlock / Activate', fa: 'قفل / فعال‌سازی' },
+        'drugs.closeCalc':      { en: 'Close Calculator', fa: 'بستن محاسبه‌گر' },
+        'drugs.close':          { en: 'Close', fa: 'بستن' },
+
+        // Calculator panel
+        'calc.baseDose':        { en: 'Base Dose:', fa: 'دوز پایه:' },
+        'calc.standardOrAge':   { en: 'Standard or Age-based', fa: 'استاندارد یا بر اساس سن' },
+        'calc.concentration':   { en: 'Concentration:', fa: 'غلظت:' },
+        'calc.per':             { en: 'per', fa: 'در' },
+        'calc.selectIndication':{ en: 'Select Clinical Indication:', fa: 'انتخاب اندیکاسیون بالینی:' },
+        'calc.enterDetails':    { en: 'Enter patient details:', fa: 'اطلاعات بیمار را وارد کنید:' },
+        'calc.noDetails':       { en: 'No patient details required:', fa: 'نیازی به اطلاعات بیمار نیست:' },
+        'calc.weight':          { en: 'Weight (kg)', fa: 'وزن (کیلوگرم)' },
+        'calc.height':          { en: 'Height (cm) - Optional', fa: 'قد (سانتی‌متر) - اختیاری' },
+        'calc.age':             { en: 'Age in years (e.g., 0.08 for 1 mo)', fa: 'سن به سال (مثلاً ۰.۰۸ برای ۱ ماه)' },
+        'calc.showInstructions':{ en: 'Show Instructions', fa: 'نمایش دستورالعمل' },
+        'calc.perDose':         { en: 'Per Dose Amount:', fa: 'مقدار هر دوز:' },
+        'calc.frequency':       { en: 'Frequency:', fa: 'دفعات مصرف:' },
+        'calc.adminGuide':      { en: 'Administration Guide', fa: 'راهنمای تجویز' },
+        'calc.fixErrors':       { en: 'Please fix the errors above.', fa: 'لطفاً خطاهای بالا را برطرف کنید.' },
+        'calc.badConc':         { en: 'Please enter valid positive numbers for concentration.', fa: 'لطفاً برای غلظت اعداد مثبت معتبر وارد کنید.' },
+
+        // Advanced clinical settings
+        'adv.title':            { en: 'Advanced Clinical Settings', fa: 'تنظیمات بالینی پیشرفته' },
+        'adv.pma':              { en: 'Post Menstrual Age (PMA) - Neonates (weeks):', fa: 'سن پس از قاعدگی (PMA) - نوزادان (هفته):' },
+        'adv.pmaHint':          { en: '(Gestational Age at birth + Chronological Age)', fa: '(سن بارداری هنگام تولد + سن تقویمی)' },
+        'adv.pmaPlaceholder':   { en: 'e.g., 32', fa: 'مثلاً ۳۲' },
+        'adv.renal':            { en: 'Renal Impairment', fa: 'نارسایی کلیوی' },
+        'adv.hepatic':          { en: 'Hepatic Impairment', fa: 'نارسایی کبدی' },
+        'adv.allergies':        { en: 'Patient Allergies:', fa: 'آلرژی‌های بیمار:' },
+        'adv.penicillins':      { en: 'Penicillins', fa: 'پنی‌سیلین‌ها' },
+        'adv.cephalosporins':   { en: 'Cephalosporins', fa: 'سفالوسپورین‌ها' },
+        'adv.nsaids':           { en: 'NSAIDs', fa: 'ان‌سایدها (NSAID)' },
+        'adv.macrolides':       { en: 'Macrolides', fa: 'ماکرولیدها' },
+
+        // Cart / active prescriptions
+        'cart.add':             { en: 'Add to Active Prescription (Check Interactions)', fa: 'افزودن به نسخه فعال (بررسی تداخلات)' },
+        'cart.remove':          { en: 'Remove from Active Prescription', fa: 'حذف از نسخه فعال' },
+        'cart.active':          { en: 'Active Prescriptions ({n})', fa: 'نسخه‌های فعال ({n})' },
+        'cart.autocheck':       { en: '* Interactions will be checked automatically for these drugs.', fa: '* تداخلات این داروها به‌صورت خودکار بررسی می‌شود.' },
+
+        // Safety badges
+        'badge.noInteraction':  { en: 'No Known Interaction', fa: 'بدون تداخل شناخته‌شده' },
+        'badge.caution':        { en: 'Caution', fa: 'احتیاط' },
+        'badge.monitor':        { en: 'Monitor', fa: 'پایش' },
+
+        // IV guideline block
+        'iv.title':             { en: 'IV Infusion Guidelines', fa: 'دستورالعمل انفوزیون وریدی' },
+        'iv.rate':              { en: 'Infusion Rate:', fa: 'سرعت انفوزیون:' },
+        'iv.maxConc':           { en: 'Max Concentration:', fa: 'حداکثر غلظت:' },
+        'iv.warning':           { en: 'Warning:', fa: 'هشدار:' },
+
+        // Formula box
+        'formula.title':        { en: 'Formula:', fa: 'فرمول:' },
+        'formula.volume':       { en: 'Volume to Administer:', fa: 'حجم قابل تجویز:' },
+        'formula.dailyMax':     { en: 'Daily Max:', fa: 'حداکثر روزانه:' },
+        'formula.fixedDesc':    { en: 'Age-based, Topical, or Standard Dose', fa: 'دوز بر اساس سن، موضعی یا استاندارد' },
+        'formula.capped':       { en: '(Capped)', fa: '(محدودشده)' },
+
+        // Home guide fallbacks
+        'guide.asPrescribed':   { en: 'Use as prescribed by physician.', fa: 'طبق دستور پزشک مصرف شود.' },
+        'guide.concZero':       { en: 'Error: Concentration cannot be zero.', fa: 'خطا: غلظت نمی‌تواند صفر باشد.' },
+
+        // Intervals
+        'interval.single':      { en: 'Single Dose / As needed', fa: 'دوز منفرد / در صورت نیاز' },
+        'interval.hours':       { en: 'Every {h} hours', fa: 'هر {h} ساعت' },
+
+        // Help / App Guide modal
+        'help.title':           { en: 'App Guide', fa: 'راهنمای برنامه' },
+        'help.item1.title':     { en: 'Scientific Pediatric Dosing', fa: 'دوزبندی علمی کودکان' },
+        'help.item1.body':      { en: 'Doses are calculated based on the latest pediatric references (Nelson) and accurate patient weight and age.', fa: 'دوزها بر اساس جدیدترین مراجع کودکان (نلسون) و وزن و سن دقیق بیمار محاسبه می‌شوند.' },
+        'help.item2.title':     { en: 'Transparent Calculations', fa: 'محاسبات شفاف' },
+        'help.item2.body':      { en: 'The exact calculation formula is displayed for each patient to ensure accuracy of values.', fa: 'فرمول دقیق محاسبه برای هر بیمار نمایش داده می‌شود تا از صحت مقادیر اطمینان حاصل شود.' },
+        'help.item3.title':     { en: 'Dropdown Mode', fa: 'حالت کشویی' },
+        'help.item3.body':      { en: 'Click the calculate dose button to open the calculator directly under the selected drug.', fa: 'روی دکمه محاسبه دوز بزنید تا محاسبه‌گر دقیقاً زیر داروی انتخاب‌شده باز شود.' },
+
+        // Premium modal
+        'premium.title':        { en: 'PediCalc Premium', fa: 'نسخه ویژه PediCalc' },
+        'premium.subtitle':     { en: 'Unlimited access to all clinical features', fa: 'دسترسی نامحدود به تمامی امکانات بالینی' },
+        'premium.feat1':        { en: 'Access to all locked drugs', fa: 'دسترسی به تمامی داروهای قفل شده' },
+        'premium.feat2':        { en: 'Smart drug-interaction checking', fa: 'بررسی هوشمند تداخلات دارویی' },
+        'premium.feat3':        { en: 'Preterm neonate settings (PMA)', fa: 'تنظیمات نوزادان نارس (PMA)' },
+        'premium.feat4':        { en: 'Dose adjustment in renal & hepatic impairment', fa: 'تنظیم دوز در نارسایی کلیوی و کبدی' },
+        'premium.buy':          { en: 'Activate & Purchase', fa: 'فعال‌سازی و خرید' },
+        'premium.securePay':    { en: 'Secure payment via Cafebazaar', fa: 'پرداخت امن از طریق کافه‌بازار' },
+
+        // Side nav
+        'nav.terms':            { en: 'Terms & Disclaimer', fa: 'شرایط و سلب مسئولیت' },
+        'nav.about':            { en: 'About Us', fa: 'درباره ما' },
+        'nav.contact':          { en: 'Contact Us', fa: 'تماس با ما' },
+        'nav.closeMenu':        { en: 'Close Menu', fa: 'بستن منو' },
+
+        // Dynamic clinical templates (calculator.js). {..} are interpolated at call time.
+        'dyn.nicu':             { en: 'Based on NICU protocol (PMA {pma} weeks), ', fa: 'بر اساس پروتکل NICU (PMA {pma} هفته)، ' },
+        'dyn.nicuDoseInterval': { en: 'dose adjusted to {dose} mg/kg and interval to every {interval} hours.', fa: 'دوز به {dose} mg/kg و فاصله به هر {interval} ساعت تنظیم شد.' },
+        'dyn.nicuInterval':     { en: 'dose interval adjusted to every {interval} hours.', fa: 'فاصله دوز به هر {interval} ساعت تنظیم شد.' },
+        'dyn.renalAdjust':      { en: 'Requires Renal Dose Adjustment', fa: 'نیاز به تنظیم دوز کلیوی' },
+        'dyn.hepaticAdjust':    { en: 'Requires Hepatic Dose Adjustment', fa: 'نیاز به تنظیم دوز کبدی' },
+        'dyn.critInteraction':  { en: 'Critical Interaction with {drug}:', fa: 'تداخل بحرانی با {drug}:' },
+        'dyn.majorInteraction': { en: 'Major Interaction with {drug}:', fa: 'تداخل عمده با {drug}:' },
+        'dyn.interaction':      { en: 'Interaction with {drug}:', fa: 'تداخل با {drug}:' },
+        'dyn.recommend':        { en: 'Recommendation: {form} is more suitable for {drug}.', fa: 'توصیه: {form} برای {drug} مناسب‌تر است.' },
+        'dyn.maxDaily':         { en: ' (Max daily: {max} {unit})', fa: ' (حداکثر روزانه: {max} {unit})' },
+        'dyn.ibwWarn':          { en: "Patient's actual weight is >120% of Ideal Body Weight ({ibw} kg).", fa: 'وزن واقعی بیمار بیش از ۱۲۰٪ وزن ایده‌آل بدن ({ibw} kg) است.' },
+        'dyn.adjbw':            { en: 'Hydrophilic Drug in Obesity:', fa: 'داروی آبدوست در چاقی:' },
+        'dyn.adjbwBody':        { en: ' Dose calculated based on Adjusted Body Weight (AdjBW = {w} kg) to prevent toxicity/underdosing.', fa: ' دوز بر اساس وزن تعدیل‌شده بدن (AdjBW = {w} kg) محاسبه شد تا از سمیت/کم‌دوزی جلوگیری شود.' },
+        'dyn.capped':           { en: 'Dose exceeded absolute adult max. Capped at {max} {unit}/dose.', fa: 'دوز از حداکثر مطلق بزرگسالان فراتر رفت. به {max} {unit} در هر دوز محدود شد.' },
+        'dyn.dailyCapped':      { en: 'Calculated daily dose (Weight &times; {unit}/kg) was {orig} {unit}. It has been capped to the adult maximum limit of {max} {unit}. Please review administration frequency.', fa: 'دوز روزانه محاسبه‌شده (وزن &times; {unit}/kg) برابر {orig} {unit} بود. به حداکثر مجاز بزرگسالان یعنی {max} {unit} محدود شد. لطفاً دفعات تجویز را بازبینی کنید.' },
+        'dyn.highDaily':        { en: 'Daily dose ({daily} {unit}) is generally high, verify with max daily allowance.', fa: 'دوز روزانه ({daily} {unit}) عموماً بالاست، با حداکثر مجاز روزانه بررسی کنید.' },
+        'dyn.applyThin':        { en: 'Apply thin layer', fa: 'لایه نازک بمالید' },
+
+        // Allergy sentences (clinical-engine.js)
+        'allergy.absolute':     { en: 'Absolute Contraindication! Patient is allergic to {class} class.', fa: 'منع مصرف مطلق! بیمار به دسته {class} حساسیت دارد.' },
+        'allergy.penToCeph':    { en: 'Caution: Patient is allergic to Penicillin. There is a 3-5% risk of cross-reactivity with Cephalosporins ({drug}).', fa: 'احتیاط: بیمار به پنی‌سیلین حساسیت دارد. خطر ۳ تا ۵ درصدی واکنش متقاطع با سفالوسپورین‌ها ({drug}) وجود دارد.' },
+        'allergy.cephToPen':    { en: 'Caution: Patient is allergic to Cephalosporins. There is a risk of cross-reactivity with Penicillins ({drug}).', fa: 'احتیاط: بیمار به سفالوسپورین‌ها حساسیت دارد. خطر واکنش متقاطع با پنی‌سیلین‌ها ({drug}) وجود دارد.' },
+
+        // Validation messages (validation.js)
+        'val.weightRequired':   { en: 'Please enter the weight.', fa: 'لطفاً وزن را وارد کنید.' },
+        'val.weightPositive':   { en: 'Weight must be a valid positive number.', fa: 'وزن باید یک عدد مثبت معتبر باشد.' },
+        'val.weightTooLow':     { en: 'Weight is too low (minimum 0.5 kg).', fa: 'وزن بسیار پایین است (حداقل ۰.۵ کیلوگرم).' },
+        'val.weightTooHigh':    { en: 'Weight is too high (maximum 150 kg).', fa: 'وزن بسیار بالاست (حداکثر ۱۵۰ کیلوگرم).' },
+        'val.neonatalPrecision':{ en: 'Neonatal weight (<2.5kg) requires extreme precision.', fa: 'وزن نوزادی (<۲.۵ کیلوگرم) نیازمند دقت بسیار بالاست.' },
+        'val.aboveAdult':       { en: 'Weight above 35kg - patient may be adolescent or adult.', fa: 'وزن بالای ۳۵ کیلوگرم - بیمار ممکن است نوجوان یا بزرگسال باشد.' },
+        'val.ageRequired':      { en: 'Please enter the age (this drug requires age).', fa: 'لطفاً سن را وارد کنید (این دارو نیازمند سن است).' },
+        'val.agePositive':      { en: 'Age must be a valid positive number.', fa: 'سن باید یک عدد مثبت معتبر باشد.' },
+        'val.ageTooHigh':       { en: 'Age above 18 years - this drug is for children.', fa: 'سن بالای ۱۸ سال - این دارو برای کودکان است.' },
+        'val.ageUnder6mo':      { en: 'Age under 6 months - requires physician consultation.', fa: 'سن زیر ۶ ماه - نیازمند مشورت با پزشک است.' },
+        'val.heightPositive':   { en: 'Height must be a valid positive number.', fa: 'قد باید یک عدد مثبت معتبر باشد.' },
+        'val.heightRange':      { en: 'Height must be between 30 and 250 cm.', fa: 'قد باید بین ۳۰ تا ۲۵۰ سانتی‌متر باشد.' },
+        'val.weightVeryLow':    { en: 'Weight entered is very low! Please recheck.', fa: 'وزن واردشده بسیار پایین است! لطفاً بازبینی کنید.' },
+
+        // Recommended-form messages
+        'form.dropBetter':      { en: 'For infants, drop or suspension form is more suitable.', fa: 'برای شیرخواران، شکل قطره یا سوسپانسیون مناسب‌تر است.' },
+        'form.syrupBetter':     { en: 'For older children, syrup form is more convenient.', fa: 'برای کودکان بزرگ‌تر، شکل شربت راحت‌تر است.' },
+        'form.drop':            { en: 'Drop', fa: 'قطره' },
+        'form.syrup':           { en: 'Syrup', fa: 'شربت' }
+    };
+
+    /** Interpolate {token} placeholders in a template with values from `vars`. */
+    function interpolate(template, vars) {
+        if (!vars) return template;
+        return template.replace(/\{(\w+)\}/g, (m, key) => (key in vars ? String(vars[key]) : m));
+    }
+
+    /** Current language code ('en' | 'fa'). */
+    function getLang() {
+        return currentLang;
+    }
+
+    /** Whether the current language is right-to-left. */
+    function isRTL() {
+        return currentLang === 'fa';
+    }
+
+    /**
+     * Translate a UI string key. Falls back to English, then to the key itself.
+     * @param {string} key dotted key from STRINGS
+     * @param {Record<string, unknown>} [vars] interpolation values
+     */
+    function t(key, vars) {
+        const entry = STRINGS[key];
+        if (!entry) return key;
+        const template = entry[currentLang] ?? entry.en ?? key;
+        return interpolate(template, vars);
+    }
+
+    /**
+     * Resolve a per-record localized field. For language 'fa' it prefers
+     * `record[field + 'Fa']`; otherwise (or if missing) it returns `record[field]`.
+     * This keeps English as a guaranteed fallback for any untranslated data.
+     */
+    function localized(record, field) {
+        if (!record) return '';
+        if (currentLang === 'fa') {
+            const faVal = record[field + 'Fa'];
+            if (faVal !== undefined && faVal !== null && faVal !== '') return faVal;
+        }
+        return record[field];
+    }
+
+    /** Register a callback fired whenever the language changes. Returns an unsubscribe fn. */
+    function onLangChange(cb) {
+        listeners.add(cb);
+        return () => listeners.delete(cb);
+    }
+
+    /** Apply <html> lang/dir for the current language (call once on boot and on change). */
+    function applyLanguage() {
+        if (typeof document !== 'undefined' && document.documentElement) {
+            document.documentElement.lang = currentLang;
+            document.documentElement.dir = isRTL() ? 'rtl' : 'ltr';
+        }
+    }
+
+    /** Set the active language, persist it, apply dir/lang, and notify listeners. */
+    function setLang(lang) {
+        if (!SUPPORTED.includes(lang) || lang === currentLang) return;
+        currentLang = lang;
+        try {
+            if (typeof localStorage !== 'undefined') localStorage.setItem(STORAGE_KEY, lang);
+        } catch { /* ignore */ }
+        applyLanguage();
+        listeners.forEach(cb => {
+            try { cb(lang); } catch { /* a bad listener must not break others */ }
+        });
+    }
+
+    /** Toggle between English and Persian. */
+    function toggleLang() {
+        setLang(currentLang === 'en' ? 'fa' : 'en');
+    }
+
+    // Expose a tiny global for the bundle / WebView bridge and quick debugging.
+    if (typeof window !== 'undefined') {
+        window.PediCalcI18n = { t, getLang, setLang, toggleLang, localized, onLangChange, applyLanguage, isRTL };
+    }
+
+    // ===== src/data/translations.fa.js =====
+    // src/data/translations.fa.js
+    // Persian (fa) translations for DATA strings that live in the drug/clinical
+    // databases: drug names, dosage forms hints, indications, indication-dose
+    // labels, and clinical/interaction/IV/adjustment messages.
+    //
+    // Kept separate from the (English) source data so the large data files stay
+    // untouched and every Persian string is reviewable in one place. Lookups are
+    // keyed by the exact English source string; anything missing here falls back
+    // to English automatically (see resolveFa()).
+    //
+    // ⚠️ Clinical accuracy of these translations must be verified by a qualified
+    // professional. Units, numbers and formula tokens are intentionally NOT here.
+
+    // --- Drug names (transliterated per common Iranian pharmacy usage) ---
+    const DRUG_NAME_FA = {
+        'Acetaminophen': 'استامینوفن',
+        'Acetaminophen (Apotel)': 'استامینوفن (آپوتل)',
+        'Acetylcysteine': 'استیل‌سیستئین',
+        'Activated Charcoal': 'زغال فعال',
+        'Acyclovir': 'آسیکلوویر',
+        'Adenosine': 'آدنوزین',
+        'Aloe Vera': 'آلوئه‌ورا',
+        'Amikacin': 'آمیکاسین',
+        'Amiodarone': 'آمیودارون',
+        'Amoxicillin': 'آموکسی‌سیلین',
+        'Ampicillin': 'آمپی‌سیلین',
+        'Ampicillin-Sulbactam (Unasyn)': 'آمپی‌سیلین-سولباکتام (یوناسین)',
+        'Atropine': 'آتروپین',
+        'Azithromycin': 'آزیترومایسین',
+        'Beclomethasone': 'بکلومتازون',
+        'Betamethasone': 'بتامتازون',
+        'Betamethasone LA': 'بتامتازون LA',
+        'Bisacodyl': 'بیزاکودیل',
+        'Bromhexine': 'برم‌هگزین',
+        'Budesonide': 'بودزوناید',
+        'Budesonide (Pulmicort)': 'بودزوناید (پولمیکورت)',
+        'Calcium (as Carbonate/Glubionate)': 'کلسیم (کربنات/گلوبیونات)',
+        'Calcium Gluconate': 'کلسیم گلوکونات',
+        'Carbamazepine': 'کاربامازپین',
+        'Cefadroxil': 'سفادروکسیل',
+        'Cefazoline': 'سفازولین',
+        'Cefdinir': 'سفدینیر',
+        'Cefepime': 'سفپیم',
+        'Cefixime': 'سفیکسیم',
+        'Cefotaxime': 'سفوتاکسیم',
+        'Ceftazidime': 'سفتازیدیم',
+        'Ceftizoxim': 'سفتیزوکسیم',
+        'Ceftriaxone': 'سفتریاکسون',
+        'Cefuroxime': 'سفوروکسیم',
+        'Cephalexin': 'سفالکسین',
+        'Cetirizine': 'ستیریزین',
+        'Chloral Hydrate': 'کلرال هیدرات',
+        'Chloramphenicol': 'کلرامفنیکل',
+        'Chlorpheniramine': 'کلرفنیرامین',
+        'Cimetidine': 'سایمتیدین',
+        'Ciprofloxacin': 'سیپروفلوکساسین',
+        'Clarithromycin': 'کلاریترومایسین',
+        'Clindamycin': 'کلیندامایسین',
+        'Clobazam': 'کلوبازام',
+        'Clobutinol': 'کلوبوتینول',
+        'Clonazepam': 'کلونازپام',
+        'Clotrimazole': 'کلوتریمازول',
+        'Co-Amoxiclav': 'کو-آموکسی‌کلاو',
+        'Co-trimoxazole': 'کوتریموکسازول',
+        'Colistin (Colistimethate)': 'کلیستین (کلیستی‌متات)',
+        'Desloratadine': 'دسلوراتادین',
+        'Dexamethasone': 'دگزامتازون',
+        'Dextromethorphan': 'دکسترومتورفان',
+        'Diazepam': 'دیازپام',
+        'Diclofenac': 'دیکلوفناک',
+        'Dicyclomine': 'دی‌سیکلومین',
+        'Dimeticon': 'دی‌متیکون',
+        'Diphenhydramine': 'دیفن‌هیدرامین',
+        'Domperidone': 'دومپریدون',
+        'Doxycycline': 'داکسی‌سایکلین',
+        'Epinephrine': 'اپی‌نفرین',
+        'Epinephrine (L-Epi)': 'اپی‌نفرین (L-Epi)',
+        'Epinephrine Auto-injector': 'اپی‌نفرین اتوانژکتور',
+        'Erythromycin': 'اریترومایسین',
+        'Famotidine': 'فاموتیدین',
+        'Fentanyl': 'فنتانیل',
+        'Ferrous Sulfate': 'سولفات فروس (آهن)',
+        'Fexofenadine': 'فکسوفنادین',
+        'Fluconazole': 'فلوکونازول',
+        'Flumazenil': 'فلومازنیل',
+        'Fluticasone': 'فلوتیکازون',
+        'Fluticasone/Salmeterol (Seretide)': 'فلوتیکازون/سالمترول (سرتاید)',
+        'Furazolidone': 'فورازولیدون',
+        'Furosemide': 'فوروزماید',
+        'Gabapentin': 'گاباپنتین',
+        'Gentamicin': 'جنتامایسین',
+        'Guaifenesin': 'گوایفنزین',
+        'Hydrocortisone': 'هیدروکورتیزون',
+        'Hydroxyzine': 'هیدروکسی‌زین',
+        'Hyoscine (Buscopan)': 'هیوسین (بوسکوپان)',
+        'Hypertonic Saline 3%': 'سالین هایپرتونیک ۳٪',
+        'IVIG': 'ایمونوگلوبولین وریدی (IVIG)',
+        'Ibuprofen': 'ایبوپروفن',
+        'Imipenem/Cilastatin': 'ایمی‌پنم/سیلاستاتین',
+        'Indomethacin': 'ایندومتاسین',
+        'Ipratropium': 'ایپراتروپیوم',
+        'Ipratropium Bromide': 'ایپراتروپیوم بروماید',
+        'Iron Polymaltose': 'آهن پلی‌مالتوز',
+        'Ketamine': 'کتامین',
+        'Ketorolac': 'کتورولاک',
+        'Ketotifen': 'کتوتیفن',
+        'Kidylact': 'کیدی‌لاکت',
+        'Lactulose': 'لاکتولوز',
+        'Levetiracetam (Keppra)': 'لِوِتیراستام (کپرا)',
+        'Levothyroxine': 'لووتیروکسین',
+        'Lidocaine': 'لیدوکائین',
+        'Linezolid': 'لینزولید',
+        'Liposomal Iron (e.g. Sidereal)': 'آهن لیپوزومال (مثل سیدرال)',
+        'Loratadine': 'لوراتادین',
+        'Lorazepam': 'لورازپام',
+        'Magnesium Sulfate': 'سولفات منیزیم',
+        'Mefenamic Acid': 'مفنامیک اسید',
+        'Meropenem': 'مروپنم',
+        'Methylphenidate': 'متیل‌فنیدیت',
+        'Methylprednisolone': 'متیل‌پردنیزولون',
+        'Metoclopramide': 'متوکلوپرامید',
+        'Metronidazole': 'مترونیدازول',
+        'Miconazole': 'میکونازول',
+        'Midazolam': 'میدازولام',
+        'Montelukast': 'مونته‌لوکاست',
+        'Morphine': 'مورفین',
+        'Mupirocin': 'موپیروسین',
+        'Naloxone': 'نالوکسان',
+        'Nitrofurantoin': 'نیتروفورانتوئین',
+        'Nystatin': 'نیستاتین',
+        'ORS': 'او‌آر‌اس (ORS)',
+        'Omeprazole': 'امپرازول',
+        'Ondansetron': 'اوندانسترون',
+        'Oseltamivir (Tamiflu)': 'اوسلتامیویر (تامی‌فلو)',
+        'Oxcarbazepine': 'اکس‌کاربازپین',
+        'PEG (Polyethylene Glycol)': 'پلی‌اتیلن گلیکول (PEG)',
+        'Pantoprazole': 'پنتوپرازول',
+        'Pedi-Lax Glycerin': 'گلیسیرین پدی‌لاکس',
+        'Pediatric Cold': 'سرماخوردگی کودکان',
+        'Pediatric Multivitamin': 'مولتی‌ویتامین کودکان',
+        'Penicillin': 'پنی‌سیلین',
+        'Penicillin 6.3.3': 'پنی‌سیلین ۶.۳.۳',
+        'Penicillin V': 'پنی‌سیلین وی (V)',
+        'Phenobarbital': 'فنوباربیتال',
+        'Phenytoin': 'فنی‌توئین',
+        'Piperacillin-Tazobactam (Zosyn)': 'پیپراسیلین-تازوباکتام (زوسین)',
+        'Piperazine': 'پیپرازین',
+        'Potassium Chloride (KCl)': 'کلرید پتاسیم (KCl)',
+        'Prednisolone': 'پردنیزولون',
+        'Probiotic': 'پروبیوتیک',
+        'Promethazine': 'پرومتازین',
+        'Propofol': 'پروپوفول',
+        'Propranolol': 'پروپرانولول',
+        'Pseudoephedrine': 'سودوافدرین',
+        'Rifampin': 'ریفامپین',
+        'Risperidone': 'ریسپریدون',
+        'Salbutamol': 'سالبوتامول',
+        'Saline': 'سالین (نمکی)',
+        'Silver Sulfadiazine': 'سیلور سولفادیازین',
+        'Sodium Bicarbonate 7.5%': 'بی‌کربنات سدیم ۷.۵٪',
+        'Theophylline-G': 'تئوفیلین-G',
+        'Topiramate': 'توپیرامات',
+        'Valproic Acid': 'والپروئیک اسید',
+        'Vancomycin': 'ونکومایسین',
+        'Vitamin A+D': 'ویتامین A+D',
+        'Vitamin D3': 'ویتامین D3',
+        'Voriconazole': 'ووریکونازول',
+        'Xylometazoline': 'زایلومتازولین',
+        'Zinc': 'زینک (روی)',
+        'Zinc Oxide': 'اکسید روی',
+        'Zinc Sulfate': 'سولفات روی'
+    };
+
+    // --- Indications (chips shown on each drug card) ---
+    const INDICATION_FA = {
+        'ADHD': 'بیش‌فعالی/کم‌توجهی (ADHD)',
+        'AOM': 'عفونت گوش میانی حاد (AOM)',
+        'Abdominal Cramps': 'دل‌پیچه شکمی',
+        'Acetaminophen Toxicity': 'مسمومیت با استامینوفن',
+        'Acne': 'آکنه',
+        'Adrenal Insufficiency': 'نارسایی آدرنال',
+        'Adrenal Insufficiency (CAH)': 'نارسایی آدرنال (CAH)',
+        'Allergic Reaction': 'واکنش آلرژیک',
+        'Allergic Rhinitis': 'رینیت آلرژیک',
+        'Allergy': 'آلرژی',
+        'Amebiasis': 'آمیبیاز',
+        'Anaerobic Infection': 'عفونت بی‌هوازی',
+        'Analgesia': 'ضددرد',
+        'Anaphylaxis': 'آنافیلاکسی',
+        'Anaphylaxis adjunct': 'کمکی در آنافیلاکسی',
+        'Anesthesia Induction': 'القای بیهوشی',
+        'Anxiety': 'اضطراب',
+        'Asthma': 'آسم',
+        'Asthma (Maintenance)': 'آسم (نگهدارنده)',
+        'Asthma Exacerbation': 'تشدید آسم',
+        'Asthma Prophylaxis': 'پیشگیری از آسم',
+        'Atypical Pneumonia': 'پنومونی آتیپیک',
+        'Bacterial Diarrhea': 'اسهال باکتریایی',
+        'Bacterial Infection': 'عفونت باکتریایی',
+        'Benzodiazepine Overdose': 'مسمومیت با بنزودیازپین',
+        'Bone Infection': 'عفونت استخوان',
+        'Bradycardia': 'برادی‌کاردی',
+        'Bronchiolitis': 'برونشیولیت',
+        'Bronchospasm': 'اسپاسم برونش',
+        'Burns': 'سوختگی',
+        'C. difficile Enterocolitis (Oral)': 'انتروکولیت کلستریدیوم دیفیسیل (خوراکی)',
+        'Candidemia': 'کاندیدمی',
+        'Candidiasis': 'کاندیدیازیس',
+        'Cardiac Arrest': 'ایست قلبی',
+        'Chickenpox': 'آبله‌مرغان',
+        'Chronic Urticaria': 'کهیر مزمن',
+        'Cold symptoms': 'علائم سرماخوردگی',
+        'Colic': 'قولنج (کولیک)',
+        'Constipation': 'یبوست',
+        'Cough': 'سرفه',
+        'Croup': 'کروپ',
+        'Dehydration': 'کم‌آبی بدن',
+        'Diaper Rash': 'سوختگی پوشک',
+        'Diarrhea': 'اسهال',
+        'Dietary Supplementation': 'مکمل غذایی',
+        'Dry Cough': 'سرفه خشک',
+        'Dry Nose': 'خشکی بینی',
+        'Eczema': 'اگزما',
+        'Edema': 'ادم (تورم)',
+        'Epilepsy': 'صرع',
+        'Esophagitis': 'ازوفاژیت',
+        'Febrile Neutropenia': 'نوتروپنی تب‌دار',
+        'Fecal Impaction': 'انسداد مدفوعی',
+        'Fever': 'تب',
+        'Fever (Resistant)': 'تب (مقاوم)',
+        'Focal Seizures': 'تشنج کانونی',
+        'Fungal Infection': 'عفونت قارچی',
+        'GERD': 'ریفلاکس معده به مری (GERD)',
+        'GI Bleeding (NPO)': 'خونریزی گوارشی (NPO)',
+        'GI Spasm': 'اسپاسم گوارشی',
+        'GI Ulcer': 'زخم گوارشی',
+        'Gas': 'نفخ',
+        'Gastroenteritis': 'گاستروانتریت',
+        'Giardia': 'ژیاردیا',
+        'Gram-negative Infection': 'عفونت گرم‌منفی',
+        'Gram-negative Infections': 'عفونت‌های گرم‌منفی',
+        'Gut Health': 'سلامت روده',
+        'Heart Failure': 'نارسایی قلبی',
+        'Hemangioma': 'همانژیوم',
+        'Herpes Simplex': 'تبخال (هرپس سیمپلکس)',
+        'Hypocalcemia': 'هیپوکلسمی',
+        'Hypokalemia': 'هیپوکالمی',
+        'Hypomagnesemia': 'هیپومنیزیمی',
+        'Hypothyroidism': 'کم‌کاری تیروئید',
+        'Immunodeficiency': 'نقص ایمنی',
+        'Impetigo': 'زرد‌زخم (ایمپتیگو)',
+        'Inflammation': 'التهاب',
+        'Influenza Treatment': 'درمان آنفلوانزا',
+        'Invasive Aspergillosis': 'آسپرژیلوز مهاجم',
+        'Iron Deficiency Anemia': 'کم‌خونی فقر آهن',
+        'JIA': 'آرتریت ایدیوپاتیک نوجوانان (JIA)',
+        'Joint Pain': 'درد مفصل',
+        'Kawasaki Disease': 'بیماری کاوازاکی',
+        'Local Anesthesia': 'بی‌حسی موضعی',
+        'MDR Gram-negative Infections': 'عفونت‌های گرم‌منفی مقاوم به چنددارو',
+        'MDR Infections': 'عفونت‌های مقاوم به چنددارو',
+        'MRSA': 'ام‌آر‌اس‌ای (MRSA)',
+        'MRSA Infection': 'عفونت MRSA',
+        'Maintenance Supplementation': 'مکمل نگهدارنده',
+        'Meningitis': 'مننژیت',
+        'Migraine': 'میگرن',
+        'Migraine Prophylaxis': 'پیشگیری از میگرن',
+        'Mild Pain': 'درد خفیف',
+        'Moderate to Severe Pain': 'درد متوسط تا شدید',
+        'Mucolytic': 'خلط‌آور (موکولیتیک)',
+        'Muscle Spasm': 'اسپاسم عضلانی',
+        'Nasal Congestion': 'گرفتگی بینی',
+        'Nausea': 'تهوع',
+        'Neuropathic Pain': 'درد نوروپاتیک',
+        'Neutropenic Fever': 'تب نوتروپنیک',
+        'Opioid Overdose': 'مسمومیت با اوپیوئید',
+        'Oral Thrush': 'برفک دهان',
+        'Osteomyelitis': 'استئومیلیت',
+        'Otitis Media': 'عفونت گوش میانی',
+        'PCP': 'پنومونی پنوموسیستیس (PCP)',
+        'PDA Closure': 'بستن مجرای شریانی باز (PDA)',
+        'Pain': 'درد',
+        'Pain (NPO)': 'درد (NPO)',
+        'Pain (NPO/Vomiting)': 'درد (NPO/استفراغ)',
+        'Peptic Ulcer': 'زخم پپتیک',
+        'Pharyngitis': 'فارنژیت',
+        'Pinworm': 'کرمک (اکسیور)',
+        'Pneumonia': 'پنومونی',
+        'Poisoning': 'مسمومیت',
+        'Pre-procedure Sedation': 'آرام‌بخشی پیش از پروسیجر',
+        'Probiotic': 'پروبیوتیک',
+        'Procedural Sedation': 'آرام‌بخشی حین پروسیجر',
+        'Productive Cough': 'سرفه خلط‌دار',
+        'Pruritus': 'خارش',
+        'Pseudomonas Infection': 'عفونت سودوموناس',
+        'Psychiatric Disorders': 'اختلالات روان‌پزشکی',
+        'Refractory Seizures': 'تشنج مقاوم',
+        'Refractory VF/Pulseless VT': 'VF مقاوم/VT بدون نبض',
+        'Resistant Fever': 'تب مقاوم',
+        'Resistant Infection': 'عفونت مقاوم',
+        'Respiratory Infection': 'عفونت تنفسی',
+        'Rickets': 'راشیتیسم',
+        'Rickets Prophylaxis': 'پیشگیری از راشیتیسم',
+        'Rickets Treatment': 'درمان راشیتیسم',
+        'Roundworm': 'کرم گرد (آسکاریس)',
+        'Routine Supplementation': 'مکمل روتین',
+        'SVT': 'تاکی‌کاردی فوق‌بطنی (SVT)',
+        'SVT (Supraventricular Tachycardia)': 'تاکی‌کاردی فوق‌بطنی (SVT)',
+        'Sedation': 'آرام‌بخشی',
+        'Seizures': 'تشنج',
+        'Sepsis': 'سپسیس',
+        'Severe Allergic Reaction': 'واکنش آلرژیک شدید',
+        'Severe Asthma': 'آسم شدید',
+        'Severe Asthma Exacerbation': 'تشدید شدید آسم',
+        'Severe Infection': 'عفونت شدید',
+        'Severe Inflammation': 'التهاب شدید',
+        'Severe Malabsorption': 'سوءجذب شدید',
+        'Severe Metabolic Acidosis': 'اسیدوز متابولیک شدید',
+        'Severe Pain': 'درد شدید',
+        'Severe Refractory Asthma': 'آسم مقاوم شدید',
+        'Severe Sepsis': 'سپسیس شدید',
+        'Severe Vitamin D Deficiency': 'کمبود شدید ویتامین D',
+        'Sinusitis': 'سینوزیت',
+        'Skin Infection': 'عفونت پوستی',
+        'Skin Infections': 'عفونت‌های پوستی',
+        'Skin Irritation': 'تحریک پوستی',
+        'Skin Protection': 'محافظت از پوست',
+        'Spasm': 'اسپاسم',
+        'Status Epilepticus': 'صرع پایدار (استاتوس اپی‌لپتیکوس)',
+        'Streptococcal': 'استرپتوکوکی',
+        'Stridor': 'استریدور',
+        'Sunburn': 'آفتاب‌سوختگی',
+        'Supplementation': 'مکمل',
+        'Systemic Fungal': 'عفونت قارچی سیستمیک',
+        'Teething Pain': 'درد دندان‌درآوردن',
+        'Tinea': 'کچلی (تینه‌آ)',
+        'Tuberculosis': 'سل',
+        'UTI': 'عفونت ادراری (UTI)',
+        'UTI Prophylaxis': 'پیشگیری از عفونت ادراری',
+        'UTI Treatment': 'درمان عفونت ادراری',
+        'Ulcerative Colitis': 'کولیت اولسراتیو',
+        'Urticaria': 'کهیر',
+        'VRE Infections': 'عفونت‌های VRE',
+        'Varicella': 'آبله‌مرغان (واریسلا)',
+        'Vitamin Deficiency': 'کمبود ویتامین',
+        'Vomiting': 'استفراغ',
+        'Wound Infection': 'عفونت زخم',
+        'Zinc Deficiency': 'کمبود روی'
+    };
+
+    // --- Indication-dose labels (shown in the clinical-indication dropdown) ---
+    const INDICATION_DOSE_FA = {
+        'AOM/Pneumonia: Day 1': 'AOM/پنومونی: روز ۱',
+        'AOM/Pneumonia: Days 2-5': 'AOM/پنومونی: روزهای ۲ تا ۵',
+        'AOM: 3-Day Regimen': 'AOM: رژیم ۳ روزه',
+        'Acute Loading Dose (IV)': 'دوز بارگیری حاد (وریدی)',
+        'Acute Otitis Media (AOM) / High Dose': 'عفونت گوش میانی حاد (AOM) / دوز بالا',
+        'Amebiasis': 'آمیبیاز',
+        'Anaerobic Bacterial Infection': 'عفونت باکتریایی بی‌هوازی',
+        'Asthma Exacerbation': 'تشدید آسم',
+        'Bacterial Meningitis': 'مننژیت باکتریایی',
+        'Croup (Single Dose)': 'کروپ (دوز منفرد)',
+        'Extended-Interval (Once Daily)': 'فاصله طولانی (روزی یک‌بار)',
+        'Fecal Impaction Clean-out (1 - 1.5 g/kg/day)': 'پاکسازی انسداد مدفوعی (۱ تا ۱.۵ g/kg/day)',
+        'Fever / Mild-Moderate Pain': 'تب / درد خفیف تا متوسط',
+        'Fever / Pain': 'تب / درد',
+        'Giardiasis': 'ژیاردیازیس',
+        'Juvenile Idiopathic Arthritis (JIA)': 'آرتریت ایدیوپاتیک نوجوانان (JIA)',
+        'Maintenance (0.4 - 1 g/kg/day)': 'نگهدارنده (۰.۴ تا ۱ g/kg/day)',
+        'Maintenance Dose': 'دوز نگهدارنده',
+        'Meningitis': 'مننژیت',
+        'Meningitis / Severe Infection': 'مننژیت / عفونت شدید',
+        'Meningitis / Severe MRSA': 'مننژیت / MRSA شدید',
+        'Mild-Moderate Infection': 'عفونت خفیف تا متوسط',
+        'Muscle Spasm': 'اسپاسم عضلانی',
+        'Once Daily Dosing': 'دوز روزی یک‌بار',
+        'Oropharyngeal Candidiasis: Day 1': 'کاندیدیازیس دهانی-حلقی: روز ۱',
+        'Oropharyngeal Candidiasis: Maintenance': 'کاندیدیازیس دهانی-حلقی: نگهدارنده',
+        'Pharyngitis / Tonsillitis (5 Days)': 'فارنژیت / تونسیلیت (۵ روز)',
+        'Physiologic Replacement': 'جایگزینی فیزیولوژیک',
+        'Pneumocystis jirovecii (PCP) Treatment': 'درمان پنوموسیستیس (PCP)',
+        'Prophylaxis': 'پیشگیری',
+        'Severe Infection': 'عفونت شدید',
+        'Severe Infection / AOM (High Dose)': 'عفونت شدید / AOM (دوز بالا)',
+        'Severe Infection / MRSA': 'عفونت شدید / MRSA',
+        'Severe Infection / Osteomyelitis': 'عفونت شدید / استئومیلیت',
+        'Severe Inflammation': 'التهاب شدید',
+        'Standard (8mg/kg/day)': 'استاندارد (8mg/kg/day)',
+        'Standard / Mild-Mod Infection': 'استاندارد / عفونت خفیف تا متوسط',
+        'Standard / Moderate Infection': 'استاندارد / عفونت متوسط',
+        'Standard / Severe Infection': 'استاندارد / عفونت شدید',
+        'Standard Infection': 'عفونت استاندارد',
+        'Standard Infection (Amox Component)': 'عفونت استاندارد (جزء آموکسی‌سیلین)',
+        'Standard Infection (Mild to Moderate)': 'عفونت استاندارد (خفیف تا متوسط)',
+        'Standard Infection (Skin/Soft Tissue)': 'عفونت استاندارد (پوست/بافت نرم)',
+        'Status Asthmaticus': 'استاتوس آسمااتیکوس',
+        'Status Asthmaticus / Anaphylaxis': 'استاتوس آسمااتیکوس / آنافیلاکسی',
+        'Status Epilepticus (IV)': 'صرع پایدار (وریدی)',
+        'Systemic Infection / Meningitis': 'عفونت سیستمیک / مننژیت',
+        'Traditional Dosing': 'دوزبندی سنتی',
+        'Treatment': 'درمان',
+        'UTI / AOM / Shigellosis': 'عفونت ادراری / AOM / شیگلوز'
+    };
+
+    // --- Clinical messages: drug warnings, age alerts, IV guideline text,
+    //     organ-impairment adjustments, and drug-drug interaction messages.
+    //     Keyed by the exact English source string. ⚠️ Verify clinically. ---
+    const CLINICAL_MSG_FA = {
+        // Drug `warning` fields
+        '6-11mo: 1mg | 1-5yr: 1.25mg | 6-11yr: 2.5mg once daily.': '۶ تا ۱۱ ماه: ۱mg | ۱ تا ۵ سال: ۱.۲۵mg | ۶ تا ۱۱ سال: ۲.۵mg روزی یک‌بار.',
+        '<15kg: 30mg | 15-23kg: 45mg | 23-40kg: 60mg | >40kg: 75mg twice daily.': 'زیر ۱۵kg: ۳۰mg | ۱۵ تا ۲۳kg: ۴۵mg | ۲۳ تا ۴۰kg: ۶۰mg | بالای ۴۰kg: ۷۵mg دو بار در روز.',
+        'Administer 30-45 minutes before procedure.': '۳۰ تا ۴۵ دقیقه پیش از پروسیجر تجویز شود.',
+        'Administer after feeding.': 'پس از تغذیه تجویز شود.',
+        'Administer slowly. Monitor for reactions. (2 g/kg as single dose for Kawasaki)': 'به‌آهستگی تجویز شود. واکنش‌ها پایش شوند. (۲ g/kg به‌صورت دوز منفرد برای کاوازاکی)',
+        'Administer with full glass of water.': 'با یک لیوان پر آب تجویز شود.',
+        'Apply to affected area 3 times daily.': 'روزی ۳ بار روی ناحیه آسیب‌دیده بمالید.',
+        'Better GI tolerance. Dose based on elemental iron.': 'تحمل گوارشی بهتر. دوز بر اساس آهن عنصری.',
+        'Can induce bronchospasm; sometimes given with a bronchodilator.': 'ممکن است اسپاسم برونش ایجاد کند؛ گاهی همراه با یک برونکودیلاتور داده می‌شود.',
+        'Check specific brand concentration carefully before use.': 'پیش از مصرف، غلظت برند مربوطه را به‌دقت بررسی کنید.',
+        'Children 2-12 years: 9 mg/kg IV q12h. Monitor liver function.': 'کودکان ۲ تا ۱۲ سال: ۹ mg/kg وریدی هر ۱۲ ساعت. عملکرد کبد پایش شود.',
+        'Contains Acetaminophen, Pseudoephedrine, and Chlorpheniramine. Do not give with other acetaminophen products.': 'حاوی استامینوفن، سودوافدرین و کلرفنیرامین است. همراه با سایر فرآورده‌های استامینوفن مصرف نشود.',
+        'Contraindicated in children under 1 year.': 'در کودکان زیر ۱ سال منع مصرف دارد.',
+        'Contraindicated in children under 18 years for routine use.': 'برای مصرف روتین در کودکان زیر ۱۸ سال منع مصرف دارد.',
+        'Contraindicated in neonates with jaundice.': 'در نوزادان مبتلا به زردی منع مصرف دارد.',
+        'Contraindicated under 1 year. Use with extreme caution due to risk of severe hypothermia and GI bleed.': 'زیر ۱ سال منع مصرف دارد. به‌دلیل خطر افت شدید دمای بدن و خونریزی گوارشی با احتیاط بسیار زیاد مصرف شود.',
+        'Contraindicated under 2 years.': 'زیر ۲ سال منع مصرف دارد.',
+        'Contraindicated under 6 months.': 'زیر ۶ ماه منع مصرف دارد.',
+        'Dilute with normal saline before nebulization.': 'پیش از نبولایز با نرمال سالین رقیق شود.',
+        'Dissolve in 200ml water. Administer based on dehydration severity.': 'در ۲۰۰ml آب حل شود. بر اساس شدت کم‌آبی تجویز شود.',
+        'Dissolve in water or milk.': 'در آب یا شیر حل شود.',
+        'Dose adjust based on severity.': 'دوز بر اساس شدت تنظیم شود.',
+        'Dose based on Ampicillin component.': 'دوز بر اساس جزء آمپی‌سیلین.',
+        'Dose based on Piperacillin component. Infuse over 30 mins.': 'دوز بر اساس جزء پیپراسیلین. طی ۳۰ دقیقه انفوزیون شود.',
+        'Dose based on TMP component (40mg TMP / 5ml). Concentration calculation uses TMP.': 'دوز بر اساس جزء TMP (۴۰mg TMP در ۵ml). محاسبه غلظت بر اساس TMP است.',
+        'Dose based on elemental calcium. Check bottle for exact elemental Ca/ml.': 'دوز بر اساس کلسیم عنصری. مقدار دقیق Ca عنصری در هر ml را روی بطری بررسی کنید.',
+        'Dose based on elemental iron (25mg/5ml elemental).': 'دوز بر اساس آهن عنصری (۲۵mg در ۵ml عنصری).',
+        'Dose based on elemental iron (25mg/ml elemental).': 'دوز بر اساس آهن عنصری (۲۵mg در ml عنصری).',
+        'Dose based on elemental iron.': 'دوز بر اساس آهن عنصری.',
+        'Dose depends on severity. May require higher doses for meningitis.': 'دوز به شدت بیماری بستگی دارد. برای مننژیت ممکن است دوز بالاتری لازم باشد.',
+        'Dose equivalent to 1-3 ml/kg/day. Adjust based on clinical response.': 'دوز معادل ۱ تا ۳ ml/kg/day. بر اساس پاسخ بالینی تنظیم شود.',
+        'Dose in IU/kg/day divided q8h. Adjust in renal impairment.': 'دوز به IU/kg/day تقسیم بر هر ۸ ساعت. در نارسایی کلیوی تنظیم شود.',
+        'Dose in mEq/kg. (7.5% solution = 0.89 mEq/ml).': 'دوز به mEq/kg. (محلول ۷.۵٪ = ۰.۸۹ mEq/ml).',
+        'Dose in micrograms (mcg)! Push slowly to avoid chest wall rigidity. 1-2 mcg/kg/dose.': 'دوز به میکروگرم (mcg)! برای جلوگیری از سفتی دیواره قفسه سینه به‌آهستگی تزریق شود. ۱ تا ۲ mcg/kg در هر دوز.',
+        'Dose in units/kg. Severe infections may require higher doses.': 'دوز به واحد/kg. عفونت‌های شدید ممکن است دوز بالاتری لازم داشته باشند.',
+        'Dose in units/kg. Use with caution in penicillin allergy.': 'دوز به واحد/kg. در آلرژی به پنی‌سیلین با احتیاط مصرف شود.',
+        'Dose should be adjusted in renal impairment. (50-100 mg/kg/day div q8h)': 'دوز در نارسایی کلیوی باید تنظیم شود. (۵۰ تا ۱۰۰ mg/kg/day تقسیم بر هر ۸ ساعت)',
+        'Dose varies by age. Infants (10-15 mcg/kg/day), Children (4-6 mcg/kg/day).': 'دوز بر اساس سن متفاوت است. شیرخواران (۱۰ تا ۱۵ mcg/kg/day)، کودکان (۴ تا ۶ mcg/kg/day).',
+        'Dose varies by severity.': 'دوز بر اساس شدت متفاوت است.',
+        'Dosing depends on indication and day of therapy.': 'دوزبندی به اندیکاسیون و روز درمان بستگی دارد.',
+        'Emergency use only.': 'فقط برای مصرف اورژانسی.',
+        'Emergency use only. Dilute appropriately for IV vs IM.': 'فقط مصرف اورژانسی. برای تزریق وریدی و عضلانی به‌طور مناسب رقیق شود.',
+        'Emergency use only. May precipitate withdrawal.': 'فقط مصرف اورژانسی. ممکن است علائم ترک را تسریع کند.',
+        'Emergency use. Can be administered IV, IM, or Buccal.': 'مصرف اورژانسی. قابل تجویز وریدی، عضلانی یا داخل‌گونه‌ای است.',
+        'Emergency use. Dilute with equal volume of diluent before IV push.': 'مصرف اورژانسی. پیش از تزریق وریدی با حجم مساوی حلال رقیق شود.',
+        'Extremely high dose! Not for daily routine supplementation without explicit physician order.': 'دوز بسیار بالا! بدون دستور صریح پزشک برای مکمل روتین روزانه مناسب نیست.',
+        'For children 6 months to 5 years.': 'برای کودکان ۶ ماه تا ۵ سال.',
+        'For children 6 to 14 years.': 'برای کودکان ۶ تا ۱۴ سال.',
+        'For children < 12 years: 10 mg/kg q8h. For > 12 years: 10 mg/kg q12h (max 600mg).': 'کودکان زیر ۱۲ سال: ۱۰ mg/kg هر ۸ ساعت. بالای ۱۲ سال: ۱۰ mg/kg هر ۱۲ ساعت (حداکثر ۶۰۰mg).',
+        'For children weighing 15-30 kg. >30 kg use 0.3 mg.': 'برای کودکان با وزن ۱۵ تا ۳۰ کیلوگرم. بالای ۳۰ کیلوگرم از ۰.۳ mg استفاده شود.',
+        'For intramuscular (IM) use only. Extremely high dose.': 'فقط برای مصرف عضلانی (IM). دوز بسیار بالا.',
+        'For occasional use only. Not for routine use.': 'فقط برای مصرف گاه‌به‌گاه. برای مصرف روتین نیست.',
+        'High-dose required for AOM.': 'برای عفونت گوش میانی حاد (AOM) دوز بالا لازم است.',
+        'Highly bioavailable, usually lower dose needed.': 'زیست‌فراهمی بالا؛ معمولاً دوز کمتری لازم است.',
+        'IV push slowly. May cause emergence delirium.': 'تزریق وریدی به‌آهستگی. ممکن است دلیریوم پس از بیهوشی ایجاد کند.',
+        'Infuse over 20-30 mins for asthma. Default calculation uses 20% (200mg/ml) concentration.': 'برای آسم طی ۲۰ تا ۳۰ دقیقه انفوزیون شود. محاسبه پیش‌فرض بر اساس غلظت ۲۰٪ (۲۰۰mg/ml) است.',
+        'Infuse over 20-60 mins (except in cardiac arrest). Monitor BP and ECG.': 'طی ۲۰ تا ۶۰ دقیقه انفوزیون شود (به‌جز در ایست قلبی). فشار خون و ECG پایش شود.',
+        'Initial dose. Monitor serum levels.': 'دوز اولیه. سطح سرمی پایش شود.',
+        'Loading dose is required for acute control.': 'برای کنترل حاد، دوز بارگیری لازم است.',
+        'Loading dose: 150 mg/kg over 60 min. Follow standard 3-bag IV protocol.': 'دوز بارگیری: ۱۵۰ mg/kg طی ۶۰ دقیقه. طبق پروتکل استاندارد سه‌کیسه‌ای وریدی ادامه یابد.',
+        'Maintenance dose.': 'دوز نگهدارنده.',
+        'Maintenance dose. Monitor serum levels.': 'دوز نگهدارنده. سطح سرمی پایش شود.',
+        'Maintenance dose. Shake bottle extremely well before use.': 'دوز نگهدارنده. پیش از مصرف بطری را بسیار خوب تکان دهید.',
+        'Max 5 days of use. Avoid in bleeding risk or renal impairment.': 'حداکثر ۵ روز مصرف. در خطر خونریزی یا نارسایی کلیوی پرهیز شود.',
+        'Max 8 puffs/day. Use spacer device for children.': 'حداکثر ۸ پاف در روز. برای کودکان از اسپیسر استفاده شود.',
+        'Max dose 800mg/dose.': 'حداکثر دوز ۸۰۰mg در هر نوبت.',
+        'May cause CNS effects in neonates.': 'ممکن است در نوزادان عوارض سیستم عصبی مرکزی ایجاد کند.',
+        'May cause drowsiness. Administer cautiously in infants.': 'ممکن است خواب‌آلودگی ایجاد کند. در شیرخواران با احتیاط تجویز شود.',
+        'Mix in water or juice. 1000mg = 1g': 'در آب یا آبمیوه مخلوط شود. ۱۰۰۰mg = ۱g',
+        'Monitor blood counts. Risk of aplastic anemia.': 'شمارش خونی پایش شود. خطر کم‌خونی آپلاستیک.',
+        'Monitor calcium levels. Dilute before IV use.': 'سطح کلسیم پایش شود. پیش از مصرف وریدی رقیق شود.',
+        'Monitor electrolyte balance.': 'تعادل الکترولیت‌ها پایش شود.',
+        'Monitor renal function and hearing.': 'عملکرد کلیه و شنوایی پایش شود.',
+        'Monitor renal function and hearing. (15 mg/kg/day div q12h)': 'عملکرد کلیه و شنوایی پایش شود. (۱۵ mg/kg/day تقسیم بر هر ۱۲ ساعت)',
+        'Monitor side effects.': 'عوارض جانبی پایش شود.',
+        'NEVER give IV push! Must be diluted and infused slowly. Dose in mEq/kg.': 'هرگز به‌صورت تزریق سریع وریدی داده نشود! باید رقیق و به‌آهستگی انفوزیون شود. دوز به mEq/kg.',
+        'Nebulized dose: 0.5 ml/kg of 1:1000 solution (Max 5 ml).': 'دوز نبولایز: ۰.۵ ml/kg از محلول ۱:۱۰۰۰ (حداکثر ۵ ml).',
+        'Neonates may require lower doses in first week of life.': 'نوزادان ممکن است در هفته اول زندگی به دوز کمتری نیاز داشته باشند.',
+        'Not for use more than 3 days.': 'بیش از ۳ روز مصرف نشود.',
+        'Not for use on face or diaper area.': 'روی صورت یا ناحیه پوشک استفاده نشود.',
+        'Not recommended for children under 12 years.': 'برای کودکان زیر ۱۲ سال توصیه نمی‌شود.',
+        'Not recommended for children under 6 months. Take with food.': 'برای کودکان زیر ۶ ماه توصیه نمی‌شود. با غذا مصرف شود.',
+        'Not recommended under 2 years without physician advice.': 'زیر ۲ سال بدون توصیه پزشک توصیه نمی‌شود.',
+        'Not recommended under 2 years.': 'زیر ۲ سال توصیه نمی‌شود.',
+        'Not recommended under 6 months.': 'زیر ۶ ماه توصیه نمی‌شود.',
+        'Often mixed with Salbutamol for nebulization.': 'اغلب برای نبولایز با سالبوتامول مخلوط می‌شود.',
+        'Oral form is for local GI effect only.': 'شکل خوراکی فقط برای اثر موضعی گوارشی است.',
+        'Physiologic replacement is 8-10 mg/m2/day divided q8h. Stress doses are higher.': 'جایگزینی فیزیولوژیک ۸ تا ۱۰ mg/m2/day تقسیم بر هر ۸ ساعت است. دوزهای استرس بالاترند.',
+        'Potent steroid. Use sparingly.': 'استروئید قوی. با احتیاط و کم مصرف شود.',
+        'Prepare fresh daily.': 'روزانه تازه تهیه شود.',
+        'Rapid IV push followed by rapid saline flush. First dose: 0.1 mg/kg. Second: 0.2 mg/kg.': 'تزریق سریع وریدی و به‌دنبال آن فلاش سریع سالین. دوز اول: ۰.۱ mg/kg. دوم: ۰.۲ mg/kg.',
+        'Requires serum level monitoring.': 'نیازمند پایش سطح سرمی است.',
+        'Rinse mouth after use to prevent oral thrush.': 'برای جلوگیری از برفک دهان، پس از مصرف دهان شسته شود.',
+        'Rinse mouth after use.': 'پس از مصرف دهان شسته شود.',
+        'Risk of Propofol Infusion Syndrome (PRIS). Extreme caution in young children.': 'خطر سندرم انفوزیون پروپوفول (PRIS). احتیاط بسیار زیاد در کودکان خردسال.',
+        'Risk of QT prolongation. Use lowest effective dose.': 'خطر طولانی‌شدن فاصله QT. کمترین دوز مؤثر مصرف شود.',
+        'Risk of drowsiness.': 'خطر خواب‌آلودگی.',
+        'Risk of liver toxicity with overdose.': 'خطر سمیت کبدی در مصرف بیش از حد.',
+        'Risk of liver toxicity with overdose. Max 75mg/kg/day.': 'خطر سمیت کبدی در مصرف بیش از حد. حداکثر ۷۵mg/kg/day.',
+        'Risk of respiratory depression. Have resuscitation equipment ready.': 'خطر دپرسیون تنفسی. تجهیزات احیا آماده باشد.',
+        'Risk of respiratory depression. Use with caution.': 'خطر دپرسیون تنفسی. با احتیاط مصرف شود.',
+        'Safe and effective antiemetic.': 'داروی ضدتهوع ایمن و مؤثر.',
+        'Safe and effective for gastroenteritis.': 'برای گاستروانتریت ایمن و مؤثر.',
+        'Safe for all ages.': 'برای همه سنین ایمن است.',
+        'Standard daily dose for infants under 15-24 months.': 'دوز روزانه استاندارد برای شیرخواران زیر ۱۵ تا ۲۴ ماه.',
+        'Standard dose. High-dose for AOM is 80-90 mg/kg/day divided q12h.': 'دوز استاندارد. دوز بالا برای AOM برابر ۸۰ تا ۹۰ mg/kg/day تقسیم بر هر ۱۲ ساعت است.',
+        'Standard dose: 1 Sachet daily. Dissolve in cool water, milk, or juice.': 'دوز استاندارد: روزی ۱ ساشه. در آب خنک، شیر یا آبمیوه حل شود.',
+        'Start low (0.5-1 mg/kg/day) and titrate up.': 'با دوز پایین (۰.۵ تا ۱ mg/kg/day) شروع و به‌تدریج افزایش یابد.',
+        'Start treatment early.': 'درمان زودهنگام آغاز شود.',
+        'Start with low dose and titrate. (Concentration: 2.5 mg/ml)': 'با دوز پایین شروع و به‌تدریج تنظیم شود. (غلظت: ۲.۵ mg/ml)',
+        'Starting dose 10-15 mg/kg/day. Monitor LFTs.': 'دوز شروع ۱۰ تا ۱۵ mg/kg/day. آزمایش‌های عملکرد کبد (LFT) پایش شود.',
+        'Starting dose 8-10 mg/kg/day divided q12h.': 'دوز شروع ۸ تا ۱۰ mg/kg/day تقسیم بر هر ۱۲ ساعت.',
+        'Starting dose. May be increased as per physician.': 'دوز شروع. طبق نظر پزشک قابل افزایش است.',
+        'Symptomatic relief of gas and colic.': 'تسکین علامتی نفخ و قولنج.',
+        'Take with food.': 'با غذا مصرف شود.',
+        'Take with food. Not recommended under 6 months.': 'با غذا مصرف شود. زیر ۶ ماه توصیه نمی‌شود.',
+        'Taper if used >5 days.': 'در صورت مصرف بیش از ۵ روز، به‌تدریج قطع شود.',
+        'Taper when discontinuing.': 'هنگام قطع، به‌تدریج کاهش داده شود.',
+        'Use daily for best effect.': 'برای بهترین اثر روزانه مصرف شود.',
+        'Use lowest effective dose.': 'کمترین دوز مؤثر مصرف شود.',
+        'Use only small amounts in infants.': 'در شیرخواران فقط مقادیر کم استفاده شود.',
+        'Use with caution in children under 2 years.': 'در کودکان زیر ۲ سال با احتیاط مصرف شود.',
+        'Use with caution in children.': 'در کودکان با احتیاط مصرف شود.',
+        'Use with caution in neonates.': 'در نوزادان با احتیاط مصرف شود.',
+        'Use with caution in severe diarrhea.': 'در اسهال شدید با احتیاط مصرف شود.',
+        'Used in acute poisoning. Administer within 1 hour of ingestion.': 'در مسمومیت حاد استفاده می‌شود. ظرف ۱ ساعت پس از بلع تجویز شود.',
+        'Used in neonates only under specialist supervision.': 'در نوزادان فقط تحت نظر متخصص استفاده شود.',
+
+        // IV guideline warnings
+        'ABSOLUTE CONTRAINDICATION FOR IV PUSH! Must be diluted and infused slowly. Continuous ECG monitoring required.': 'منع مصرف مطلق برای تزریق سریع وریدی! باید رقیق و به‌آهستگی انفوزیون شود. پایش مداوم ECG لازم است.',
+        "Co-administration with calcium-containing solutions (e.g., Ringer's Lactate) is strictly prohibited (risk of fatal precipitation).": 'مصرف هم‌زمان با محلول‌های حاوی کلسیم (مانند رینگر لاکتات) اکیداً ممنوع است (خطر رسوب کشنده).',
+        'Dilute only with Normal Saline (NS). Precipitates in dextrose solutions. Risk of cardiac arrhythmias with rapid injection.': 'فقط با نرمال سالین (NS) رقیق شود. در محلول‌های دکستروز رسوب می‌کند. خطر آریتمی قلبی در تزریق سریع.',
+        'Direct IV injection (undiluted) is recommended. Do not dilute due to incompatibility with most IV fluids.': 'تزریق مستقیم وریدی (بدون رقیق‌سازی) توصیه می‌شود. به‌دلیل ناسازگاری با بیشتر مایعات وریدی رقیق نشود.',
+        'High risk of nephrotoxicity. Adjust dose in renal failure.': 'خطر بالای سمیت کلیوی. دوز در نارسایی کلیوی تنظیم شود.',
+        'Incompatible with normal saline in some concentrations; usually mixed in D5W. Monitor ECG for bradycardia/AV block.': 'در برخی غلظت‌ها با نرمال سالین ناسازگار است؛ معمولاً در D5W مخلوط می‌شود. ECG برای برادی‌کاردی/بلوک AV پایش شود.',
+        'Low stability after reconstitution; inject immediately.': 'پایداری پایین پس از حل‌شدن؛ بلافاصله تزریق شود.',
+        'May cause false-positive Galactomannan test.': 'ممکن است آزمایش گالاکتومانان را مثبت کاذب کند.',
+        'Never infuse in the same line with penicillins (causes drug inactivation).': 'هرگز در یک خط با پنی‌سیلین‌ها انفوزیون نشود (باعث غیرفعال‌شدن دارو می‌شود).',
+        'Rapid IV injection may cause respiratory depression or hypotension. Resuscitation equipment must be available.': 'تزریق سریع وریدی ممکن است دپرسیون تنفسی یا افت فشار خون ایجاد کند. تجهیزات احیا باید در دسترس باشد.',
+        'Rapid IV push may cause chest wall rigidity and severe respiratory depression.': 'تزریق سریع وریدی ممکن است سفتی دیواره قفسه سینه و دپرسیون تنفسی شدید ایجاد کند.',
+        'Rapid administration may cause respiratory depression. Protect airway.': 'تجویز سریع ممکن است دپرسیون تنفسی ایجاد کند. راه هوایی محافظت شود.',
+        'Rapid injection causes bradycardia and cardiac arrest. Cardiac monitoring is mandatory during infusion.': 'تزریق سریع باعث برادی‌کاردی و ایست قلبی می‌شود. پایش قلبی حین انفوزیون الزامی است.',
+        'Requires strict monitoring of renal function and serum levels.': 'نیازمند پایش دقیق عملکرد کلیه و سطوح سرمی است.',
+        'Risk of Red Man Syndrome with rapid infusion. Use of a Central Venous Catheter (CVC) is recommended for concentrations higher than 5mg/ml.': 'خطر سندرم مرد قرمز (Red Man) با انفوزیون سریع. برای غلظت‌های بالاتر از ۵mg/ml استفاده از کاتتر ورید مرکزی (CVC) توصیه می‌شود.',
+
+        // Organ-impairment adjustment warnings
+        'Adjust dose and interval if GFR < 50 ml/min.': 'در صورت GFR کمتر از ۵۰ ml/min، دوز و فاصله تنظیم شود.',
+        'Highly dependent on renal function. Dosing intervals may extend to 24 to 48 hours.': 'به‌شدت وابسته به عملکرد کلیه. فاصله دوز ممکن است تا ۲۴ تا ۴۸ ساعت افزایش یابد.',
+        'If GFR < 10, reduce the dose by 50%.': 'در صورت GFR کمتر از ۱۰، دوز ۵۰٪ کاهش یابد.',
+        'If GFR < 30, change 8-hour dosing to 12-hour intervals.': 'در صورت GFR کمتر از ۳۰، دوز هر ۸ ساعت به فاصله ۱۲ ساعت تغییر یابد.',
+        'If GFR < 30, increase dosing interval to 12 or 24 hours.': 'در صورت GFR کمتر از ۳۰، فاصله دوز به ۱۲ یا ۲۴ ساعت افزایش یابد.',
+        'If GFR < 50, the maintenance dose should be halved after the loading dose.': 'در صورت GFR کمتر از ۵۰، دوز نگهدارنده پس از دوز بارگیری نصف شود.',
+        'Reduce dose by up to 50% in severe hepatic impairment.': 'در نارسایی شدید کبدی، دوز تا ۵۰٪ کاهش یابد.',
+        'Reduce dose or extend interval if GFR < 30 ml/min.': 'در صورت GFR کمتر از ۳۰ ml/min، دوز کاهش یا فاصله افزایش یابد.',
+        'Requires strict dose and interval adjustment based on creatinine clearance and serum levels (TDM).': 'نیازمند تنظیم دقیق دوز و فاصله بر اساس کلیرانس کراتینین و سطوح سرمی (TDM) است.',
+        'Use with extreme caution or reduce dose in severe hepatic impairment.': 'در نارسایی شدید کبدی با احتیاط بسیار زیاد مصرف یا دوز کاهش یابد.',
+
+        // Contraindication warnings (from validation.js)
+        'Ibuprofen is contraindicated in infants under 6 months or weight < 6kg!': 'ایبوپروفن در شیرخواران زیر ۶ ماه یا وزن کمتر از ۶ کیلوگرم منع مصرف دارد!',
+        'In neonates under 2.5kg, dose must be determined by physician.': 'در نوزادان زیر ۲.۵ کیلوگرم، دوز باید توسط پزشک تعیین شود.',
+        'Contraindicated in neonates (< 28 days), especially with jaundice or if receiving IV calcium!': 'در نوزادان (کمتر از ۲۸ روز) منع مصرف دارد، به‌ویژه در زردی یا دریافت کلسیم وریدی!',
+        'Requires close monitoring of renal function and hearing in neonates and infants!': 'نیازمند پایش دقیق عملکرد کلیه و شنوایی در نوزادان و شیرخواران است!',
+        'Use in neonates requires serum level monitoring!': 'مصرف در نوزادان نیازمند پایش سطح سرمی است!',
+        'Contraindicated in children under 2 years due to risk of fatal respiratory depression.': 'در کودکان زیر ۲ سال به‌دلیل خطر دپرسیون تنفسی کشنده منع مصرف دارد.',
+        'Contraindicated in children under 1 year.': 'در کودکان زیر ۱ سال منع مصرف دارد.',
+        'Risk of respiratory depression. Use with caution in neonates.': 'خطر دپرسیون تنفسی. در نوزادان با احتیاط مصرف شود.',
+        'Use with caution in penicillin-allergic patients.': 'در بیماران حساس به پنی‌سیلین با احتیاط مصرف شود.',
+        'According to AAP/Nelson guidelines, short courses (<21 days) are safe for all ages. Long courses are contraindicated under 8 yrs.': 'طبق راهنمای AAP/نلسون، دوره‌های کوتاه (کمتر از ۲۱ روز) برای همه سنین ایمن است. دوره‌های طولانی زیر ۸ سال منع مصرف دارد.',
+        'Not recommended for routine use in children under 18 years.': 'برای مصرف روتین در کودکان زیر ۱۸ سال توصیه نمی‌شود.',
+        'Risk of gray baby syndrome in neonates. Monitor blood counts.': 'خطر سندرم کودک خاکستری در نوزادان. شمارش خونی پایش شود.',
+
+        // Drug-drug interaction messages
+        'Contraindicated: Concurrent use of multiple NSAIDs increases GI adverse effects without added benefit.': 'منع مصرف: مصرف هم‌زمان چند NSAID عوارض گوارشی را بدون فایده اضافی افزایش می‌دهد.',
+        'Contraindicated: Concurrent use of multiple NSAIDs significantly increases GI and renal toxicity.': 'منع مصرف: مصرف هم‌زمان چند NSAID سمیت گوارشی و کلیوی را به‌طور قابل‌توجهی افزایش می‌دهد.',
+        'Critical Risk: Additive QT prolongation leading to life-threatening arrhythmias (Torsades de Pointes).': 'خطر بحرانی: طولانی‌شدن تجمعی QT که به آریتمی‌های تهدیدکننده حیات (تورساد دو پوانت) منجر می‌شود.',
+        'Critical Risk: Additive QT prolongation leading to life-threatening arrhythmias.': 'خطر بحرانی: طولانی‌شدن تجمعی QT که به آریتمی‌های تهدیدکننده حیات منجر می‌شود.',
+        'Critical Risk: Carbamazepine significantly reduces Voriconazole levels. Co-administration is contraindicated.': 'خطر بحرانی: کاربامازپین سطح ووریکونازول را به‌طور قابل‌توجهی کاهش می‌دهد. مصرف هم‌زمان منع دارد.',
+        'Critical Risk: Non-selective MAOI activity of Linezolid combined with pseudoephedrine can cause severe hypertensive crisis.': 'خطر بحرانی: فعالیت MAOI غیرانتخابی لینزولید همراه با سودوافدرین می‌تواند بحران شدید فشار خون ایجاد کند.',
+        'Critical Risk: Phenobarbital significantly reduces Voriconazole levels. Co-administration is contraindicated.': 'خطر بحرانی: فنوباربیتال سطح ووریکونازول را به‌طور قابل‌توجهی کاهش می‌دهد. مصرف هم‌زمان منع دارد.',
+        'Critical Risk: Phenytoin reduces Voriconazole levels while Voriconazole increases Phenytoin levels.': 'خطر بحرانی: فنی‌توئین سطح ووریکونازول را کاهش می‌دهد و ووریکونازول سطح فنی‌توئین را افزایش می‌دهد.',
+        'Critical Risk: Rifampin profoundly reduces Voriconazole levels. Co-administration is contraindicated.': 'خطر بحرانی: ریفامپین سطح ووریکونازول را به‌شدت کاهش می‌دهد. مصرف هم‌زمان منع دارد.',
+        'Critical Risk: Severe QT prolongation and CYP3A4 inhibition leading to lethal arrhythmias.': 'خطر بحرانی: طولانی‌شدن شدید QT و مهار CYP3A4 که به آریتمی‌های کشنده منجر می‌شود.',
+        'Critical Risk: Severe QT prolongation and cardiotoxicity. Combination contraindicated.': 'خطر بحرانی: طولانی‌شدن شدید QT و سمیت قلبی. این ترکیب منع مصرف دارد.',
+        'Critical Risk: Severe QT prolongation and potential fatal Torsades de Pointes arrhythmias.': 'خطر بحرانی: طولانی‌شدن شدید QT و احتمال آریتمی کشنده تورساد دو پوانت.',
+        'Critical Risk: Severe QT prolongation and risk of Torsades de Pointes.': 'خطر بحرانی: طولانی‌شدن شدید QT و خطر تورساد دو پوانت.',
+        'Critical Risk: Severe QT prolongation and risk of fatal Torsades de Pointes. Combination contraindicated.': 'خطر بحرانی: طولانی‌شدن شدید QT و خطر تورساد دو پوانت کشنده. این ترکیب منع مصرف دارد.',
+        'Critical Risk: Severe QT prolongation and risk of fatal Torsades de Pointes. Contraindicated.': 'خطر بحرانی: طولانی‌شدن شدید QT و خطر تورساد دو پوانت کشنده. منع مصرف دارد.',
+        'Critical Risk: Severe QT prolongation. Combination contraindicated.': 'خطر بحرانی: طولانی‌شدن شدید QT. این ترکیب منع مصرف دارد.',
+        'Critical Risk: Severe bradycardia, hypotension, and cardiac output depression.': 'خطر بحرانی: برادی‌کاردی شدید، افت فشار خون و کاهش برون‌ده قلبی.',
+        'Critical Risk: Severe synergistic QT prolongation. Monitor ECG closely for Torsades de Pointes.': 'خطر بحرانی: طولانی‌شدن هم‌افزای شدید QT. ECG برای تورساد دو پوانت به‌دقت پایش شود.',
+        'Critical Risk: Severe synergistic QT prolongation. Monitor ECG closely.': 'خطر بحرانی: طولانی‌شدن هم‌افزای شدید QT. ECG به‌دقت پایش شود.',
+        'Critical Risk: Synergistic QT prolongation leading to lethal ventricular arrhythmias.': 'خطر بحرانی: طولانی‌شدن هم‌افزای QT که به آریتمی‌های بطنی کشنده منجر می‌شود.',
+        'Critical Risk: Synergistic QT prolongation leading to life-threatening arrhythmias (Torsades de Pointes).': 'خطر بحرانی: طولانی‌شدن هم‌افزای QT که به آریتمی‌های تهدیدکننده حیات (تورساد دو پوانت) منجر می‌شود.',
+        'Critical Risk: Synergistic QT prolongation leading to life-threatening arrhythmias.': 'خطر بحرانی: طولانی‌شدن هم‌افزای QT که به آریتمی‌های تهدیدکننده حیات منجر می‌شود.',
+        'Critical Risk: Synergistic QT prolongation. Extreme caution advised or avoid combination.': 'خطر بحرانی: طولانی‌شدن هم‌افزای QT. احتیاط بسیار زیاد توصیه می‌شود یا از این ترکیب پرهیز شود.',
+        'Fatal Risk: Precipitation of ceftriaxone-calcium in lungs and kidneys, especially in neonates.': 'خطر کشنده: رسوب سفتریاکسون-کلسیم در ریه‌ها و کلیه‌ها، به‌ویژه در نوزادان.',
+        'Fatal Risk: Severe hyperkalemia causing cardiac arrest.': 'خطر کشنده: هایپرکالمی شدید که باعث ایست قلبی می‌شود.',
+        'High Risk: Additive CNS and respiratory depression.': 'خطر بالا: دپرسیون تجمعی سیستم عصبی مرکزی و تنفسی.',
+        'High Risk: Additive CNS and severe respiratory depression risk.': 'خطر بالا: خطر دپرسیون تجمعی سیستم عصبی مرکزی و دپرسیون تنفسی شدید.',
+        'High Risk: Additive QT prolongation and potential for serious cardiac arrhythmias.': 'خطر بالا: طولانی‌شدن تجمعی QT و احتمال آریتمی‌های قلبی جدی.',
+        'High Risk: Additive QT prolongation risk.': 'خطر بالا: خطر طولانی‌شدن تجمعی QT.',
+        'High Risk: Additive prolongation of the QT interval. Monitor ECG closely.': 'خطر بالا: طولانی‌شدن تجمعی فاصله QT. ECG به‌دقت پایش شود.',
+        'High Risk: Amiodarone inhibits CYP2C9, significantly increasing Phenytoin levels and risk of toxicity.': 'خطر بالا: آمیودارون CYP2C9 را مهار می‌کند و سطح فنی‌توئین و خطر سمیت را به‌طور قابل‌توجهی افزایش می‌دهد.',
+        'High Risk: Bacteriostatic drugs (Doxycycline) may interfere with the bactericidal action of Penicillins.': 'خطر بالا: داروهای باکتریواستاتیک (داکسی‌سایکلین) ممکن است با اثر باکتریسیدال پنی‌سیلین‌ها تداخل کنند.',
+        'High Risk: Calcium decreases Levothyroxine absorption. Separate administration.': 'خطر بالا: کلسیم جذب لووتیروکسین را کاهش می‌دهد. زمان مصرف جدا شود.',
+        'High Risk: Calcium severely decreases Ciprofloxacin absorption. Separate administration times.': 'خطر بالا: کلسیم جذب سیپروفلوکساسین را به‌شدت کاهش می‌دهد. زمان مصرف جدا شود.',
+        'High Risk: Calcium severely decreases Doxycycline absorption. Separate administration by hours.': 'خطر بالا: کلسیم جذب داکسی‌سایکلین را به‌شدت کاهش می‌دهد. مصرف را چند ساعت جدا کنید.',
+        'High Risk: Carbamazepine increases toxic metabolite of acetaminophen, elevating risk of hepatotoxicity.': 'خطر بالا: کاربامازپین متابولیت سمی استامینوفن را افزایش می‌دهد و خطر سمیت کبدی را بالا می‌برد.',
+        'High Risk: Carbamazepine induces metabolism of Doxycycline, decreasing its half-life.': 'خطر بالا: کاربامازپین متابولیسم داکسی‌سایکلین را القا می‌کند و نیمه‌عمر آن را کاهش می‌دهد.',
+        'High Risk: Carbamazepine induces metabolism of Levothyroxine, potentially increasing thyroid hormone requirements.': 'خطر بالا: کاربامازپین متابولیسم لووتیروکسین را القا می‌کند و ممکن است نیاز به هورمون تیروئید را افزایش دهد.',
+        'High Risk: Carbamazepine induces metabolism of corticosteroids, decreasing their blood levels and efficacy.': 'خطر بالا: کاربامازپین متابولیسم کورتیکواستروئیدها را القا می‌کند و سطح خونی و اثربخشی آن‌ها را کاهش می‌دهد.',
+        'High Risk: Carbapenems markedly decrease Valproic Acid serum levels, precipitating breakthrough seizures.': 'خطر بالا: کارباپنم‌ها سطح سرمی والپروئیک اسید را به‌شدت کاهش می‌دهند و باعث بروز تشنج می‌شوند.',
+        'High Risk: Carbapenems rapidly and significantly decrease Valproic Acid serum levels, risking breakthrough seizures.': 'خطر بالا: کارباپنم‌ها به‌سرعت و به‌طور قابل‌توجهی سطح سرمی والپروئیک اسید را کاهش می‌دهند و خطر بروز تشنج دارند.',
+        'High Risk: Cimetidine inhibits hepatic metabolism of Diazepam, leading to accumulation and prolonged sedation.': 'خطر بالا: سایمتیدین متابولیسم کبدی دیازپام را مهار می‌کند و به تجمع و آرام‌بخشی طولانی منجر می‌شود.',
+        'High Risk: Cimetidine inhibits metabolism of Midazolam, leading to prolonged CNS depression.': 'خطر بالا: سایمتیدین متابولیسم میدازولام را مهار می‌کند و به دپرسیون طولانی سیستم عصبی مرکزی منجر می‌شود.',
+        'High Risk: Cimetidine inhibits metabolism, leading to Phenytoin toxicity (ataxia, nystagmus).': 'خطر بالا: سایمتیدین متابولیسم را مهار می‌کند و به سمیت فنی‌توئین (آتاکسی، نیستاگموس) منجر می‌شود.',
+        'High Risk: Cimetidine inhibits metabolism, leading to Theophylline toxicity (seizures, arrhythmias).': 'خطر بالا: سایمتیدین متابولیسم را مهار می‌کند و به سمیت تئوفیلین (تشنج، آریتمی) منجر می‌شود.',
+        'High Risk: Ciprofloxacin inhibits theophylline metabolism, leading to severe seizures and arrhythmia.': 'خطر بالا: سیپروفلوکساسین متابولیسم تئوفیلین را مهار می‌کند و به تشنج شدید و آریتمی منجر می‌شود.',
+        'High Risk: Clarithromycin inhibits CYP3A4, increasing Loratadine levels.': 'خطر بالا: کلاریترومایسین CYP3A4 را مهار می‌کند و سطح لوراتادین را افزایش می‌دهد.',
+        'High Risk: Clarithromycin inhibits CYP3A4, significantly increasing Fentanyl levels and respiratory depression.': 'خطر بالا: کلاریترومایسین CYP3A4 را مهار می‌کند و سطح فنتانیل و دپرسیون تنفسی را به‌طور قابل‌توجهی افزایش می‌دهد.',
+        'High Risk: Clarithromycin inhibits metabolism of Carbamazepine, causing severe toxicity (ataxia, lethargy).': 'خطر بالا: کلاریترومایسین متابولیسم کاربامازپین را مهار می‌کند و باعث سمیت شدید (آتاکسی، بی‌حالی) می‌شود.',
+        'High Risk: Complex CYP450 interactions leading to altered levels of both drugs and increased toxicity.': 'خطر بالا: تداخلات پیچیده CYP450 که به تغییر سطح هر دو دارو و افزایش سمیت منجر می‌شود.',
+        'High Risk: Complex alteration of phenytoin binding and metabolism leading to toxicity.': 'خطر بالا: تغییر پیچیده در اتصال و متابولیسم فنی‌توئین که به سمیت منجر می‌شود.',
+        'High Risk: Concomitant use increases the risk of tendinitis and tendon rupture.': 'خطر بالا: مصرف هم‌زمان خطر التهاب و پارگی تاندون را افزایش می‌دهد.',
+        'High Risk: Concomitant use may increase the risk of nephrotoxicity.': 'خطر بالا: مصرف هم‌زمان ممکن است خطر سمیت کلیوی را افزایش دهد.',
+        'High Risk: Concurrent use may enhance neuromuscular blockade leading to respiratory depression.': 'خطر بالا: مصرف هم‌زمان ممکن است بلوک عصبی‌عضلانی را تشدید و به دپرسیون تنفسی منجر کند.',
+        'High Risk: Concurrent use of fluoroquinolones and NSAIDs increases the risk of CNS stimulation and seizures.': 'خطر بالا: مصرف هم‌زمان فلوروکینولون‌ها و NSAIDها خطر تحریک سیستم عصبی مرکزی و تشنج را افزایش می‌دهد.',
+        'High Risk: Enhanced risk of renal failure and hearing loss.': 'خطر بالا: افزایش خطر نارسایی کلیه و کاهش شنوایی.',
+        'High Risk: Erythromycin dramatically increases Carbamazepine plasma concentrations.': 'خطر بالا: اریترومایسین غلظت پلاسمایی کاربامازپین را به‌شدت افزایش می‌دهد.',
+        'High Risk: Erythromycin inhibits CYP3A4, increasing Loratadine levels and potential for adverse effects.': 'خطر بالا: اریترومایسین CYP3A4 را مهار می‌کند و سطح لوراتادین و احتمال عوارض را افزایش می‌دهد.',
+        'High Risk: Erythromycin inhibits CYP3A4, significantly increasing Fentanyl levels and respiratory depression.': 'خطر بالا: اریترومایسین CYP3A4 را مهار می‌کند و سطح فنتانیل و دپرسیون تنفسی را به‌طور قابل‌توجهی افزایش می‌دهد.',
+        'High Risk: Erythromycin inhibits metabolism of Valproic Acid, leading to potential toxicity.': 'خطر بالا: اریترومایسین متابولیسم والپروئیک اسید را مهار می‌کند و ممکن است به سمیت منجر شود.',
+        'High Risk: Fluconazole inhibits CYP enzymes, increasing Diazepam concentrations.': 'خطر بالا: فلوکونازول آنزیم‌های CYP را مهار می‌کند و غلظت دیازپام را افزایش می‌دهد.',
+        'High Risk: Fluconazole inhibits CYP3A4, increasing Fentanyl concentrations and toxicity risk.': 'خطر بالا: فلوکونازول CYP3A4 را مهار می‌کند و غلظت فنتانیل و خطر سمیت را افزایش می‌دهد.',
+        'High Risk: Fluconazole inhibits CYP3A4, increasing Midazolam plasma concentrations and risk of prolonged sedation.': 'خطر بالا: فلوکونازول CYP3A4 را مهار می‌کند و غلظت پلاسمایی میدازولام و خطر آرام‌بخشی طولانی را افزایش می‌دهد.',
+        'High Risk: Fluconazole inhibits CYP3A4, significantly increasing Carbamazepine toxicity.': 'خطر بالا: فلوکونازول CYP3A4 را مهار می‌کند و سمیت کاربامازپین را به‌طور قابل‌توجهی افزایش می‌دهد.',
+        'High Risk: Fluconazole inhibits phenytoin metabolism, increasing the risk of phenytoin toxicity.': 'خطر بالا: فلوکونازول متابولیسم فنی‌توئین را مهار می‌کند و خطر سمیت فنی‌توئین را افزایش می‌دهد.',
+        'High Risk: In vitro antagonism. Both drugs compete for the same 50S ribosomal binding site.': 'خطر بالا: آنتاگونیسم آزمایشگاهی. هر دو دارو بر سر جایگاه اتصال ریبوزومی ۵۰S رقابت می‌کنند.',
+        'High Risk: Increased ototoxicity and nephrotoxicity.': 'خطر بالا: افزایش سمیت شنوایی و کلیوی.',
+        'High Risk: Increased risk of Serotonin Syndrome or hypertensive crisis.': 'خطر بالا: افزایش خطر سندرم سروتونین یا بحران فشار خون.',
+        'High Risk: Increased risk of Serotonin Syndrome.': 'خطر بالا: افزایش خطر سندرم سروتونین.',
+        'High Risk: Increased risk of acute kidney injury (AKI). Monitor renal function closely.': 'خطر بالا: افزایش خطر آسیب حاد کلیه (AKI). عملکرد کلیه به‌دقت پایش شود.',
+        'High Risk: Increased risk of extrapyramidal symptoms (EPS) and neuroleptic malignant syndrome.': 'خطر بالا: افزایش خطر علائم اکستراپیرامیدال (EPS) و سندرم بدخیم نورولپتیک.',
+        'High Risk: Increased risk of hyperammonemia with or without encephalopathy.': 'خطر بالا: افزایش خطر هایپرآمونمی با یا بدون انسفالوپاتی.',
+        'High Risk: Increased risk of ototoxicity and permanent hearing impairment.': 'خطر بالا: افزایش خطر سمیت شنوایی و آسیب دائمی شنوایی.',
+        'High Risk: Increased risk of severe CNS depression and respiratory failure.': 'خطر بالا: افزایش خطر دپرسیون شدید سیستم عصبی مرکزی و نارسایی تنفسی.',
+        'High Risk: Iron decreases Levothyroxine absorption. Separate administration by at least 4 hours.': 'خطر بالا: آهن جذب لووتیروکسین را کاهش می‌دهد. مصرف را حداقل ۴ ساعت جدا کنید.',
+        'High Risk: Iron severely decreases Ciprofloxacin absorption. Separate administration.': 'خطر بالا: آهن جذب سیپروفلوکساسین را به‌شدت کاهش می‌دهد. زمان مصرف جدا شود.',
+        'High Risk: Iron severely decreases Doxycycline absorption. Separate administration.': 'خطر بالا: آهن جذب داکسی‌سایکلین را به‌شدت کاهش می‌دهد. زمان مصرف جدا شود.',
+        "High Risk: Linezolid's MAOI activity can enhance the sympathomimetic effects of Salbutamol (tachycardia/hypertension).": 'خطر بالا: فعالیت MAOI لینزولید می‌تواند اثرات سمپاتومیمتیک سالبوتامول (تاکی‌کاردی/فشار خون) را تشدید کند.',
+        'High Risk: Macrolides inhibit CYP3A4, significantly increasing Midazolam levels and prolonging sedation/respiratory depression.': 'خطر بالا: ماکرولیدها CYP3A4 را مهار می‌کنند و سطح میدازولام را به‌طور قابل‌توجهی افزایش و آرام‌بخشی/دپرسیون تنفسی را طولانی می‌کنند.',
+        'High Risk: Magnesium severely decreases Ciprofloxacin absorption. Separate administration times.': 'خطر بالا: منیزیم جذب سیپروفلوکساسین را به‌شدت کاهش می‌دهد. زمان مصرف جدا شود.',
+        'High Risk: Magnesium severely decreases Doxycycline absorption. Separate administration times.': 'خطر بالا: منیزیم جذب داکسی‌سایکلین را به‌شدت کاهش می‌دهد. زمان مصرف جدا شود.',
+        'High Risk: Markedly increases Theophylline serum levels, precipitating toxicity.': 'خطر بالا: سطح سرمی تئوفیلین را به‌طور چشمگیری افزایش و سمیت را ایجاد می‌کند.',
+        'High Risk: Metronidazole inhibits CYP3A4, increasing Carbamazepine levels and risk of toxicity.': 'خطر بالا: مترونیدازول CYP3A4 را مهار می‌کند و سطح کاربامازپین و خطر سمیت را افزایش می‌دهد.',
+        'High Risk: Metronidazole inhibits Phenytoin metabolism, potentially leading to toxic serum levels.': 'خطر بالا: مترونیدازول متابولیسم فنی‌توئین را مهار می‌کند و ممکن است به سطوح سرمی سمی منجر شود.',
+        'High Risk: Mutual induction of metabolism, leading to unpredictable serum levels.': 'خطر بالا: القای متقابل متابولیسم که به سطوح سرمی غیرقابل‌پیش‌بینی منجر می‌شود.',
+        'High Risk: Mutual metabolic inhibition significantly increasing serum levels of both drugs.': 'خطر بالا: مهار متقابل متابولیک که سطح سرمی هر دو دارو را به‌طور قابل‌توجهی افزایش می‌دهد.',
+        'High Risk: NSAIDs blunt diuretic effect and increase risk of acute renal failure.': 'خطر بالا: NSAIDها اثر مدر را کاهش و خطر نارسایی حاد کلیه را افزایش می‌دهند.',
+        'High Risk: NSAIDs reduce the efficacy of loop diuretics and increase nephrotoxicity.': 'خطر بالا: NSAIDها اثربخشی مدرهای لوپ را کاهش و سمیت کلیوی را افزایش می‌دهند.',
+        'High Risk: Omeprazole inhibits CYP2C19, decreasing Diazepam clearance and prolonging its effects.': 'خطر بالا: امپرازول CYP2C19 را مهار می‌کند و کلیرانس دیازپام را کاهش و اثر آن را طولانی می‌کند.',
+        'High Risk: Phenobarbital induces CYP enzymes, increasing acetaminophen hepatotoxic metabolites.': 'خطر بالا: فنوباربیتال آنزیم‌های CYP را القا می‌کند و متابولیت‌های کبدی‌سمی استامینوفن را افزایش می‌دهد.',
+        'High Risk: Phenobarbital induces hepatic metabolism of Theophylline, significantly reducing its serum levels.': 'خطر بالا: فنوباربیتال متابولیسم کبدی تئوفیلین را القا می‌کند و سطح سرمی آن را به‌طور قابل‌توجهی کاهش می‌دهد.',
+        'High Risk: Phenobarbital induces hepatic metabolism of corticosteroids, reducing efficacy.': 'خطر بالا: فنوباربیتال متابولیسم کبدی کورتیکواستروئیدها را القا و اثربخشی را کاهش می‌دهد.',
+        'High Risk: Phenobarbital induces metabolism of Doxycycline, decreasing its half-life.': 'خطر بالا: فنوباربیتال متابولیسم داکسی‌سایکلین را القا و نیمه‌عمر آن را کاهش می‌دهد.',
+        'High Risk: Phenobarbital induces metabolism of Metronidazole, potentially leading to treatment failure.': 'خطر بالا: فنوباربیتال متابولیسم مترونیدازول را القا می‌کند و ممکن است به شکست درمان منجر شود.',
+        'High Risk: Phenytoin decreases steroid blood levels, compromising therapeutic efficacy.': 'خطر بالا: فنی‌توئین سطح خونی استروئید را کاهش و اثربخشی درمانی را مختل می‌کند.',
+        'High Risk: Phenytoin increases the metabolism and clearance of Levothyroxine.': 'خطر بالا: فنی‌توئین متابولیسم و کلیرانس لووتیروکسین را افزایش می‌دهد.',
+        'High Risk: Phenytoin increases toxic metabolite of acetaminophen, elevating risk of hepatotoxicity.': 'خطر بالا: فنی‌توئین متابولیت سمی استامینوفن را افزایش و خطر سمیت کبدی را بالا می‌برد.',
+        'High Risk: Phenytoin induces hepatic metabolism of corticosteroids, reducing efficacy.': 'خطر بالا: فنی‌توئین متابولیسم کبدی کورتیکواستروئیدها را القا و اثربخشی را کاهش می‌دهد.',
+        'High Risk: Phenytoin induces metabolism of Doxycycline, decreasing its half-life.': 'خطر بالا: فنی‌توئین متابولیسم داکسی‌سایکلین را القا و نیمه‌عمر آن را کاهش می‌دهد.',
+        'High Risk: Phenytoin strongly induces the metabolism of Theophylline, potentially reducing its efficacy and asthma control.': 'خطر بالا: فنی‌توئین متابولیسم تئوفیلین را به‌شدت القا می‌کند و ممکن است اثربخشی آن و کنترل آسم را کاهش دهد.',
+        'High Risk: Potent synergistic respiratory depression and severe hypotension.': 'خطر بالا: دپرسیون تنفسی هم‌افزای قوی و افت شدید فشار خون.',
+        'High Risk: Profound additive CNS and respiratory depression.': 'خطر بالا: دپرسیون تجمعی عمیق سیستم عصبی مرکزی و تنفسی.',
+        'High Risk: Profound central nervous system (CNS) and respiratory depression.': 'خطر بالا: دپرسیون عمیق سیستم عصبی مرکزی (CNS) و تنفسی.',
+        'High Risk: Profound central nervous system (CNS) and severe respiratory depression.': 'خطر بالا: دپرسیون عمیق سیستم عصبی مرکزی (CNS) و دپرسیون تنفسی شدید.',
+        'High Risk: Propranolol antagonizes bronchodilation and decreases Theophylline clearance, increasing toxicity.': 'خطر بالا: پروپرانولول با گشادی برونش مقابله و کلیرانس تئوفیلین را کاهش می‌دهد و سمیت را افزایش می‌دهد.',
+        'High Risk: Rifampin increases clearance of corticosteroids, markedly reducing efficacy.': 'خطر بالا: ریفامپین کلیرانس کورتیکواستروئیدها را افزایش و اثربخشی را به‌طور چشمگیری کاهش می‌دهد.',
+        'High Risk: Rifampin increases clearance of corticosteroids, requiring higher steroid doses.': 'خطر بالا: ریفامپین کلیرانس کورتیکواستروئیدها را افزایش می‌دهد و به دوز استروئید بالاتری نیاز است.',
+        'High Risk: Rifampin induces hepatic metabolism, decreasing Doxycycline half-life and efficacy.': 'خطر بالا: ریفامپین متابولیسم کبدی را القا می‌کند و نیمه‌عمر و اثربخشی داکسی‌سایکلین را کاهش می‌دهد.',
+        'High Risk: Rifampin strongly induces metabolism of Phenytoin, significantly reducing seizure control.': 'خطر بالا: ریفامپین متابولیسم فنی‌توئین را به‌شدت القا می‌کند و کنترل تشنج را به‌طور قابل‌توجهی کاهش می‌دهد.',
+        'High Risk: Rifampin strongly induces metabolism, significantly decreasing Fluconazole levels.': 'خطر بالا: ریفامپین متابولیسم را به‌شدت القا می‌کند و سطح فلوکونازول را به‌طور قابل‌توجهی کاهش می‌دهد.',
+        'High Risk: Severe extrapyramidal reactions (EPS), dystonia, and neuroleptic malignant syndrome risk.': 'خطر بالا: واکنش‌های شدید اکستراپیرامیدال (EPS)، دیستونی و خطر سندرم بدخیم نورولپتیک.',
+        'High Risk: Severe respiratory depression and airway compromise. Resuscitation equipment must be ready.': 'خطر بالا: دپرسیون تنفسی شدید و اختلال راه هوایی. تجهیزات احیا باید آماده باشد.',
+        'High Risk: Severe respiratory depression and hypotension. Monitor airway continuously.': 'خطر بالا: دپرسیون تنفسی شدید و افت فشار خون. راه هوایی به‌طور مداوم پایش شود.',
+        'High Risk: Significantly increases Theophylline serum levels, increasing risk of toxicity.': 'خطر بالا: سطح سرمی تئوفیلین را به‌طور قابل‌توجهی افزایش و خطر سمیت را بالا می‌برد.',
+        'High Risk: Synergistic CNS and respiratory depression.': 'خطر بالا: دپرسیون هم‌افزای سیستم عصبی مرکزی و تنفسی.',
+        'High Risk: Synergistic CNS and respiratory depression. Monitor patient closely.': 'خطر بالا: دپرسیون هم‌افزای سیستم عصبی مرکزی و تنفسی. بیمار به‌دقت پایش شود.',
+        'High Risk: Synergistic CNS and severe respiratory depression risk.': 'خطر بالا: خطر دپرسیون هم‌افزای سیستم عصبی مرکزی و دپرسیون تنفسی شدید.',
+        'High Risk: Synergistic CNS depression leading to prolonged recovery times.': 'خطر بالا: دپرسیون هم‌افزای سیستم عصبی مرکزی که به طولانی‌شدن زمان ریکاوری منجر می‌شود.',
+        'High Risk: Synergistic CNS depression.': 'خطر بالا: دپرسیون هم‌افزای سیستم عصبی مرکزی.',
+        'High Risk: Synergistic central nervous system (CNS) and respiratory depression.': 'خطر بالا: دپرسیون هم‌افزای سیستم عصبی مرکزی (CNS) و تنفسی.',
+        'High Risk: Synergistic nephrotoxicity and ototoxicity. Monitor serum levels and renal function closely.': 'خطر بالا: سمیت کلیوی و شنوایی هم‌افزا. سطوح سرمی و عملکرد کلیه به‌دقت پایش شود.',
+        'High Risk: Synergistic nephrotoxicity. Strict monitoring required.': 'خطر بالا: سمیت کلیوی هم‌افزا. پایش دقیق لازم است.',
+        'High Risk: Synergistic potassium depletion. Increased risk of severe hypokalemia.': 'خطر بالا: تخلیه هم‌افزای پتاسیم. افزایش خطر هیپوکالمی شدید.',
+        'High Risk: Synergistic severe respiratory depression and hemodynamic instability.': 'خطر بالا: دپرسیون تنفسی شدید هم‌افزا و ناپایداری همودینامیک.',
+        'High Risk: Synergistic severe respiratory depression and profound hypotension.': 'خطر بالا: دپرسیون تنفسی شدید هم‌افزا و افت عمیق فشار خون.',
+        'High Risk: Trimethoprim acts as a potassium-sparing diuretic, significantly increasing the risk of hyperkalemia.': 'خطر بالا: تری‌متوپریم مانند یک مدر نگهدارنده پتاسیم عمل می‌کند و خطر هایپرکالمی را به‌طور قابل‌توجهی افزایش می‌دهد.',
+        'High Risk: Unopposed alpha-adrenergic activity leading to severe hypertension and reflex bradycardia.': 'خطر بالا: فعالیت آلفا-آدرنرژیک بدون مهار که به فشار خون شدید و برادی‌کاردی رفلکسی منجر می‌شود.',
+        'High Risk: Valproate increases Phenobarbital levels significantly, causing severe sedation and coma.': 'خطر بالا: والپروات سطح فنوباربیتال را به‌طور قابل‌توجهی افزایش می‌دهد و باعث آرام‌بخشی شدید و کوما می‌شود.',
+        'High Risk: Voriconazole inhibits CYP3A4, significantly increasing Fentanyl levels and respiratory depression.': 'خطر بالا: ووریکونازول CYP3A4 را مهار می‌کند و سطح فنتانیل و دپرسیون تنفسی را به‌طور قابل‌توجهی افزایش می‌دهد.',
+        "Moderate Risk: Additive CNS depression and potential antagonism of Metoclopramide's prokinetic effect.": 'خطر متوسط: دپرسیون تجمعی سیستم عصبی مرکزی و احتمال مقابله با اثر پروکینتیک متوکلوپرامید.',
+        'Moderate Risk: Antagonistic effect. Non-selective beta-blockers negate bronchodilating effect of Salbutamol.': 'خطر متوسط: اثر آنتاگونیستی. بتابلاکرهای غیرانتخابی اثر گشادکننده برونش سالبوتامول را خنثی می‌کنند.',
+        'Moderate Risk: Anticholinergic effects of Diphenhydramine antagonize the GI motility effects of Metoclopramide. Additive CNS depression.': 'خطر متوسط: اثرات آنتی‌کولینرژیک دیفن‌هیدرامین با اثرات حرکتی گوارشی متوکلوپرامید مقابله می‌کنند. دپرسیون تجمعی سیستم عصبی مرکزی.',
+        'Moderate Risk: Calcium significantly impairs oral iron absorption. Separate administration by 2 hours.': 'خطر متوسط: کلسیم جذب خوراکی آهن را به‌طور قابل‌توجهی مختل می‌کند. مصرف را ۲ ساعت جدا کنید.',
+        'Moderate Risk: Decreased gastric acidity lowers absorption of elemental iron.': 'خطر متوسط: کاهش اسیدیته معده جذب آهن عنصری را کاهش می‌دهد.',
+        'Moderate Risk: Ibuprofen may displace Valproic Acid from protein binding, altering its free levels.': 'خطر متوسط: ایبوپروفن ممکن است والپروئیک اسید را از اتصال پروتئینی جابه‌جا کند و سطح آزاد آن را تغییر دهد.',
+        'Moderate Risk: Increased gastric pH decreases absorption of oral Cefuroxime.': 'خطر متوسط: افزایش pH معده جذب سفوروکسیم خوراکی را کاهش می‌دهد.',
+        'Moderate Risk: Increased risk of gastrointestinal bleeding and ulceration.': 'خطر متوسط: افزایش خطر خونریزی و زخم گوارشی.',
+        'Moderate Risk: Markedly increased risk of gastrointestinal mucosal ulceration and bleeding.': 'خطر متوسط: افزایش چشمگیر خطر زخم و خونریزی مخاط گوارشی.',
+        'Moderate Risk: PPIs increase gastric pH, which may decrease the absorption of Levothyroxine.': 'خطر متوسط: PPIها pH معده را افزایش می‌دهند که ممکن است جذب لووتیروکسین را کاهش دهد.',
+        'Moderate Risk: Synergistic GI toxicity and ulceration risk.': 'خطر متوسط: سمیت گوارشی هم‌افزا و خطر زخم.',
+        'Moderate Risk: Valproic Acid decreases the clearance of Lorazepam, potentially increasing its effects.': 'خطر متوسط: والپروئیک اسید کلیرانس لورازپام را کاهش می‌دهد و ممکن است اثرات آن را افزایش دهد.',
+        'Moderate Risk: Valproic Acid displaces Diazepam from protein binding sites and inhibits its metabolism.': 'خطر متوسط: والپروئیک اسید دیازپام را از جایگاه‌های اتصال پروتئینی جابه‌جا و متابولیسم آن را مهار می‌کند.'
+    };
+
+
+    /**
+     * Resolve a localized version of a data string. In Persian mode it looks the
+     * exact English source up in the relevant map and returns the Persian text if
+     * present; in English mode (or when no translation exists) it returns the
+     * original English string unchanged — so English is always a safe fallback.
+     * @param {'drug'|'indication'|'indicationDose'|'clinical'} kind
+     * @param {string} en the exact English source string
+     */
+    function resolveFa(kind, en) {
+        if (getLang() !== 'fa') return en;
+        const map = kind === 'drug' ? DRUG_NAME_FA
+            : kind === 'indication' ? INDICATION_FA
+            : kind === 'indicationDose' ? INDICATION_DOSE_FA
+            : kind === 'clinical' ? CLINICAL_MSG_FA
+            : null;
+        if (!map) return en;
+        return map[en] ?? en;
+    }
+
+    if (typeof window !== 'undefined') {
+        window.PediCalcFa = { DRUG_NAME_FA, INDICATION_FA, INDICATION_DOSE_FA, CLINICAL_MSG_FA, resolveFa };
+    }
+
     // ===== src/core/utils.js =====
     // src/core/utils.js
     // Framework-free helper utilities shared across the app: HTML escaping,
     // dose-unit resolution, interval formatting, the home administration guide,
     // and small DOM/UX helpers.
+
 
     /**
      * Escape a value for safe interpolation into innerHTML.
@@ -48,9 +1075,8 @@
         nearlyEqual,
 
         getIntervalText(hours) {
-            if (hours === 0) return 'Single Dose / As needed';
-            const map = { 24: 'Every 24 hours', 12: 'Every 12 hours', 8: 'Every 8 hours', 6: 'Every 6 hours', 4: 'Every 4 hours' };
-            return map[hours] || `Every ${hours} hours`;
+            if (hours === 0) return t('interval.single');
+            return t('interval.hours', { h: hours });
         },
 
         generateHomeGuide(drug, minDose, maxDose, validation, customConc) {
@@ -66,7 +1092,7 @@
                     baseConc = drug.mgPerMl;
                 }
                 const activeConc = parseFloat(customConc !== null ? customConc : baseConc);
-                if (!activeConc || activeConc <= 0) return `<strong style="color: var(--danger-500);"><i class="fas fa-exclamation-triangle"></i> Error: Concentration cannot be zero.</strong>`;
+                if (!activeConc || activeConc <= 0) return `<strong style="color: var(--danger-500);"><i class="fas fa-exclamation-triangle"></i> ${escapeHtml(t('guide.concZero'))}</strong>`;
 
                 const minCc = parseFloat((minDose / activeConc).toFixed(2)).toString();
                 const maxCc = parseFloat((maxDose / activeConc).toFixed(2)).toString();
@@ -78,7 +1104,7 @@
                 return `<strong>${escapeHtml(validation.calculatedFixedDose)}</strong> ${escapeHtml(intervalText)}`;
             }
 
-            return `Use as prescribed by physician.`;
+            return escapeHtml(t('guide.asPrescribed'));
         },
 
         // Single source of truth for dose-unit resolution (used by the calculator, formula/formatting
@@ -141,20 +1167,20 @@
     //   explicitly so the value's unit is unambiguous.
 
     const categoriesDB = [
-        { id: 'all', name: 'All', icon: 'fa-layer-group', image: 'assets/categories/all.png' },
-        { id: 'syrup', name: 'Syrup', icon: 'fa-wine-bottle', image: 'assets/categories/syrup.png' },
-        { id: 'drop', name: 'Drop', icon: 'fa-tint', image: 'assets/categories/drop.png' },
-        { id: 'ampoule', name: 'Ampoule', icon: 'fa-syringe', image: 'assets/categories/ampoule.png' },
-        { id: 'tablet', name: 'Tab & Cap', icon: 'fa-pills', image: 'assets/categories/pill.png' },
-        { id: 'powder', name: 'Powder', icon: 'fa-box-open', image: 'assets/categories/powder.png' },
-        { id: 'suppository', name: 'Suppository', icon: 'fa-capsules', image: 'assets/categories/suppository.png' },
-        { id: 'vial', name: 'Vial', icon: 'fa-flask', image: 'assets/categories/vial.png' },
-        { id: 'inhaler', name: 'Inhaler', icon: 'fa-wind', image: 'assets/categories/inhaler.png' },
-        { id: 'ointment', name: 'Ointment', icon: 'fa-hand-sparkles', image: 'assets/categories/ointment.png' },
-        { id: 'cream', name: 'Cream', icon: 'fa-paint-brush', image: 'assets/categories/cream.png' },
-        { id: 'gel', name: 'Gel', icon: 'fa-flask', image: 'assets/categories/gel.png' },
-        { id: 'spray', name: 'Spray', icon: 'fa-spray-can', image: 'assets/categories/spray.png' },
-        { id: 'sachet', name: 'Sachet', icon: 'fa-envelope', image: 'assets/categories/sachet.png' }
+        { id: 'all', name: 'All', nameFa: 'همه', icon: 'fa-layer-group', image: 'assets/categories/all.png' },
+        { id: 'syrup', name: 'Syrup', nameFa: 'شربت', icon: 'fa-wine-bottle', image: 'assets/categories/syrup.png' },
+        { id: 'drop', name: 'Drop', nameFa: 'قطره', icon: 'fa-tint', image: 'assets/categories/drop.png' },
+        { id: 'ampoule', name: 'Ampoule', nameFa: 'آمپول', icon: 'fa-syringe', image: 'assets/categories/ampoule.png' },
+        { id: 'tablet', name: 'Tab & Cap', nameFa: 'قرص و کپسول', icon: 'fa-pills', image: 'assets/categories/pill.png' },
+        { id: 'powder', name: 'Powder', nameFa: 'پودر', icon: 'fa-box-open', image: 'assets/categories/powder.png' },
+        { id: 'suppository', name: 'Suppository', nameFa: 'شیاف', icon: 'fa-capsules', image: 'assets/categories/suppository.png' },
+        { id: 'vial', name: 'Vial', nameFa: 'ویال', icon: 'fa-flask', image: 'assets/categories/vial.png' },
+        { id: 'inhaler', name: 'Inhaler', nameFa: 'اسپری استنشاقی', icon: 'fa-wind', image: 'assets/categories/inhaler.png' },
+        { id: 'ointment', name: 'Ointment', nameFa: 'پماد', icon: 'fa-hand-sparkles', image: 'assets/categories/ointment.png' },
+        { id: 'cream', name: 'Cream', nameFa: 'کرم', icon: 'fa-paint-brush', image: 'assets/categories/cream.png' },
+        { id: 'gel', name: 'Gel', nameFa: 'ژل', icon: 'fa-flask', image: 'assets/categories/gel.png' },
+        { id: 'spray', name: 'Spray', nameFa: 'اسپری', icon: 'fa-spray-can', image: 'assets/categories/spray.png' },
+        { id: 'sachet', name: 'Sachet', nameFa: 'ساشه', icon: 'fa-envelope', image: 'assets/categories/sachet.png' }
     ];
     
     const drugsDB = [
@@ -2110,10 +3136,10 @@
 
         getRecommendedForm(drug, weight) {
             if (weight < 10 && drug.category === 'syrup') {
-                return { preferred: 'Drop', message: 'For infants, drop or suspension form is more suitable.' };
+                return { preferred: t('form.drop'), message: t('form.dropBetter') };
             }
             if (weight >= 10 && weight < 20 && drug.category === 'drop') {
-                return { preferred: 'Syrup', message: 'For older children, syrup form is more convenient.' };
+                return { preferred: t('form.syrup'), message: t('form.syrupBetter') };
             }
             return null;
         },
@@ -2124,34 +3150,34 @@
 
             if (requiresWeight) {
                 if (weight === undefined || weight === null || weight === '') {
-                    errors.push({ field: 'weight', message: 'Please enter the weight.' });
+                    errors.push({ field: 'weight', message: t('val.weightRequired') });
                 } else {
                     const w = Number(weight);
                     if (isNaN(w) || w <= 0) {
-                        errors.push({ field: 'weight', message: 'Weight must be a valid positive number.' });
+                        errors.push({ field: 'weight', message: t('val.weightPositive') });
                     } else if (w < 0.5) {
-                        errors.push({ field: 'weight', message: 'Weight is too low (minimum 0.5 kg).' });
+                        errors.push({ field: 'weight', message: t('val.weightTooLow') });
                     } else if (w > 150) {
-                        errors.push({ field: 'weight', message: 'Weight is too high (maximum 150 kg).' });
+                        errors.push({ field: 'weight', message: t('val.weightTooHigh') });
                     } else if (w < 2.5) {
-                        warnings.push({ field: 'weight', message: 'Neonatal weight (<2.5kg) requires extreme precision.' });
+                        warnings.push({ field: 'weight', message: t('val.neonatalPrecision') });
                     } else if (w > 35) {
-                        warnings.push({ field: 'weight', message: 'Weight above 35kg - patient may be adolescent or adult.' });
+                        warnings.push({ field: 'weight', message: t('val.aboveAdult') });
                     }
                 }
             }
 
             if (requiresAge) {
                 if (age === undefined || age === null || age === '') {
-                    errors.push({ field: 'age', message: 'Please enter the age (this drug requires age).' });
+                    errors.push({ field: 'age', message: t('val.ageRequired') });
                 } else {
                     const a = Number(age);
                     if (isNaN(a) || a < 0) {
-                        errors.push({ field: 'age', message: 'Age must be a valid positive number.' });
+                        errors.push({ field: 'age', message: t('val.agePositive') });
                     } else if (a > 18) {
-                        errors.push({ field: 'age', message: 'Age above 18 years - this drug is for children.' });
+                        errors.push({ field: 'age', message: t('val.ageTooHigh') });
                     } else if (a < 0.5 && requiresAge) {
-                        warnings.push({ field: 'age', message: 'Age under 6 months - requires physician consultation.' });
+                        warnings.push({ field: 'age', message: t('val.ageUnder6mo') });
                     }
                 }
             }
@@ -2159,9 +3185,9 @@
             if (height !== null && height !== '') {
                 const h = Number(height);
                 if (isNaN(h) || h <= 0) {
-                    errors.push({ field: 'height', message: 'Height must be a valid positive number.' });
+                    errors.push({ field: 'height', message: t('val.heightPositive') });
                 } else if (h < 30 || h > 250) {
-                    errors.push({ field: 'height', message: 'Height must be between 30 and 250 cm.' });
+                    errors.push({ field: 'height', message: t('val.heightRange') });
                 }
             }
 
@@ -2173,9 +3199,9 @@
             let ageCategory = 'Unknown';
 
             if (requiresWeight) {
-                if (weight < 0.5) issues.push({ type: 'error', message: 'Weight entered is very low! Please recheck.', severity: 'critical' });
-                if (weight < 2.5) issues.push({ type: 'warning', message: 'Neonatal weight (<2.5kg) requires extreme precision.', severity: 'high' });
-                if (weight > 35) issues.push({ type: 'info', message: 'Weight above 35kg - patient may be adolescent or adult.', severity: 'low' });
+                if (weight < 0.5) issues.push({ type: 'error', message: t('val.weightVeryLow'), severity: 'critical' });
+                if (weight < 2.5) issues.push({ type: 'warning', message: t('val.neonatalPrecision'), severity: 'high' });
+                if (weight > 35) issues.push({ type: 'info', message: t('val.aboveAdult'), severity: 'low' });
 
                 ageCategory = 'Neonate';
                 for (const [key, range] of Object.entries(ValidationEngine.weightRanges)) {
@@ -2200,6 +3226,17 @@
     // src/data/clinical-rules.data.js.
 
 
+    /** Localized label for an allergy class name used inside allergy sentences. */
+    function allergyClassLabel(allergyClass) {
+        const key = {
+            'Penicillin': 'adv.penicillins',
+            'Cephalosporin': 'adv.cephalosporins',
+            'NSAID': 'adv.nsaids',
+            'Macrolide': 'adv.macrolides'
+        }[allergyClass];
+        return key ? t(key) : allergyClass;
+    }
+
     /** Strip a parenthetical brand/qualifier suffix, e.g. "Acetaminophen (Apotel)" -> "Acetaminophen". */
     function getBaseName(name) {
         return name.split(' (')[0].trim();
@@ -2222,10 +3259,10 @@
             const guideline = ClinicalRulesDB.ivGuidelines[drugName];
             if (!guideline) return null;
             return {
-                title: 'IV Infusion Guidelines',
-                rate: guideline.rate || 'Standard',
+                title: t('iv.title'),
+                rate: guideline.rate || 'Standard',       // rate/conc keep units → not translated
                 maxConc: guideline.maxConcentration || 'N/A',
-                warning: guideline.warning || ''
+                warning: guideline.warning ? resolveFa('clinical', guideline.warning) : ''
             };
         },
 
@@ -2233,8 +3270,8 @@
             const adjustment = ClinicalRulesDB.adjustments[drugName];
             if (adjustment && adjustment.type === impairmentType) {
                 return {
-                    alert: `Requires ${impairmentType === 'renal' ? 'Renal' : 'Hepatic'} Dose Adjustment`,
-                    message: adjustment.warning
+                    alert: t(impairmentType === 'renal' ? 'dyn.renalAdjust' : 'dyn.hepaticAdjust'),
+                    message: resolveFa('clinical', adjustment.warning)
                 };
             }
             return null;
@@ -2244,20 +3281,21 @@
             const risks = [];
             patientAllergies.forEach(allergyClass => {
                 const drugsInClass = ClinicalRulesDB.crossAllergies[allergyClass];
+                const drugFa = resolveFa('drug', drugName);
                 if (drugsInClass && drugsInClass.includes(drugName)) {
                     risks.push({
                         severity: 'critical',
-                        message: `Absolute Contraindication! Patient is allergic to ${allergyClass} class.`
+                        message: t('allergy.absolute', { class: allergyClassLabel(allergyClass) })
                     });
                 } else if (allergyClass === 'Penicillin' && ClinicalRulesDB.crossAllergies['Cephalosporin'].includes(drugName)) {
                     risks.push({
                         severity: 'high',
-                        message: `Caution: Patient is allergic to Penicillin. There is a 3-5% risk of cross-reactivity with Cephalosporins (${drugName}).`
+                        message: t('allergy.penToCeph', { drug: drugFa })
                     });
                 } else if (allergyClass === 'Cephalosporin' && ClinicalRulesDB.crossAllergies['Penicillin'].includes(drugName)) {
                     risks.push({
                         severity: 'high',
-                        message: `Caution: Patient is allergic to Cephalosporins. There is a risk of cross-reactivity with Penicillins (${drugName}).`
+                        message: t('allergy.cephToPen', { drug: drugFa })
                     });
                 }
             });
@@ -2282,10 +3320,11 @@
 
                 if (interactingActiveDrug) {
                     const activeOriginalName = activePrescriptionList.find(d => getBaseName(d) === interactingActiveDrug);
+                    const displayName = activeOriginalName || interactingActiveDrug;
                     foundInteractions.push({
-                        interactingWith: activeOriginalName || interactingActiveDrug,
+                        interactingWith: resolveFa('drug', displayName),
                         severity: interaction.severity,
-                        message: interaction.message
+                        message: resolveFa('clinical', interaction.message)
                     });
                 }
             });
@@ -2392,11 +3431,11 @@
             // 3. Process Advanced Clinical Rules (Organ Impairments, Allergies & INTERACTIONS)
             if (AdvancedClinicalEngine) {
                 if (this.advancedSettings.pmaVal && (interval !== (this.selectedIndication ? this.selectedIndication.intervalHours : this.drug.intervalHours) || this.neonatalOverrideDose !== null)) {
-                    let warnMsg = `Based on NICU protocol (PMA ${this.advancedSettings.pmaVal} weeks), `;
+                    let warnMsg = t('dyn.nicu', { pma: this.advancedSettings.pmaVal });
                     if (this.neonatalOverrideDose !== null) {
-                        warnMsg += `dose adjusted to ${this.neonatalOverrideDose} mg/kg and interval to every ${interval} hours.`;
+                        warnMsg += t('dyn.nicuDoseInterval', { dose: this.neonatalOverrideDose, interval });
                     } else {
-                        warnMsg += `dose interval adjusted to every ${interval} hours.`;
+                        warnMsg += t('dyn.nicuInterval', { interval });
                     }
                     result.warnings.push(warnMsg);
                 }
@@ -2424,13 +3463,13 @@
                     const interactions = AdvancedClinicalEngine.checkInteractions(this.drug.name, this.advancedSettings.activePrescriptions);
                     interactions.forEach(interaction => {
                         if (interaction.severity === 'critical') {
-                            result.alerts.push(`<strong>Critical Interaction with ${escapeHtml(interaction.interactingWith)}:</strong> ${escapeHtml(interaction.message)}`);
+                            result.alerts.push(`<strong>${escapeHtml(t('dyn.critInteraction', { drug: interaction.interactingWith }))}</strong> ${escapeHtml(interaction.message)}`);
                             result.severity = 'high';
                         } else if (interaction.severity === 'high') {
-                            result.alerts.push(`<strong>Major Interaction with ${escapeHtml(interaction.interactingWith)}:</strong> ${escapeHtml(interaction.message)}`);
+                            result.alerts.push(`<strong>${escapeHtml(t('dyn.majorInteraction', { drug: interaction.interactingWith }))}</strong> ${escapeHtml(interaction.message)}`);
                             if (result.severity !== 'high') result.severity = 'high';
                         } else {
-                            result.warnings.push(`<strong>Interaction with ${escapeHtml(interaction.interactingWith)}:</strong> ${escapeHtml(interaction.message)}`);
+                            result.warnings.push(`<strong>${escapeHtml(t('dyn.interaction', { drug: interaction.interactingWith }))}</strong> ${escapeHtml(interaction.message)}`);
                         }
                     });
                 }
@@ -2461,7 +3500,7 @@
                 // minWeight: 0 with no minAge means "always applies" (no real threshold), not "never applies".
                 const alwaysApplies = !contra.minWeight && !contra.minAge;
                 if (weightTriggers || ageTriggers || alwaysApplies) {
-                    result.alerts.push(contra.warning);
+                    result.alerts.push(resolveFa('clinical', contra.warning));
                     result.severity = contra.severity;
                 }
             }
@@ -2471,7 +3510,7 @@
                 const formRec = ValidationEngine.getRecommendedForm(this.drug, this.weight);
                 if (formRec) {
                     result.warnings.push(formRec.message);
-                    if (this.weight < 10) result.alerts.push(`Recommendation: ${escapeHtml(formRec.preferred)} is more suitable for ${escapeHtml(this.drug.name)}.`);
+                    if (this.weight < 10) result.alerts.push(t('dyn.recommend', { form: formRec.preferred, drug: resolveFa('drug', this.drug.name) }));
                 }
             }
 
@@ -2481,7 +3520,7 @@
             let doseUnitLabel = Utils.resolveDoseUnit(this.drug);
 
             if (this.drug.maxDailyDoseMg) {
-                result.dailyMaxDisplay = ` (Max daily: ${this.drug.maxDailyDoseMg} ${doseUnitLabel})`;
+                result.dailyMaxDisplay = t('dyn.maxDaily', { max: this.drug.maxDailyDoseMg, unit: doseUnitLabel });
             } else {
                 result.dailyMaxDisplay = '';
             }
@@ -2491,7 +3530,7 @@
 
         _calculateTopical(result) {
             result.isFixedDose = true;
-            result.calculatedFixedDose = this.drug.fixedDose || 'Apply thin layer';
+            result.calculatedFixedDose = this.drug.fixedDose || t('dyn.applyThin');
             result.displayResult = result.calculatedFixedDose;
             return result;
         }
@@ -2509,7 +3548,7 @@
                     parsedMin = foundTier.minDose;
                     parsedMax = foundTier.maxDose;
                 } else if (this.drug.ageAlert && this.age < this.drug.ageAlert.minAgeRequired) {
-                    result.alerts.push(this.drug.ageAlert.message);
+                    result.alerts.push(resolveFa('clinical', this.drug.ageAlert.message));
                     result.severity = this.drug.ageAlert.severity;
                 }
             }
@@ -2560,12 +3599,12 @@
                 const ibw = (this.height * this.height * 1.65) / 1000;
 
                 if (this.weight > 1.2 * ibw) {
-                    result.warnings.push(`Patient's actual weight is >120% of Ideal Body Weight (${ibw.toFixed(1)} kg).`);
+                    result.warnings.push(t('dyn.ibwWarn', { ibw: ibw.toFixed(1) }));
                     if (this.drug.hydrophilic) {
                         calcWeight = ibw + 0.4 * (this.weight - ibw); // Adjusted Body Weight
                         this.usedIBW = true;
                         this.ibwVal = calcWeight;
-                        result.alerts.push(`<strong>Hydrophilic Drug in Obesity:</strong> Dose calculated based on Adjusted Body Weight (AdjBW = ${calcWeight.toFixed(1)} kg) to prevent toxicity/underdosing.`);
+                        result.alerts.push(`<strong>${escapeHtml(t('dyn.adjbw'))}</strong>${escapeHtml(t('dyn.adjbwBody', { w: calcWeight.toFixed(1) }))}`);
                         result.severity = 'high';
                     }
                 }
@@ -2580,7 +3619,7 @@
             if (this.drug.maxSingleDoseMg) {
                 if (result.minDose > this.drug.maxSingleDoseMg) {
                     result.minDose = this.drug.maxSingleDoseMg;
-                    result.alerts.push(`Dose exceeded absolute adult max. Capped at ${this.drug.maxSingleDoseMg} ${doseUnitLabel}/dose.`);
+                    result.alerts.push(t('dyn.capped', { max: this.drug.maxSingleDoseMg, unit: doseUnitLabel }));
                     result.severity = 'medium';
                 }
                 if (result.maxDose > this.drug.maxSingleDoseMg) {
@@ -2597,7 +3636,7 @@
 
                 if (this.drug.maxDailyDoseMg && result.dailyMax > this.drug.maxDailyDoseMg) {
                     result.dailyMax = this.drug.maxDailyDoseMg;
-                    result.warnings.push(`Calculated daily dose (Weight &times; ${doseUnitLabel}/kg) was ${originalDailyMax} ${doseUnitLabel}. It has been capped to the adult maximum limit of ${this.drug.maxDailyDoseMg} ${doseUnitLabel}. Please review administration frequency.`);
+                    result.warnings.push(t('dyn.dailyCapped', { unit: doseUnitLabel, orig: originalDailyMax, max: this.drug.maxDailyDoseMg }));
 
                     const dosesPerDay = 24 / result.appliedInterval;
                     const maxAllowedPerDose = this.drug.maxDailyDoseMg / dosesPerDay;
@@ -2616,7 +3655,7 @@
             }
 
             if (result.dailyMax > 1000 && !this.drug.highDoseSafe && !this.drug.maxDailyDoseMg && result.appliedInterval > 0 && doseUnitLabel !== 'Units') {
-                result.warnings.push(`Daily dose (${result.dailyMax} ${doseUnitLabel}) is generally high, verify with max daily allowance.`);
+                result.warnings.push(t('dyn.highDaily', { daily: result.dailyMax, unit: doseUnitLabel }));
                 result.severity = 'high';
             }
 
@@ -2668,7 +3707,7 @@
                     const volStr = (minVol === maxVol) ? `${minVol} ${unitLabel}` : `${minVol} - ${maxVol} ${unitLabel}`;
                     volumeHTML = `
                         <div class="formula-line" style="background: var(--primary-100); padding: 8px; border-radius: var(--radius-sm); margin-top: 8px; border: 1px solid var(--primary-300);">
-                            <span class="f-desc" style="color: var(--primary-800); font-weight: bold;">Volume to Administer:</span>
+                            <span class="f-desc" style="color: var(--primary-800); font-weight: bold;">${escapeHtml(t('formula.volume'))}</span>
                             <span class="f-result" style="color: var(--primary-700); font-size: 0.85rem;"><strong>${escapeHtml(volStr)}</strong></span>
                         </div>
                     `;
@@ -2679,12 +3718,12 @@
             if (result.isFixedDose) {
                 return `
                     <div class="formula-box">
-                        <div class="formula-title"><i class="fas fa-info-circle"></i> Formula:</div>
+                        <div class="formula-title"><i class="fas fa-info-circle"></i> ${escapeHtml(t('formula.title'))}</div>
                         <div class="formula-line">
-                            <span class="f-desc">Age-based, Topical, or Standard Dose</span>
+                            <span class="f-desc">${escapeHtml(t('formula.fixedDesc'))}</span>
                             <span class="f-result">= <strong>${escapeHtml(result.calculatedFixedDose)}</strong></span>
                         </div>
-                        ${result.dailyMaxDisplay ? `<div class="formula-line"><span class="f-desc">Daily Max:</span><span class="f-result"><strong>${escapeHtml(this.drug.maxDailyDoseMg)}${dailyMaxUnit}</strong></span></div>` : ''}
+                        ${result.dailyMaxDisplay ? `<div class="formula-line"><span class="f-desc">${escapeHtml(t('formula.dailyMax'))}</span><span class="f-result"><strong>${escapeHtml(this.drug.maxDailyDoseMg)}${dailyMaxUnit}</strong></span></div>` : ''}
                         ${volumeHTML}
                     </div>
                 `;
@@ -2701,12 +3740,12 @@
             if (nearlyEqual(min, max) || nearlyEqual(result.minDose, result.maxDose)) {
                 return `
                     <div class="formula-box">
-                        <div class="formula-title"><i class="fas fa-square-root-variable"></i> Formula:</div>
+                        <div class="formula-title"><i class="fas fa-square-root-variable"></i> ${escapeHtml(t('formula.title'))}</div>
                         <div class="formula-line">
-                            <span class="f-desc">${escapeHtml(weightStr)} × ${escapeHtml(min)} ${perKgUnit} ${isCappedMin ? '(Capped)' : ''}</span>
+                            <span class="f-desc">${escapeHtml(weightStr)} × ${escapeHtml(min)} ${perKgUnit} ${isCappedMin ? escapeHtml(t('formula.capped')) : ''}</span>
                             <span class="f-result">= <strong>${escapeHtml(this._formatNum(result.minDose))}</strong></span>
                         </div>
-                        ${result.dailyMaxDisplay && result.dailyMax > 0 ? `<div class="formula-line"><span class="f-desc">Daily Max:</span><span class="f-result"><strong>${escapeHtml(result.dailyMax)}${dailyMaxUnit}</strong></span></div>` : ''}
+                        ${result.dailyMaxDisplay && result.dailyMax > 0 ? `<div class="formula-line"><span class="f-desc">${escapeHtml(t('formula.dailyMax'))}</span><span class="f-result"><strong>${escapeHtml(result.dailyMax)}${dailyMaxUnit}</strong></span></div>` : ''}
                         ${volumeHTML}
                     </div>
                 `;
@@ -2714,16 +3753,16 @@
 
             return `
                 <div class="formula-box">
-                    <div class="formula-title"><i class="fas fa-square-root-variable"></i> Formula:</div>
+                    <div class="formula-title"><i class="fas fa-square-root-variable"></i> ${escapeHtml(t('formula.title'))}</div>
                     <div class="formula-line">
-                        <span class="f-desc">Min: ${escapeHtml(weightStr)} × ${escapeHtml(min)} ${perKgUnit} ${isCappedMin ? '(Capped)' : ''}</span>
+                        <span class="f-desc">Min: ${escapeHtml(weightStr)} × ${escapeHtml(min)} ${perKgUnit} ${isCappedMin ? escapeHtml(t('formula.capped')) : ''}</span>
                         <span class="f-result">= <strong>${escapeHtml(this._formatNum(result.minDose))}</strong></span>
                     </div>
                     <div class="formula-line">
-                        <span class="f-desc">Max: ${escapeHtml(weightStr)} × ${escapeHtml(max)} ${perKgUnit} ${isCappedMax ? '(Capped)' : ''}</span>
+                        <span class="f-desc">Max: ${escapeHtml(weightStr)} × ${escapeHtml(max)} ${perKgUnit} ${isCappedMax ? escapeHtml(t('formula.capped')) : ''}</span>
                         <span class="f-result">= <strong>${escapeHtml(this._formatNum(result.maxDose))}</strong></span>
                     </div>
-                    ${result.dailyMaxDisplay && result.dailyMax > 0 ? `<div class="formula-line"><span class="f-desc">Daily Max:</span><span class="f-result"><strong>${escapeHtml(result.dailyMax)}${dailyMaxUnit}</strong></span></div>` : ''}
+                    ${result.dailyMaxDisplay && result.dailyMax > 0 ? `<div class="formula-line"><span class="f-desc">${escapeHtml(t('formula.dailyMax'))}</span><span class="f-result"><strong>${escapeHtml(result.dailyMax)}${dailyMaxUnit}</strong></span></div>` : ''}
                     ${volumeHTML}
                 </div>
             `;
@@ -2809,22 +3848,18 @@
     // from small, readable pieces.
 
 
-    const PREMIUM_FEATURES = [
-        'دسترسی به تمامی داروهای قفل شده',
-        'بررسی هوشمند تداخلات دارویی',
-        'تنظیمات نوزادان نارس (PMA)',
-        'تنظیم دوز در نارسایی کلیوی و کبدی'
-    ];
-
     function featureListItem(text) {
         return `
             <li style="display: flex; align-items: center; margin-bottom: 14px; color: #374151; font-size: 0.9rem; font-weight: 600;">
-                <i class="fas fa-check-circle" style="color: #10b981; margin-left: 12px; font-size: 1.2rem;"></i>
+                <i class="fas fa-check-circle" style="color: #10b981; margin-left: 12px; margin-right: 12px; font-size: 1.2rem;"></i>
                 ${Utils.escapeHtml(text)}
             </li>`;
     }
 
     function buildModalMarkup() {
+        const features = [t('premium.feat1'), t('premium.feat2'), t('premium.feat3'), t('premium.feat4')];
+        const dir = isRTL() ? 'rtl' : 'ltr';
+        const align = isRTL() ? 'right' : 'left';
         return `
     <div class="modal-container" style="border-radius: 20px; overflow: hidden; border: 1px solid rgba(245, 158, 11, 0.3); box-shadow: 0 10px 40px rgba(0,0,0,0.2); padding: 0; max-width: 90%; width: 360px; margin: auto; align-self: center;">
         <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); padding: 35px 20px 25px; text-align: center; position: relative; border-bottom: 1px solid #fde68a;">
@@ -2834,52 +3869,53 @@
             <div style="width: 75px; height: 75px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px; box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4); border: 4px solid white;">
                 <i class="fas fa-crown" style="color: white; font-size: 34px;"></i>
             </div>
-            <h3 style="color: #92400e; font-size: 1.5rem; font-weight: 900; margin: 0; font-family: inherit;">نسخه ویژه PediCalc</h3>
-            <p style="color: #b45309; font-size: 0.85rem; margin-top: 8px; font-weight: 600;">دسترسی نامحدود به تمامی امکانات بالینی</p>
+            <h3 style="color: #92400e; font-size: 1.5rem; font-weight: 900; margin: 0; font-family: inherit;">${Utils.escapeHtml(t('premium.title'))}</h3>
+            <p style="color: #b45309; font-size: 0.85rem; margin-top: 8px; font-weight: 600;">${Utils.escapeHtml(t('premium.subtitle'))}</p>
         </div>
-        <div class="modal-body" style="padding: 25px 25px 20px; background: white; text-align: right; direction: rtl;">
+        <div class="modal-body" style="padding: 25px 25px 20px; background: white; text-align: ${align}; direction: ${dir};">
             <ul style="list-style: none; padding: 0; margin: 0 0 25px 0;">
-                ${PREMIUM_FEATURES.map(featureListItem).join('')}
+                ${features.map(featureListItem).join('')}
             </ul>
             <button id="buyPremiumBtn" style="width: 100%; padding: 14px; font-size: 1.05rem; font-weight: 800; font-family: inherit; color: white; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 15px rgba(217, 119, 6, 0.35); display: flex; align-items: center; justify-content: center; gap: 8px;">
-                <i class="fas fa-gem"></i> فعال‌سازی و خرید
+                <i class="fas fa-gem"></i> ${Utils.escapeHtml(t('premium.buy'))}
             </button>
             <div style="text-align: center; margin-top: 15px;">
                 <span style="font-size: 0.7rem; color: #9ca3af; display: inline-flex; align-items: center; justify-content: center; gap: 4px;">
-                    <i class="fas fa-shield-alt"></i> پرداخت امن از طریق کافه‌بازار
+                    <i class="fas fa-shield-alt"></i> ${Utils.escapeHtml(t('premium.securePay'))}
                 </span>
             </div>
         </div>
     </div>`;
     }
 
-    /** Show (creating on first use) the premium upsell modal. */
+    /** Show the premium upsell modal, (re)building its markup in the current language. */
     function showPremiumModal() {
         let modal = document.getElementById('premium-modal');
         if (!modal) {
             modal = document.createElement('div');
             modal.id = 'premium-modal';
-            modal.className = 'modal-overlay active';
-            modal.innerHTML = buildModalMarkup();
+            modal.className = 'modal-overlay';
             document.body.appendChild(modal);
-
-            const buyBtn = modal.querySelector('#buyPremiumBtn');
-            if (buyBtn) {
-                buyBtn.addEventListener('click', () => {
-                    if (typeof window.Android !== 'undefined' && window.Android.purchasePremium) {
-                        window.Android.purchasePremium();
-                        modal.classList.remove('active');
-                    }
-                });
-            }
-
-            const closeBtn = modal.querySelector('.premium-close-btn-top');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', () => modal.classList.remove('active'));
-            }
-        } else {
-            modal.classList.add('active');
         }
+        // Rebuild every time so the content matches the current language.
+        modal.innerHTML = buildModalMarkup();
+
+        const buyBtn = modal.querySelector('#buyPremiumBtn');
+        if (buyBtn) {
+            buyBtn.addEventListener('click', () => {
+                if (typeof window.Android !== 'undefined' && window.Android.purchasePremium) {
+                    window.Android.purchasePremium();
+                    modal.classList.remove('active');
+                }
+            });
+        }
+
+        const closeBtn = modal.querySelector('.premium-close-btn-top');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+        }
+
+        modal.classList.add('active');
     }
 
     // ===== src/ui/cart.js =====
@@ -2907,12 +3943,12 @@
 
         banner.innerHTML = `
             <div style="font-size: 0.8rem; font-weight: 800; color: var(--danger-700); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-                <i class="fas fa-file-medical"></i> Active Prescriptions (${State.prescriptionList.length})
+                <i class="fas fa-file-medical"></i> ${Utils.escapeHtml(t('cart.active', { n: State.prescriptionList.length }))}
             </div>
             <div style="display: flex; flex-wrap: wrap; gap: 10px; padding-top: 8px;">
                 ${State.prescriptionList.map(name => `
                     <div style="position: relative; background: white; padding: 6px 14px; border-radius: var(--radius-sm); font-size: 0.75rem; font-weight: 700; border: 1px solid var(--danger-200); color: var(--danger-800); box-shadow: var(--shadow-sm);">
-                        ${Utils.escapeHtml(name)}
+                        ${Utils.escapeHtml(resolveFa('drug', name))}
                         <div class="remove-from-cart" data-name="${Utils.escapeHtml(name)}" style="position: absolute; top: -8px; right: -8px; width: 22px; height: 22px; background: var(--danger-500); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.2s; z-index: 2;">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         </div>
@@ -2920,7 +3956,7 @@
                 `).join('')}
             </div>
             <div style="font-size: 0.65rem; color: var(--danger-600); margin-top: 12px;">
-                * Interactions will be checked automatically for these drugs.
+                ${Utils.escapeHtml(t('cart.autocheck'))}
             </div>
         `;
 
@@ -2937,7 +3973,7 @@
                         if (openDropdown) {
                             const activeCartBtn = openDropdown.querySelector('.toggle-cart-btn');
                             if (activeCartBtn && currentDrug.name === name) {
-                                activeCartBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Add to Active Prescription (Check Interactions)';
+                                activeCartBtn.innerHTML = `<i class="fas fa-plus-circle"></i> ${Utils.escapeHtml(t('cart.add'))}`;
                                 activeCartBtn.style.border = '2px dashed var(--primary-500)';
                                 activeCartBtn.style.background = 'var(--primary-50)';
                                 activeCartBtn.style.color = 'var(--primary-700)';
@@ -3037,7 +4073,7 @@
             let iconHtml;
             if (cat.image) {
                 const imageExists = await Utils.checkImage(cat.image);
-                if (imageExists) iconHtml = `<img src="${esc(cat.image)}" alt="${esc(cat.name)}" class="category-image" />`;
+                if (imageExists) iconHtml = `<img src="${esc(cat.image)}" alt="${esc(localized(cat, 'name'))}" class="category-image" />`;
                 else iconHtml = `<i class="fas ${esc(cat.icon)}"></i>`;
             } else {
                 iconHtml = `<i class="fas ${esc(cat.icon)}"></i>`;
@@ -3046,7 +4082,7 @@
             return `
                 <div class="category-item ${isActive}" data-id="${esc(cat.id)}" role="tab" aria-selected="${isActive ? 'true' : 'false'}">
                     <div class="category-icon">${iconHtml}</div>
-                    <div class="category-name">${esc(cat.name)}</div>
+                    <div class="category-name">${esc(localized(cat, 'name'))}</div>
                     <div class="category-count">${count}</div>
                 </div>
             `;
@@ -3065,21 +4101,22 @@
             const q = State.searchQuery.toLowerCase();
             filtered = filtered.filter(d =>
                 d.name.toLowerCase().includes(q) ||
-                (d.indications && d.indications.some(i => i.toLowerCase().includes(q))) ||
+                resolveFa('drug', d.name).toLowerCase().includes(q) ||
+                (d.indications && d.indications.some(i => i.toLowerCase().includes(q) || resolveFa('indication', i).toLowerCase().includes(q))) ||
                 d.category.includes(q)
             );
         }
 
-        DOM.drugCount.textContent = `${drugsDB.length} Drugs`;
-        DOM.resultCount.textContent = `${filtered.length} items`;
+        DOM.drugCount.textContent = t('drugs.count', { n: drugsDB.length });
+        DOM.resultCount.textContent = t('drugs.items', { n: filtered.length });
         State.openDropdownId = null;
 
         if (filtered.length === 0) {
             DOM.drugList.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-search-minus"></i>
-                    <h3>No Drug Found</h3>
-                    <p>Please change the category or search term.</p>
+                    <h3>${esc(t('drugs.none.title'))}</h3>
+                    <p>${esc(t('drugs.none.body'))}</p>
                 </div>
             `;
             return;
@@ -3099,7 +4136,7 @@
 
             const indicationsHTML = drug.indications ? `
                 <div class="drug-indications-mini">
-                    ${drug.indications.slice(0, 2).map(i => `<span class="tag-mini">${esc(i)}</span>`).join('')}
+                    ${drug.indications.slice(0, 2).map(i => `<span class="tag-mini">${esc(resolveFa('indication', i))}</span>`).join('')}
                     ${drug.indications.length > 2 ? `<span class="tag-mini">+</span>` : ''}
                 </div>
             ` : '';
@@ -3113,21 +4150,21 @@
             return `
                 <article class="drug-list-card" data-drug-id="${esc(drug.id)}" data-locked="${isLocked}" style="position: relative;">
                     ${lockHTML}
-                    <button class="close-card-btn" aria-label="Close Calculator">
-                        <img src="assets/close-icon.png" class="close-icon" alt="Close" />
+                    <button class="close-card-btn" aria-label="${esc(t('drugs.closeCalc'))}">
+                        <img src="assets/close-icon.png" class="close-icon" alt="${esc(t('drugs.close'))}" />
                     </button>
                     <div class="drug-card-content">
                         <div class="drug-icon-wrapper">
                             ${iconHtml}
                         </div>
                         <div class="drug-details">
-                            <h4 class="drug-name">${esc(drug.name)}</h4>
+                            <h4 class="drug-name">${esc(resolveFa('drug', drug.name))}</h4>
                             <span class="drug-form">${esc(drug.form)}</span>
                             ${indicationsHTML}
                         </div>
                     </div>
                     <button class="select-drug-btn toggle-calc-btn" data-drug-id="${esc(drug.id)}">
-                        ${isLocked ? '<i class="fas fa-lock"></i> قفل / فعال‌سازی' : '<i class="fas fa-calculator"></i> Calculate Dose'}
+                        ${isLocked ? `<i class="fas fa-lock"></i> ${esc(t('drugs.unlock'))}` : `<i class="fas fa-calculator"></i> ${esc(t('drugs.calculate'))}`}
                     </button>
                     <div class="drug-calc-dropdown" id="calc-dropdown-${esc(drug.id)}" hidden></div>
                 </article>
@@ -3180,17 +4217,18 @@
         const requiresWeight = !isTopical && !isZeroWeight;
 
         const ageInputHTML = drug.requiresAge ? `
-            <input type="number" class="calc-age-input" step="0.01" min="0" max="18" placeholder="Age in years (e.g., 0.08 for 1 mo)" autocomplete="off" />
+            <input type="number" class="calc-age-input" step="0.01" min="0" max="18" placeholder="${esc(t('calc.age'))}" autocomplete="off" />
         ` : '';
 
         const weightInputHTML = requiresWeight ? `
-            <input type="number" class="calc-weight-input" step="0.1" min="0.5" max="150" placeholder="Weight (kg)" autocomplete="off" />
-            <input type="number" class="calc-height-input" step="1" min="30" max="250" placeholder="Height (cm) - Optional" autocomplete="off" />
+            <input type="number" class="calc-weight-input" step="0.1" min="0.5" max="150" placeholder="${esc(t('calc.weight'))}" autocomplete="off" />
+            <input type="number" class="calc-height-input" step="1" min="30" max="250" placeholder="${esc(t('calc.height'))}" autocomplete="off" />
         ` : `<input type="hidden" class="calc-weight-input" value="0" />`;
 
+        // Base-dose display keeps units (mg/kg) in English; only "Standard or Age-based" is translated.
         const baseDoseDisplay = (drug.indicationDoses && drug.indicationDoses.length > 0)
             ? `${drug.indicationDoses[0].minMgPerKg}${drug.indicationDoses[0].minMgPerKg !== drug.indicationDoses[0].maxMgPerKg ? ` to ${drug.indicationDoses[0].maxMgPerKg}` : ''} mg/kg`
-            : (drug.fixedDose ? 'Standard or Age-based' : `${drug.minMgPerKg}${drug.minMgPerKg !== drug.maxMgPerKg ? ` to ${drug.maxMgPerKg}` : ''} mg/kg`);
+            : (drug.fixedDose ? t('calc.standardOrAge') : `${drug.minMgPerKg}${drug.minMgPerKg !== drug.maxMgPerKg ? ` to ${drug.maxMgPerKg}` : ''} mg/kg`);
 
         const hasConcentration = (drug.baseDose !== undefined && drug.baseVolume !== undefined) || !!drug.mgPerMl;
 
@@ -3210,16 +4248,16 @@
         const isInCart = State.prescriptionList && State.prescriptionList.includes(drug.name);
         const cartBtnHTML = `
             <button type="button" class="toggle-cart-btn" style="margin-bottom: 12px; width: 100%; padding: 8px; border-radius: var(--radius-sm); border: 2px dashed ${isInCart ? 'var(--danger-500)' : 'var(--primary-500)'}; background: ${isInCart ? 'var(--danger-50)' : 'var(--primary-50)'}; color: ${isInCart ? 'var(--danger-700)' : 'var(--primary-700)'}; font-weight: 700; font-family: inherit; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;">
-                <i class="fas ${isInCart ? 'fa-minus-circle' : 'fa-plus-circle'}"></i> ${isInCart ? 'Remove from Active Prescription' : 'Add to Active Prescription (Check Interactions)'}
+                <i class="fas ${isInCart ? 'fa-minus-circle' : 'fa-plus-circle'}"></i> ${isInCart ? esc(t('cart.remove')) : esc(t('cart.add'))}
             </button>
         `;
 
         const concentrationHTML = hasConcentration ? `
             <div class="concentration-settings">
-                <label><i class="fas fa-vial"></i> Concentration:</label>
+                <label><i class="fas fa-vial"></i> ${esc(t('calc.concentration'))}</label>
                 <div class="conc-inputs">
                     <input type="number" class="conc-mg" value="${esc(defaultTotalMg)}" step="0.1" min="0.1">
-                    <span>${esc(doseUnit)} per</span>
+                    <span>${esc(doseUnit)} ${esc(t('calc.per'))}</span>
                     <input type="number" class="conc-vol" value="${esc(defaultTotalVol)}" step="0.1" min="0.1">
                     <span>${esc(unitType)}</span>
                 </div>
@@ -3228,15 +4266,15 @@
 
         const indicationSelectorHTML = drug.indicationDoses && drug.indicationDoses.length > 0 ? `
             <div class="custom-dropdown" id="dropdown-group-${esc(drug.id)}">
-                <label class="custom-dropdown-label"><i class="fas fa-stethoscope"></i> Select Clinical Indication:</label>
+                <label class="custom-dropdown-label"><i class="fas fa-stethoscope"></i> ${esc(t('calc.selectIndication'))}</label>
                 <div class="dropdown-selected" id="dropdown-selected-${esc(drug.id)}" data-value="0">
-                    <span class="selected-text">${esc(drug.indicationDoses[0].name)}</span>
+                    <span class="selected-text">${esc(resolveFa('indicationDose', drug.indicationDoses[0].name))}</span>
                     <i class="fas fa-chevron-down dropdown-icon"></i>
                 </div>
                 <div class="dropdown-options" id="dropdown-options-${esc(drug.id)}">
                     ${drug.indicationDoses.map((ind, index) => `
                         <div class="dropdown-option ${index === 0 ? 'selected' : ''}" data-value="${index}">
-                            ${esc(ind.name)}
+                            ${esc(resolveFa('indicationDose', ind.name))}
                         </div>
                     `).join('')}
                 </div>
@@ -3245,39 +4283,39 @@
 
         const advancedClinicalHTML = `
             <div class="adv-clinical-toggle">
-                <img src="assets/settings.png" alt="Advanced Settings" class="gear-icon" style="width: 18px; height: 18px; object-fit: contain; transition: transform 0.3s ease; margin-right: 4px;" /> Advanced Clinical Settings
+                <img src="assets/settings.png" alt="${esc(t('adv.title'))}" class="gear-icon" style="width: 18px; height: 18px; object-fit: contain; transition: transform 0.3s ease; margin-right: 4px;" /> ${esc(t('adv.title'))}
                 <i class="fas fa-chevron-down adv-icon" style="margin-left: auto; transition: transform 0.3s ease;"></i>
             </div>
             <div class="adv-clinical-panel" hidden>
                 <div style="margin-bottom: 12px;">
                     <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); display:block; margin-bottom: 4px;">
-                        Post Menstrual Age (PMA) - Neonates (weeks):
-                        <div style="font-size: 0.6rem; font-weight: 400; color: var(--text-tertiary); margin-top: 2px;">(Gestational Age at birth + Chronological Age)</div>
+                        ${esc(t('adv.pma'))}
+                        <div style="font-size: 0.6rem; font-weight: 400; color: var(--text-tertiary); margin-top: 2px;">${esc(t('adv.pmaHint'))}</div>
                     </label>
-                    <input type="number" class="calc-pma-input" placeholder="e.g., 32" style="width: 100%; padding: 8px; border: 2px solid var(--border-light); border-radius: var(--radius-sm); font-family: inherit; font-size: 0.75rem;">
+                    <input type="number" class="calc-pma-input" placeholder="${esc(t('adv.pmaPlaceholder'))}" style="width: 100%; padding: 8px; border: 2px solid var(--border-light); border-radius: var(--radius-sm); font-family: inherit; font-size: 0.75rem;">
                 </div>
                 <div style="display: flex; gap: 15px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--border-light);">
                     <label style="font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 4px; color: var(--text-primary); cursor: pointer;">
-                        <input type="checkbox" class="calc-renal-cb" style="accent-color: var(--primary-500); width: 14px; height: 14px;"> Renal Impairment
+                        <input type="checkbox" class="calc-renal-cb" style="accent-color: var(--primary-500); width: 14px; height: 14px;"> ${esc(t('adv.renal'))}
                     </label>
                     <label style="font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 4px; color: var(--text-primary); cursor: pointer;">
-                        <input type="checkbox" class="calc-hepatic-cb" style="accent-color: var(--primary-500); width: 14px; height: 14px;"> Hepatic Impairment
+                        <input type="checkbox" class="calc-hepatic-cb" style="accent-color: var(--primary-500); width: 14px; height: 14px;"> ${esc(t('adv.hepatic'))}
                     </label>
                 </div>
                 <div>
-                    <label style="font-size: 0.7rem; font-weight: 800; color: var(--danger-600); display:block; margin-bottom: 4px;">Patient Allergies:</label>
+                    <label style="font-size: 0.7rem; font-weight: 800; color: var(--danger-600); display:block; margin-bottom: 4px;">${esc(t('adv.allergies'))}</label>
                     <div class="allergy-checkbox-group">
                         <label class="allergy-checkbox-label">
-                            <input type="checkbox" class="calc-allergy-cb" value="Penicillin"> Penicillins
+                            <input type="checkbox" class="calc-allergy-cb" value="Penicillin"> ${esc(t('adv.penicillins'))}
                         </label>
                         <label class="allergy-checkbox-label">
-                            <input type="checkbox" class="calc-allergy-cb" value="Cephalosporin"> Cephalosporins
+                            <input type="checkbox" class="calc-allergy-cb" value="Cephalosporin"> ${esc(t('adv.cephalosporins'))}
                         </label>
                         <label class="allergy-checkbox-label">
-                            <input type="checkbox" class="calc-allergy-cb" value="NSAID"> NSAIDs
+                            <input type="checkbox" class="calc-allergy-cb" value="NSAID"> ${esc(t('adv.nsaids'))}
                         </label>
                         <label class="allergy-checkbox-label">
-                            <input type="checkbox" class="calc-allergy-cb" value="Macrolide"> Macrolides
+                            <input type="checkbox" class="calc-allergy-cb" value="Macrolide"> ${esc(t('adv.macrolides'))}
                         </label>
                     </div>
                 </div>
@@ -3286,20 +4324,20 @@
 
         const noInputBoxStyle = (!requiresWeight && !drug.requiresAge) ? 'border-style: dashed; background: var(--primary-50);' : '';
         const buttonStyle = (!requiresWeight && !drug.requiresAge) ? 'width: 100%; padding: 8px; font-size: 0.85rem; justify-content: center; border-radius: var(--radius-md);' : 'padding: 0 10px; min-width: 40px; justify-content: center;';
-        const buttonContent = (!requiresWeight && !drug.requiresAge) ? '<i class="fas fa-file-prescription" style="margin-right: 6px;"></i> Show Instructions' : '<img src="assets/arrow.png" alt="Calculate" style="width: 24px; height: 24px; object-fit: contain; display: block;" />';
+        const buttonContent = (!requiresWeight && !drug.requiresAge) ? `<i class="fas fa-file-prescription" style="margin-right: 6px;"></i> ${esc(t('calc.showInstructions'))}` : '<img src="assets/arrow.png" alt="Calculate" style="width: 24px; height: 24px; object-fit: contain; display: block;" />';
 
         container.innerHTML = `
             <div class="focus-calc-panel">
                 ${cartBtnHTML}
                 ${indicationSelectorHTML}
                 <div class="mdh-base-dose" style="margin-bottom: 10px;">
-                    <span>Base Dose:</span>
+                    <span>${esc(t('calc.baseDose'))}</span>
                     <strong class="dynamic-base-dose-display">${esc(baseDoseDisplay)}</strong>
                 </div>
                 ${concentrationHTML}
                 ${advancedClinicalHTML}
                 <div class="weight-input-section" style="${noInputBoxStyle}">
-                    <label class="weight-input-label">${(requiresWeight || drug.requiresAge) ? 'Enter patient details:' : 'No patient details required:'}</label>
+                    <label class="weight-input-label">${(requiresWeight || drug.requiresAge) ? esc(t('calc.enterDetails')) : esc(t('calc.noDetails'))}</label>
                     <div class="weight-input-group">
                         ${weightInputHTML}
                         ${ageInputHTML}
@@ -3321,13 +4359,13 @@
                 const idx = State.prescriptionList.indexOf(drug.name);
                 if (idx > -1) {
                     State.prescriptionList.splice(idx, 1);
-                    cartBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Add to Active Prescription (Check Interactions)';
+                    cartBtn.innerHTML = `<i class="fas fa-plus-circle"></i> ${esc(t('cart.add'))}`;
                     cartBtn.style.border = '2px dashed var(--primary-500)';
                     cartBtn.style.background = 'var(--primary-50)';
                     cartBtn.style.color = 'var(--primary-700)';
                 } else {
                     State.prescriptionList.push(drug.name);
-                    cartBtn.innerHTML = '<i class="fas fa-minus-circle"></i> Remove from Active Prescription';
+                    cartBtn.innerHTML = `<i class="fas fa-minus-circle"></i> ${esc(t('cart.remove'))}`;
                     cartBtn.style.border = '2px dashed var(--danger-500)';
                     cartBtn.style.background = 'var(--danger-50)';
                     cartBtn.style.color = 'var(--danger-700)';
@@ -3454,7 +4492,7 @@
             const heightVal = heightInput ? Number(heightInput.value) : null;
 
             if (!validateFields()) {
-                errorDiv.textContent = 'Please fix the errors above.'; errorDiv.hidden = false; Utils.vibrate(50); return;
+                errorDiv.textContent = t('calc.fixErrors'); errorDiv.hidden = false; Utils.vibrate(50); return;
             }
             errorDiv.hidden = true; Utils.vibrate();
 
@@ -3464,7 +4502,7 @@
                 const volVal = parseFloat(container.querySelector('.conc-vol').value);
 
                 if (isNaN(mgVal) || isNaN(volVal) || mgVal <= 0 || volVal <= 0) {
-                    errorDiv.textContent = 'Please enter valid positive numbers for concentration.';
+                    errorDiv.textContent = t('calc.badConc');
                     errorDiv.hidden = false;
                     Utils.vibrate(50);
                     return;
@@ -3516,36 +4554,36 @@
                     ivHTML = `
                         <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-left: 4px solid #0ea5e9; padding: 10px; border-radius: 6px; margin-bottom: 12px;">
                             <strong style="color: #0369a1; display:flex; align-items: center; gap: 6px; font-size: 0.75rem; margin-bottom: 6px;"><i class="fas fa-syringe"></i> ${esc(ivGuide.title)}</strong>
-                            <div style="font-size: 0.7rem; color: #334155; margin-bottom: 3px;"><strong>Infusion Rate:</strong> ${esc(ivGuide.rate)}</div>
-                            <div style="font-size: 0.7rem; color: #334155;"><strong>Max Concentration:</strong> ${esc(ivGuide.maxConc)}</div>
-                            ${ivGuide.warning ? `<div style="font-size: 0.65rem; color: #b91c1c; margin-top: 6px; font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> Warning: ${esc(ivGuide.warning)}</div>` : ''}
+                            <div style="font-size: 0.7rem; color: #334155; margin-bottom: 3px;"><strong>${esc(t('iv.rate'))}</strong> ${esc(ivGuide.rate)}</div>
+                            <div style="font-size: 0.7rem; color: #334155;"><strong>${esc(t('iv.maxConc'))}</strong> ${esc(ivGuide.maxConc)}</div>
+                            ${ivGuide.warning ? `<div style="font-size: 0.65rem; color: #b91c1c; margin-top: 6px; font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> ${esc(t('iv.warning'))} ${esc(ivGuide.warning)}</div>` : ''}
                         </div>
                     `;
                 }
             }
 
             let safetyBadge = doseResult.isValid
-                ? `<span class="safety-badge safe"><i class="fas fa-check-circle"></i> No Known Interaction</span>`
+                ? `<span class="safety-badge safe"><i class="fas fa-check-circle"></i> ${esc(t('badge.noInteraction'))}</span>`
                 : (doseResult.severity === 'high'
-                    ? `<span class="safety-badge dangerous"><i class="fas fa-exclamation-triangle"></i> Caution</span>`
-                    : `<span class="safety-badge caution"><i class="fas fa-shield-alt"></i> Monitor</span>`);
+                    ? `<span class="safety-badge dangerous"><i class="fas fa-exclamation-triangle"></i> ${esc(t('badge.caution'))}</span>`
+                    : `<span class="safety-badge caution"><i class="fas fa-shield-alt"></i> ${esc(t('badge.monitor'))}</span>`);
 
             resultArea.innerHTML = `
                 <div class="calc-final-result ${warningClass}">
-                    <div class="cfr-header">Per Dose Amount: ${safetyBadge}</div>
+                    <div class="cfr-header">${esc(t('calc.perDose'))} ${safetyBadge}</div>
                     <div class="cfr-amount">${esc(doseResult.displayResult)}</div>
-                    <div class="cfr-interval">Frequency: <strong>${esc(Utils.getIntervalText(doseResult.appliedInterval))}</strong></div>
+                    <div class="cfr-interval">${esc(t('calc.frequency'))} <strong>${esc(Utils.getIntervalText(doseResult.appliedInterval))}</strong></div>
                 </div>
                 ${calculator.getFormulaHTML(doseResult)}
 
                 <div style="margin-top: 15px;">
                     ${patientWarningsHTML}
                     ${validationHTML}
-                    ${drug.warning ? `<div class="drug-warning"><i class="fas fa-exclamation-triangle"></i> ${esc(drug.warning)}</div>` : ''}
+                    ${drug.warning ? `<div class="drug-warning"><i class="fas fa-exclamation-triangle"></i> ${esc(resolveFa('clinical', drug.warning))}</div>` : ''}
                     ${ivHTML}
                 </div>
 
-                ${showHomeGuide ? `<div class="drug-home-guide" style="margin-top: 10px;"><div class="home-guide-label">Administration Guide</div><div class="home-guide-text">${Utils.generateHomeGuide(drug, minDose, maxDose, doseResult, customConc)}</div></div>` : ''}
+                ${showHomeGuide ? `<div class="drug-home-guide" style="margin-top: 10px;"><div class="home-guide-label">${esc(t('calc.adminGuide'))}</div><div class="home-guide-text">${Utils.generateHomeGuide(drug, minDose, maxDose, doseResult, customConc)}</div></div>` : ''}
             `;
             resultArea.hidden = false;
             setTimeout(() => container.parentElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
@@ -3676,6 +4714,62 @@
         }
     }
 
+    // ===== src/ui/i18n-dom.js =====
+    // src/ui/i18n-dom.js
+    // Applies translations to the STATIC markup in index.html that carries
+    // data-i18n* attributes, and wires the header language-toggle button.
+    //
+    // Attributes supported on any element:
+    //   data-i18n="key"                 -> sets textContent
+    //   data-i18n-placeholder="key"     -> sets placeholder
+    //   data-i18n-aria="key"            -> sets aria-label
+    //   data-i18n-content="key"         -> sets the content attribute (e.g. <meta>)
+    //   data-i18n-args='{"n":0}'        -> optional JSON interpolation args for the key
+
+
+    function argsFor(el) {
+        const raw = el.getAttribute('data-i18n-args');
+        if (!raw) return undefined;
+        try { return JSON.parse(raw); } catch { return undefined; }
+    }
+
+    /** Translate every element in the document that carries a data-i18n* attribute. */
+    function applyStaticTranslations() {
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            el.textContent = t(el.getAttribute('data-i18n'), argsFor(el));
+        });
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            el.setAttribute('placeholder', t(el.getAttribute('data-i18n-placeholder')));
+        });
+        document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+            el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria')));
+        });
+        document.querySelectorAll('[data-i18n-content]').forEach(el => {
+            el.setAttribute('content', t(el.getAttribute('data-i18n-content')));
+        });
+    }
+
+    /**
+     * Wire the header language toggle. `onChange` is invoked after the language
+     * switches so the caller can re-render the dynamic parts (categories, drug list).
+     */
+    function setupLanguageToggle(onChange) {
+        applyLanguage(); // set <html> lang/dir for the persisted/default language
+        applyStaticTranslations();
+
+        const btn = document.getElementById('langToggleBtn');
+        if (btn) {
+            btn.addEventListener('click', () => {
+                toggleLang();
+            });
+        }
+
+        onLangChange(() => {
+            applyStaticTranslations();
+            if (typeof onChange === 'function') onChange(getLang());
+        });
+    }
+
     // ===== src/main.js =====
     // src/main.js
     // Application entry point. Imported as an ES module from index.html.
@@ -3685,6 +4779,14 @@
 
 
     async function init() {
+        // Apply persisted language (dir/lang + static strings) and wire the toggle.
+        // When the language changes, re-render the dynamic UI so it follows suit.
+        setupLanguageToggle(async () => {
+            await renderCategories();
+            renderDrugs();
+            updateCartUI();
+        });
+
         await renderCategories();
         renderDrugs();
         updateCartUI();

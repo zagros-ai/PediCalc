@@ -42,7 +42,9 @@ src/
   data/
     drugs.data.js              # categoriesDB + drugsDB (pure data)
     clinical-rules.data.js     # ClinicalRulesDB: interactions, allergies, IV, PMA (pure data)
+    translations.fa.js         # Persian translations for data strings (drug names, indications, clinical messages)
   core/
+    i18n.js                    # Internationalization: t(), localized(), language state, RTL
     utils.js                   # escapeHtml, unit resolution, formatting, DOM/UX helpers
     validation.js              # ValidationEngine: input/patient validation + contraindications
     clinical-engine.js         # AdvancedClinicalEngine: logic over ClinicalRulesDB
@@ -55,6 +57,7 @@ src/
     cart.js                    # "Active prescriptions" banner
     premium-modal.js           # Premium upsell modal
     disclaimer.js              # First-run legal disclaimer
+    i18n-dom.js                # Applies data-i18n attributes + wires the language toggle
 tests/
   calculator.test.js           # Unit tests for the dosing engine
 ```
@@ -64,6 +67,36 @@ tests/
 that touches the DOM. Data modules also mirror their exports onto `window`
 (`window.drugsDB`, `window.AdvancedClinicalEngine`, …) so the Android WebView
 bridge and any non-module consumers keep working.
+
+## Internationalization (English / Persian)
+
+The app is fully bilingual — **English (default)** and **Persian (فارسی, RTL)** —
+with a language toggle in the header. The choice is persisted in `localStorage`
+and switching flips `<html dir>` between `ltr`/`rtl` and re-renders the UI.
+
+How it is organised:
+
+- **UI strings** live in a dictionary in `src/core/i18n.js`, keyed by dotted
+  ids and looked up with `t('key', { vars })`.
+- **Data strings** (drug names, indications, indication-dose labels, and all
+  clinical / interaction / IV / contraindication messages) live in
+  `src/data/translations.fa.js`, keyed by the exact English source string and
+  resolved with `resolveFa(kind, englishText)`.
+- **Static HTML** carries `data-i18n`, `data-i18n-placeholder`,
+  `data-i18n-aria` and `data-i18n-content` attributes; `src/ui/i18n-dom.js`
+  applies them on boot and on every language change.
+- **English is always the fallback.** If any Persian string is missing, the
+  English original is shown — the app never renders a blank or a raw key.
+- **Units and formulas are intentionally NOT translated** (`mg`, `mcg`,
+  `Units`, `mEq`, `g`, `mg/kg`, `ml`, and the calculation math), so a dose like
+  `100 mg to 150 mg` reads identically in both languages.
+
+To add or fix a translation, edit the relevant map in
+`src/data/translations.fa.js` (data) or the `STRINGS` table in
+`src/core/i18n.js` (UI), then rebuild the bundle.
+
+> ⚠️ The Persian clinical/interaction translations are a first pass and **must
+> be reviewed by a qualified professional** before clinical use.
 
 ## Two ways to run the app
 

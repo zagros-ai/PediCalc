@@ -12,20 +12,20 @@
 //   explicitly so the value's unit is unambiguous.
 
 export const categoriesDB = [
-    { id: 'all', name: 'All', icon: 'fa-layer-group', image: 'assets/categories/all.png' },
-    { id: 'syrup', name: 'Syrup', icon: 'fa-wine-bottle', image: 'assets/categories/syrup.png' },
-    { id: 'drop', name: 'Drop', icon: 'fa-tint', image: 'assets/categories/drop.png' },
-    { id: 'ampoule', name: 'Ampoule', icon: 'fa-syringe', image: 'assets/categories/ampoule.png' },
-    { id: 'tablet', name: 'Tab & Cap', icon: 'fa-pills', image: 'assets/categories/pill.png' },
-    { id: 'powder', name: 'Powder', icon: 'fa-box-open', image: 'assets/categories/powder.png' },
-    { id: 'suppository', name: 'Suppository', icon: 'fa-capsules', image: 'assets/categories/suppository.png' },
-    { id: 'vial', name: 'Vial', icon: 'fa-flask', image: 'assets/categories/vial.png' },
-    { id: 'inhaler', name: 'Inhaler', icon: 'fa-wind', image: 'assets/categories/inhaler.png' },
-    { id: 'ointment', name: 'Ointment', icon: 'fa-hand-sparkles', image: 'assets/categories/ointment.png' },
-    { id: 'cream', name: 'Cream', icon: 'fa-paint-brush', image: 'assets/categories/cream.png' },
-    { id: 'gel', name: 'Gel', icon: 'fa-flask', image: 'assets/categories/gel.png' },
-    { id: 'spray', name: 'Spray', icon: 'fa-spray-can', image: 'assets/categories/spray.png' },
-    { id: 'sachet', name: 'Sachet', icon: 'fa-envelope', image: 'assets/categories/sachet.png' }
+    { id: 'all', name: 'All', nameFa: 'همه', icon: 'fa-layer-group', image: 'assets/categories/all.png' },
+    { id: 'syrup', name: 'Syrup', nameFa: 'شربت', icon: 'fa-wine-bottle', image: 'assets/categories/syrup.png' },
+    { id: 'drop', name: 'Drop', nameFa: 'قطره', icon: 'fa-tint', image: 'assets/categories/drop.png' },
+    { id: 'ampoule', name: 'Ampoule', nameFa: 'آمپول', icon: 'fa-syringe', image: 'assets/categories/ampoule.png' },
+    { id: 'tablet', name: 'Tab & Cap', nameFa: 'قرص و کپسول', icon: 'fa-pills', image: 'assets/categories/pill.png' },
+    { id: 'powder', name: 'Powder', nameFa: 'پودر', icon: 'fa-box-open', image: 'assets/categories/powder.png' },
+    { id: 'suppository', name: 'Suppository', nameFa: 'شیاف', icon: 'fa-capsules', image: 'assets/categories/suppository.png' },
+    { id: 'vial', name: 'Vial', nameFa: 'ویال', icon: 'fa-flask', image: 'assets/categories/vial.png' },
+    { id: 'inhaler', name: 'Inhaler', nameFa: 'اسپری استنشاقی', icon: 'fa-wind', image: 'assets/categories/inhaler.png' },
+    { id: 'ointment', name: 'Ointment', nameFa: 'پماد', icon: 'fa-hand-sparkles', image: 'assets/categories/ointment.png' },
+    { id: 'cream', name: 'Cream', nameFa: 'کرم', icon: 'fa-paint-brush', image: 'assets/categories/cream.png' },
+    { id: 'gel', name: 'Gel', nameFa: 'ژل', icon: 'fa-flask', image: 'assets/categories/gel.png' },
+    { id: 'spray', name: 'Spray', nameFa: 'اسپری', icon: 'fa-spray-can', image: 'assets/categories/spray.png' },
+    { id: 'sachet', name: 'Sachet', nameFa: 'ساشه', icon: 'fa-envelope', image: 'assets/categories/sachet.png' }
 ];
 
 export const drugsDB = [

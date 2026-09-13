@@ -8,6 +8,8 @@
 import { Utils, escapeHtml, nearlyEqual } from './utils.js';
 import { ValidationEngine } from './validation.js';
 import { AdvancedClinicalEngine } from './clinical-engine.js';
+import { t } from './i18n.js';
+import { resolveFa } from '../data/translations.fa.js';
 
 export class DrugDoseCalculator {
     constructor(drug, weight, age = null, customConcentration = null, selectedIndication = null, advancedSettings = {}, height = null) {
@@ -78,11 +80,11 @@ export class DrugDoseCalculator {
         // 3. Process Advanced Clinical Rules (Organ Impairments, Allergies & INTERACTIONS)
         if (AdvancedClinicalEngine) {
             if (this.advancedSettings.pmaVal && (interval !== (this.selectedIndication ? this.selectedIndication.intervalHours : this.drug.intervalHours) || this.neonatalOverrideDose !== null)) {
-                let warnMsg = `Based on NICU protocol (PMA ${this.advancedSettings.pmaVal} weeks), `;
+                let warnMsg = t('dyn.nicu', { pma: this.advancedSettings.pmaVal });
                 if (this.neonatalOverrideDose !== null) {
-                    warnMsg += `dose adjusted to ${this.neonatalOverrideDose} mg/kg and interval to every ${interval} hours.`;
+                    warnMsg += t('dyn.nicuDoseInterval', { dose: this.neonatalOverrideDose, interval });
                 } else {
-                    warnMsg += `dose interval adjusted to every ${interval} hours.`;
+                    warnMsg += t('dyn.nicuInterval', { interval });
                 }
                 result.warnings.push(warnMsg);
             }
@@ -110,13 +112,13 @@ export class DrugDoseCalculator {
                 const interactions = AdvancedClinicalEngine.checkInteractions(this.drug.name, this.advancedSettings.activePrescriptions);
                 interactions.forEach(interaction => {
                     if (interaction.severity === 'critical') {
-                        result.alerts.push(`<strong>Critical Interaction with ${escapeHtml(interaction.interactingWith)}:</strong> ${escapeHtml(interaction.message)}`);
+                        result.alerts.push(`<strong>${escapeHtml(t('dyn.critInteraction', { drug: interaction.interactingWith }))}</strong> ${escapeHtml(interaction.message)}`);
                         result.severity = 'high';
                     } else if (interaction.severity === 'high') {
-                        result.alerts.push(`<strong>Major Interaction with ${escapeHtml(interaction.interactingWith)}:</strong> ${escapeHtml(interaction.message)}`);
+                        result.alerts.push(`<strong>${escapeHtml(t('dyn.majorInteraction', { drug: interaction.interactingWith }))}</strong> ${escapeHtml(interaction.message)}`);
                         if (result.severity !== 'high') result.severity = 'high';
                     } else {
-                        result.warnings.push(`<strong>Interaction with ${escapeHtml(interaction.interactingWith)}:</strong> ${escapeHtml(interaction.message)}`);
+                        result.warnings.push(`<strong>${escapeHtml(t('dyn.interaction', { drug: interaction.interactingWith }))}</strong> ${escapeHtml(interaction.message)}`);
                     }
                 });
             }
@@ -147,7 +149,7 @@ export class DrugDoseCalculator {
             // minWeight: 0 with no minAge means "always applies" (no real threshold), not "never applies".
             const alwaysApplies = !contra.minWeight && !contra.minAge;
             if (weightTriggers || ageTriggers || alwaysApplies) {
-                result.alerts.push(contra.warning);
+                result.alerts.push(resolveFa('clinical', contra.warning));
                 result.severity = contra.severity;
             }
         }
@@ -157,7 +159,7 @@ export class DrugDoseCalculator {
             const formRec = ValidationEngine.getRecommendedForm(this.drug, this.weight);
             if (formRec) {
                 result.warnings.push(formRec.message);
-                if (this.weight < 10) result.alerts.push(`Recommendation: ${escapeHtml(formRec.preferred)} is more suitable for ${escapeHtml(this.drug.name)}.`);
+                if (this.weight < 10) result.alerts.push(t('dyn.recommend', { form: formRec.preferred, drug: resolveFa('drug', this.drug.name) }));
             }
         }
 
@@ -167,7 +169,7 @@ export class DrugDoseCalculator {
         let doseUnitLabel = Utils.resolveDoseUnit(this.drug);
 
         if (this.drug.maxDailyDoseMg) {
-            result.dailyMaxDisplay = ` (Max daily: ${this.drug.maxDailyDoseMg} ${doseUnitLabel})`;
+            result.dailyMaxDisplay = t('dyn.maxDaily', { max: this.drug.maxDailyDoseMg, unit: doseUnitLabel });
         } else {
             result.dailyMaxDisplay = '';
         }
@@ -177,7 +179,7 @@ export class DrugDoseCalculator {
 
     _calculateTopical(result) {
         result.isFixedDose = true;
-        result.calculatedFixedDose = this.drug.fixedDose || 'Apply thin layer';
+        result.calculatedFixedDose = this.drug.fixedDose || t('dyn.applyThin');
         result.displayResult = result.calculatedFixedDose;
         return result;
     }
@@ -195,7 +197,7 @@ export class DrugDoseCalculator {
                 parsedMin = foundTier.minDose;
                 parsedMax = foundTier.maxDose;
             } else if (this.drug.ageAlert && this.age < this.drug.ageAlert.minAgeRequired) {
-                result.alerts.push(this.drug.ageAlert.message);
+                result.alerts.push(resolveFa('clinical', this.drug.ageAlert.message));
                 result.severity = this.drug.ageAlert.severity;
             }
         }
@@ -246,12 +248,12 @@ export class DrugDoseCalculator {
             const ibw = (this.height * this.height * 1.65) / 1000;
 
             if (this.weight > 1.2 * ibw) {
-                result.warnings.push(`Patient's actual weight is >120% of Ideal Body Weight (${ibw.toFixed(1)} kg).`);
+                result.warnings.push(t('dyn.ibwWarn', { ibw: ibw.toFixed(1) }));
                 if (this.drug.hydrophilic) {
                     calcWeight = ibw + 0.4 * (this.weight - ibw); // Adjusted Body Weight
                     this.usedIBW = true;
                     this.ibwVal = calcWeight;
-                    result.alerts.push(`<strong>Hydrophilic Drug in Obesity:</strong> Dose calculated based on Adjusted Body Weight (AdjBW = ${calcWeight.toFixed(1)} kg) to prevent toxicity/underdosing.`);
+                    result.alerts.push(`<strong>${escapeHtml(t('dyn.adjbw'))}</strong>${escapeHtml(t('dyn.adjbwBody', { w: calcWeight.toFixed(1) }))}`);
                     result.severity = 'high';
                 }
             }
@@ -266,7 +268,7 @@ export class DrugDoseCalculator {
         if (this.drug.maxSingleDoseMg) {
             if (result.minDose > this.drug.maxSingleDoseMg) {
                 result.minDose = this.drug.maxSingleDoseMg;
-                result.alerts.push(`Dose exceeded absolute adult max. Capped at ${this.drug.maxSingleDoseMg} ${doseUnitLabel}/dose.`);
+                result.alerts.push(t('dyn.capped', { max: this.drug.maxSingleDoseMg, unit: doseUnitLabel }));
                 result.severity = 'medium';
             }
             if (result.maxDose > this.drug.maxSingleDoseMg) {
@@ -283,7 +285,7 @@ export class DrugDoseCalculator {
 
             if (this.drug.maxDailyDoseMg && result.dailyMax > this.drug.maxDailyDoseMg) {
                 result.dailyMax = this.drug.maxDailyDoseMg;
-                result.warnings.push(`Calculated daily dose (Weight &times; ${doseUnitLabel}/kg) was ${originalDailyMax} ${doseUnitLabel}. It has been capped to the adult maximum limit of ${this.drug.maxDailyDoseMg} ${doseUnitLabel}. Please review administration frequency.`);
+                result.warnings.push(t('dyn.dailyCapped', { unit: doseUnitLabel, orig: originalDailyMax, max: this.drug.maxDailyDoseMg }));
 
                 const dosesPerDay = 24 / result.appliedInterval;
                 const maxAllowedPerDose = this.drug.maxDailyDoseMg / dosesPerDay;
@@ -302,7 +304,7 @@ export class DrugDoseCalculator {
         }
 
         if (result.dailyMax > 1000 && !this.drug.highDoseSafe && !this.drug.maxDailyDoseMg && result.appliedInterval > 0 && doseUnitLabel !== 'Units') {
-            result.warnings.push(`Daily dose (${result.dailyMax} ${doseUnitLabel}) is generally high, verify with max daily allowance.`);
+            result.warnings.push(t('dyn.highDaily', { daily: result.dailyMax, unit: doseUnitLabel }));
             result.severity = 'high';
         }
 
@@ -354,7 +356,7 @@ export class DrugDoseCalculator {
                 const volStr = (minVol === maxVol) ? `${minVol} ${unitLabel}` : `${minVol} - ${maxVol} ${unitLabel}`;
                 volumeHTML = `
                     <div class="formula-line" style="background: var(--primary-100); padding: 8px; border-radius: var(--radius-sm); margin-top: 8px; border: 1px solid var(--primary-300);">
-                        <span class="f-desc" style="color: var(--primary-800); font-weight: bold;">Volume to Administer:</span>
+                        <span class="f-desc" style="color: var(--primary-800); font-weight: bold;">${escapeHtml(t('formula.volume'))}</span>
                         <span class="f-result" style="color: var(--primary-700); font-size: 0.85rem;"><strong>${escapeHtml(volStr)}</strong></span>
                     </div>
                 `;
@@ -365,12 +367,12 @@ export class DrugDoseCalculator {
         if (result.isFixedDose) {
             return `
                 <div class="formula-box">
-                    <div class="formula-title"><i class="fas fa-info-circle"></i> Formula:</div>
+                    <div class="formula-title"><i class="fas fa-info-circle"></i> ${escapeHtml(t('formula.title'))}</div>
                     <div class="formula-line">
-                        <span class="f-desc">Age-based, Topical, or Standard Dose</span>
+                        <span class="f-desc">${escapeHtml(t('formula.fixedDesc'))}</span>
                         <span class="f-result">= <strong>${escapeHtml(result.calculatedFixedDose)}</strong></span>
                     </div>
-                    ${result.dailyMaxDisplay ? `<div class="formula-line"><span class="f-desc">Daily Max:</span><span class="f-result"><strong>${escapeHtml(this.drug.maxDailyDoseMg)}${dailyMaxUnit}</strong></span></div>` : ''}
+                    ${result.dailyMaxDisplay ? `<div class="formula-line"><span class="f-desc">${escapeHtml(t('formula.dailyMax'))}</span><span class="f-result"><strong>${escapeHtml(this.drug.maxDailyDoseMg)}${dailyMaxUnit}</strong></span></div>` : ''}
                     ${volumeHTML}
                 </div>
             `;
@@ -387,12 +389,12 @@ export class DrugDoseCalculator {
         if (nearlyEqual(min, max) || nearlyEqual(result.minDose, result.maxDose)) {
             return `
                 <div class="formula-box">
-                    <div class="formula-title"><i class="fas fa-square-root-variable"></i> Formula:</div>
+                    <div class="formula-title"><i class="fas fa-square-root-variable"></i> ${escapeHtml(t('formula.title'))}</div>
                     <div class="formula-line">
-                        <span class="f-desc">${escapeHtml(weightStr)} × ${escapeHtml(min)} ${perKgUnit} ${isCappedMin ? '(Capped)' : ''}</span>
+                        <span class="f-desc">${escapeHtml(weightStr)} × ${escapeHtml(min)} ${perKgUnit} ${isCappedMin ? escapeHtml(t('formula.capped')) : ''}</span>
                         <span class="f-result">= <strong>${escapeHtml(this._formatNum(result.minDose))}</strong></span>
                     </div>
-                    ${result.dailyMaxDisplay && result.dailyMax > 0 ? `<div class="formula-line"><span class="f-desc">Daily Max:</span><span class="f-result"><strong>${escapeHtml(result.dailyMax)}${dailyMaxUnit}</strong></span></div>` : ''}
+                    ${result.dailyMaxDisplay && result.dailyMax > 0 ? `<div class="formula-line"><span class="f-desc">${escapeHtml(t('formula.dailyMax'))}</span><span class="f-result"><strong>${escapeHtml(result.dailyMax)}${dailyMaxUnit}</strong></span></div>` : ''}
                     ${volumeHTML}
                 </div>
             `;
@@ -400,16 +402,16 @@ export class DrugDoseCalculator {
 
         return `
             <div class="formula-box">
-                <div class="formula-title"><i class="fas fa-square-root-variable"></i> Formula:</div>
+                <div class="formula-title"><i class="fas fa-square-root-variable"></i> ${escapeHtml(t('formula.title'))}</div>
                 <div class="formula-line">
-                    <span class="f-desc">Min: ${escapeHtml(weightStr)} × ${escapeHtml(min)} ${perKgUnit} ${isCappedMin ? '(Capped)' : ''}</span>
+                    <span class="f-desc">Min: ${escapeHtml(weightStr)} × ${escapeHtml(min)} ${perKgUnit} ${isCappedMin ? escapeHtml(t('formula.capped')) : ''}</span>
                     <span class="f-result">= <strong>${escapeHtml(this._formatNum(result.minDose))}</strong></span>
                 </div>
                 <div class="formula-line">
-                    <span class="f-desc">Max: ${escapeHtml(weightStr)} × ${escapeHtml(max)} ${perKgUnit} ${isCappedMax ? '(Capped)' : ''}</span>
+                    <span class="f-desc">Max: ${escapeHtml(weightStr)} × ${escapeHtml(max)} ${perKgUnit} ${isCappedMax ? escapeHtml(t('formula.capped')) : ''}</span>
                     <span class="f-result">= <strong>${escapeHtml(this._formatNum(result.maxDose))}</strong></span>
                 </div>
-                ${result.dailyMaxDisplay && result.dailyMax > 0 ? `<div class="formula-line"><span class="f-desc">Daily Max:</span><span class="f-result"><strong>${escapeHtml(result.dailyMax)}${dailyMaxUnit}</strong></span></div>` : ''}
+                ${result.dailyMaxDisplay && result.dailyMax > 0 ? `<div class="formula-line"><span class="f-desc">${escapeHtml(t('formula.dailyMax'))}</span><span class="f-result"><strong>${escapeHtml(result.dailyMax)}${dailyMaxUnit}</strong></span></div>` : ''}
                 ${volumeHTML}
             </div>
         `;

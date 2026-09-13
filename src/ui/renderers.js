@@ -11,6 +11,8 @@ import { AdvancedClinicalEngine } from '../core/clinical-engine.js';
 import { categoriesDB, drugsDB } from '../data/drugs.data.js';
 import { showPremiumModal } from './premium-modal.js';
 import { updateCartUI } from './cart.js';
+import { t, localized } from '../core/i18n.js';
+import { resolveFa } from '../data/translations.fa.js';
 
 const esc = Utils.escapeHtml;
 
@@ -27,7 +29,7 @@ export async function renderCategories() {
         let iconHtml;
         if (cat.image) {
             const imageExists = await Utils.checkImage(cat.image);
-            if (imageExists) iconHtml = `<img src="${esc(cat.image)}" alt="${esc(cat.name)}" class="category-image" />`;
+            if (imageExists) iconHtml = `<img src="${esc(cat.image)}" alt="${esc(localized(cat, 'name'))}" class="category-image" />`;
             else iconHtml = `<i class="fas ${esc(cat.icon)}"></i>`;
         } else {
             iconHtml = `<i class="fas ${esc(cat.icon)}"></i>`;
@@ -36,7 +38,7 @@ export async function renderCategories() {
         return `
             <div class="category-item ${isActive}" data-id="${esc(cat.id)}" role="tab" aria-selected="${isActive ? 'true' : 'false'}">
                 <div class="category-icon">${iconHtml}</div>
-                <div class="category-name">${esc(cat.name)}</div>
+                <div class="category-name">${esc(localized(cat, 'name'))}</div>
                 <div class="category-count">${count}</div>
             </div>
         `;
@@ -55,21 +57,22 @@ export function renderDrugs() {
         const q = State.searchQuery.toLowerCase();
         filtered = filtered.filter(d =>
             d.name.toLowerCase().includes(q) ||
-            (d.indications && d.indications.some(i => i.toLowerCase().includes(q))) ||
+            resolveFa('drug', d.name).toLowerCase().includes(q) ||
+            (d.indications && d.indications.some(i => i.toLowerCase().includes(q) || resolveFa('indication', i).toLowerCase().includes(q))) ||
             d.category.includes(q)
         );
     }
 
-    DOM.drugCount.textContent = `${drugsDB.length} Drugs`;
-    DOM.resultCount.textContent = `${filtered.length} items`;
+    DOM.drugCount.textContent = t('drugs.count', { n: drugsDB.length });
+    DOM.resultCount.textContent = t('drugs.items', { n: filtered.length });
     State.openDropdownId = null;
 
     if (filtered.length === 0) {
         DOM.drugList.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-search-minus"></i>
-                <h3>No Drug Found</h3>
-                <p>Please change the category or search term.</p>
+                <h3>${esc(t('drugs.none.title'))}</h3>
+                <p>${esc(t('drugs.none.body'))}</p>
             </div>
         `;
         return;
@@ -89,7 +92,7 @@ export function renderDrugs() {
 
         const indicationsHTML = drug.indications ? `
             <div class="drug-indications-mini">
-                ${drug.indications.slice(0, 2).map(i => `<span class="tag-mini">${esc(i)}</span>`).join('')}
+                ${drug.indications.slice(0, 2).map(i => `<span class="tag-mini">${esc(resolveFa('indication', i))}</span>`).join('')}
                 ${drug.indications.length > 2 ? `<span class="tag-mini">+</span>` : ''}
             </div>
         ` : '';
@@ -103,21 +106,21 @@ export function renderDrugs() {
         return `
             <article class="drug-list-card" data-drug-id="${esc(drug.id)}" data-locked="${isLocked}" style="position: relative;">
                 ${lockHTML}
-                <button class="close-card-btn" aria-label="Close Calculator">
-                    <img src="assets/close-icon.png" class="close-icon" alt="Close" />
+                <button class="close-card-btn" aria-label="${esc(t('drugs.closeCalc'))}">
+                    <img src="assets/close-icon.png" class="close-icon" alt="${esc(t('drugs.close'))}" />
                 </button>
                 <div class="drug-card-content">
                     <div class="drug-icon-wrapper">
                         ${iconHtml}
                     </div>
                     <div class="drug-details">
-                        <h4 class="drug-name">${esc(drug.name)}</h4>
+                        <h4 class="drug-name">${esc(resolveFa('drug', drug.name))}</h4>
                         <span class="drug-form">${esc(drug.form)}</span>
                         ${indicationsHTML}
                     </div>
                 </div>
                 <button class="select-drug-btn toggle-calc-btn" data-drug-id="${esc(drug.id)}">
-                    ${isLocked ? '<i class="fas fa-lock"></i> قفل / فعال‌سازی' : '<i class="fas fa-calculator"></i> Calculate Dose'}
+                    ${isLocked ? `<i class="fas fa-lock"></i> ${esc(t('drugs.unlock'))}` : `<i class="fas fa-calculator"></i> ${esc(t('drugs.calculate'))}`}
                 </button>
                 <div class="drug-calc-dropdown" id="calc-dropdown-${esc(drug.id)}" hidden></div>
             </article>
@@ -170,17 +173,18 @@ export function renderCalcUI(drugId, container) {
     const requiresWeight = !isTopical && !isZeroWeight;
 
     const ageInputHTML = drug.requiresAge ? `
-        <input type="number" class="calc-age-input" step="0.01" min="0" max="18" placeholder="Age in years (e.g., 0.08 for 1 mo)" autocomplete="off" />
+        <input type="number" class="calc-age-input" step="0.01" min="0" max="18" placeholder="${esc(t('calc.age'))}" autocomplete="off" />
     ` : '';
 
     const weightInputHTML = requiresWeight ? `
-        <input type="number" class="calc-weight-input" step="0.1" min="0.5" max="150" placeholder="Weight (kg)" autocomplete="off" />
-        <input type="number" class="calc-height-input" step="1" min="30" max="250" placeholder="Height (cm) - Optional" autocomplete="off" />
+        <input type="number" class="calc-weight-input" step="0.1" min="0.5" max="150" placeholder="${esc(t('calc.weight'))}" autocomplete="off" />
+        <input type="number" class="calc-height-input" step="1" min="30" max="250" placeholder="${esc(t('calc.height'))}" autocomplete="off" />
     ` : `<input type="hidden" class="calc-weight-input" value="0" />`;
 
+    // Base-dose display keeps units (mg/kg) in English; only "Standard or Age-based" is translated.
     const baseDoseDisplay = (drug.indicationDoses && drug.indicationDoses.length > 0)
         ? `${drug.indicationDoses[0].minMgPerKg}${drug.indicationDoses[0].minMgPerKg !== drug.indicationDoses[0].maxMgPerKg ? ` to ${drug.indicationDoses[0].maxMgPerKg}` : ''} mg/kg`
-        : (drug.fixedDose ? 'Standard or Age-based' : `${drug.minMgPerKg}${drug.minMgPerKg !== drug.maxMgPerKg ? ` to ${drug.maxMgPerKg}` : ''} mg/kg`);
+        : (drug.fixedDose ? t('calc.standardOrAge') : `${drug.minMgPerKg}${drug.minMgPerKg !== drug.maxMgPerKg ? ` to ${drug.maxMgPerKg}` : ''} mg/kg`);
 
     const hasConcentration = (drug.baseDose !== undefined && drug.baseVolume !== undefined) || !!drug.mgPerMl;
 
@@ -200,16 +204,16 @@ export function renderCalcUI(drugId, container) {
     const isInCart = State.prescriptionList && State.prescriptionList.includes(drug.name);
     const cartBtnHTML = `
         <button type="button" class="toggle-cart-btn" style="margin-bottom: 12px; width: 100%; padding: 8px; border-radius: var(--radius-sm); border: 2px dashed ${isInCart ? 'var(--danger-500)' : 'var(--primary-500)'}; background: ${isInCart ? 'var(--danger-50)' : 'var(--primary-50)'}; color: ${isInCart ? 'var(--danger-700)' : 'var(--primary-700)'}; font-weight: 700; font-family: inherit; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;">
-            <i class="fas ${isInCart ? 'fa-minus-circle' : 'fa-plus-circle'}"></i> ${isInCart ? 'Remove from Active Prescription' : 'Add to Active Prescription (Check Interactions)'}
+            <i class="fas ${isInCart ? 'fa-minus-circle' : 'fa-plus-circle'}"></i> ${isInCart ? esc(t('cart.remove')) : esc(t('cart.add'))}
         </button>
     `;
 
     const concentrationHTML = hasConcentration ? `
         <div class="concentration-settings">
-            <label><i class="fas fa-vial"></i> Concentration:</label>
+            <label><i class="fas fa-vial"></i> ${esc(t('calc.concentration'))}</label>
             <div class="conc-inputs">
                 <input type="number" class="conc-mg" value="${esc(defaultTotalMg)}" step="0.1" min="0.1">
-                <span>${esc(doseUnit)} per</span>
+                <span>${esc(doseUnit)} ${esc(t('calc.per'))}</span>
                 <input type="number" class="conc-vol" value="${esc(defaultTotalVol)}" step="0.1" min="0.1">
                 <span>${esc(unitType)}</span>
             </div>
@@ -218,15 +222,15 @@ export function renderCalcUI(drugId, container) {
 
     const indicationSelectorHTML = drug.indicationDoses && drug.indicationDoses.length > 0 ? `
         <div class="custom-dropdown" id="dropdown-group-${esc(drug.id)}">
-            <label class="custom-dropdown-label"><i class="fas fa-stethoscope"></i> Select Clinical Indication:</label>
+            <label class="custom-dropdown-label"><i class="fas fa-stethoscope"></i> ${esc(t('calc.selectIndication'))}</label>
             <div class="dropdown-selected" id="dropdown-selected-${esc(drug.id)}" data-value="0">
-                <span class="selected-text">${esc(drug.indicationDoses[0].name)}</span>
+                <span class="selected-text">${esc(resolveFa('indicationDose', drug.indicationDoses[0].name))}</span>
                 <i class="fas fa-chevron-down dropdown-icon"></i>
             </div>
             <div class="dropdown-options" id="dropdown-options-${esc(drug.id)}">
                 ${drug.indicationDoses.map((ind, index) => `
                     <div class="dropdown-option ${index === 0 ? 'selected' : ''}" data-value="${index}">
-                        ${esc(ind.name)}
+                        ${esc(resolveFa('indicationDose', ind.name))}
                     </div>
                 `).join('')}
             </div>
@@ -235,39 +239,39 @@ export function renderCalcUI(drugId, container) {
 
     const advancedClinicalHTML = `
         <div class="adv-clinical-toggle">
-            <img src="assets/settings.png" alt="Advanced Settings" class="gear-icon" style="width: 18px; height: 18px; object-fit: contain; transition: transform 0.3s ease; margin-right: 4px;" /> Advanced Clinical Settings
+            <img src="assets/settings.png" alt="${esc(t('adv.title'))}" class="gear-icon" style="width: 18px; height: 18px; object-fit: contain; transition: transform 0.3s ease; margin-right: 4px;" /> ${esc(t('adv.title'))}
             <i class="fas fa-chevron-down adv-icon" style="margin-left: auto; transition: transform 0.3s ease;"></i>
         </div>
         <div class="adv-clinical-panel" hidden>
             <div style="margin-bottom: 12px;">
                 <label style="font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); display:block; margin-bottom: 4px;">
-                    Post Menstrual Age (PMA) - Neonates (weeks):
-                    <div style="font-size: 0.6rem; font-weight: 400; color: var(--text-tertiary); margin-top: 2px;">(Gestational Age at birth + Chronological Age)</div>
+                    ${esc(t('adv.pma'))}
+                    <div style="font-size: 0.6rem; font-weight: 400; color: var(--text-tertiary); margin-top: 2px;">${esc(t('adv.pmaHint'))}</div>
                 </label>
-                <input type="number" class="calc-pma-input" placeholder="e.g., 32" style="width: 100%; padding: 8px; border: 2px solid var(--border-light); border-radius: var(--radius-sm); font-family: inherit; font-size: 0.75rem;">
+                <input type="number" class="calc-pma-input" placeholder="${esc(t('adv.pmaPlaceholder'))}" style="width: 100%; padding: 8px; border: 2px solid var(--border-light); border-radius: var(--radius-sm); font-family: inherit; font-size: 0.75rem;">
             </div>
             <div style="display: flex; gap: 15px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px dashed var(--border-light);">
                 <label style="font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 4px; color: var(--text-primary); cursor: pointer;">
-                    <input type="checkbox" class="calc-renal-cb" style="accent-color: var(--primary-500); width: 14px; height: 14px;"> Renal Impairment
+                    <input type="checkbox" class="calc-renal-cb" style="accent-color: var(--primary-500); width: 14px; height: 14px;"> ${esc(t('adv.renal'))}
                 </label>
                 <label style="font-size: 0.7rem; font-weight: 700; display: flex; align-items: center; gap: 4px; color: var(--text-primary); cursor: pointer;">
-                    <input type="checkbox" class="calc-hepatic-cb" style="accent-color: var(--primary-500); width: 14px; height: 14px;"> Hepatic Impairment
+                    <input type="checkbox" class="calc-hepatic-cb" style="accent-color: var(--primary-500); width: 14px; height: 14px;"> ${esc(t('adv.hepatic'))}
                 </label>
             </div>
             <div>
-                <label style="font-size: 0.7rem; font-weight: 800; color: var(--danger-600); display:block; margin-bottom: 4px;">Patient Allergies:</label>
+                <label style="font-size: 0.7rem; font-weight: 800; color: var(--danger-600); display:block; margin-bottom: 4px;">${esc(t('adv.allergies'))}</label>
                 <div class="allergy-checkbox-group">
                     <label class="allergy-checkbox-label">
-                        <input type="checkbox" class="calc-allergy-cb" value="Penicillin"> Penicillins
+                        <input type="checkbox" class="calc-allergy-cb" value="Penicillin"> ${esc(t('adv.penicillins'))}
                     </label>
                     <label class="allergy-checkbox-label">
-                        <input type="checkbox" class="calc-allergy-cb" value="Cephalosporin"> Cephalosporins
+                        <input type="checkbox" class="calc-allergy-cb" value="Cephalosporin"> ${esc(t('adv.cephalosporins'))}
                     </label>
                     <label class="allergy-checkbox-label">
-                        <input type="checkbox" class="calc-allergy-cb" value="NSAID"> NSAIDs
+                        <input type="checkbox" class="calc-allergy-cb" value="NSAID"> ${esc(t('adv.nsaids'))}
                     </label>
                     <label class="allergy-checkbox-label">
-                        <input type="checkbox" class="calc-allergy-cb" value="Macrolide"> Macrolides
+                        <input type="checkbox" class="calc-allergy-cb" value="Macrolide"> ${esc(t('adv.macrolides'))}
                     </label>
                 </div>
             </div>
@@ -276,20 +280,20 @@ export function renderCalcUI(drugId, container) {
 
     const noInputBoxStyle = (!requiresWeight && !drug.requiresAge) ? 'border-style: dashed; background: var(--primary-50);' : '';
     const buttonStyle = (!requiresWeight && !drug.requiresAge) ? 'width: 100%; padding: 8px; font-size: 0.85rem; justify-content: center; border-radius: var(--radius-md);' : 'padding: 0 10px; min-width: 40px; justify-content: center;';
-    const buttonContent = (!requiresWeight && !drug.requiresAge) ? '<i class="fas fa-file-prescription" style="margin-right: 6px;"></i> Show Instructions' : '<img src="assets/arrow.png" alt="Calculate" style="width: 24px; height: 24px; object-fit: contain; display: block;" />';
+    const buttonContent = (!requiresWeight && !drug.requiresAge) ? `<i class="fas fa-file-prescription" style="margin-right: 6px;"></i> ${esc(t('calc.showInstructions'))}` : '<img src="assets/arrow.png" alt="Calculate" style="width: 24px; height: 24px; object-fit: contain; display: block;" />';
 
     container.innerHTML = `
         <div class="focus-calc-panel">
             ${cartBtnHTML}
             ${indicationSelectorHTML}
             <div class="mdh-base-dose" style="margin-bottom: 10px;">
-                <span>Base Dose:</span>
+                <span>${esc(t('calc.baseDose'))}</span>
                 <strong class="dynamic-base-dose-display">${esc(baseDoseDisplay)}</strong>
             </div>
             ${concentrationHTML}
             ${advancedClinicalHTML}
             <div class="weight-input-section" style="${noInputBoxStyle}">
-                <label class="weight-input-label">${(requiresWeight || drug.requiresAge) ? 'Enter patient details:' : 'No patient details required:'}</label>
+                <label class="weight-input-label">${(requiresWeight || drug.requiresAge) ? esc(t('calc.enterDetails')) : esc(t('calc.noDetails'))}</label>
                 <div class="weight-input-group">
                     ${weightInputHTML}
                     ${ageInputHTML}
@@ -311,13 +315,13 @@ export function renderCalcUI(drugId, container) {
             const idx = State.prescriptionList.indexOf(drug.name);
             if (idx > -1) {
                 State.prescriptionList.splice(idx, 1);
-                cartBtn.innerHTML = '<i class="fas fa-plus-circle"></i> Add to Active Prescription (Check Interactions)';
+                cartBtn.innerHTML = `<i class="fas fa-plus-circle"></i> ${esc(t('cart.add'))}`;
                 cartBtn.style.border = '2px dashed var(--primary-500)';
                 cartBtn.style.background = 'var(--primary-50)';
                 cartBtn.style.color = 'var(--primary-700)';
             } else {
                 State.prescriptionList.push(drug.name);
-                cartBtn.innerHTML = '<i class="fas fa-minus-circle"></i> Remove from Active Prescription';
+                cartBtn.innerHTML = `<i class="fas fa-minus-circle"></i> ${esc(t('cart.remove'))}`;
                 cartBtn.style.border = '2px dashed var(--danger-500)';
                 cartBtn.style.background = 'var(--danger-50)';
                 cartBtn.style.color = 'var(--danger-700)';
@@ -444,7 +448,7 @@ export function renderCalcUI(drugId, container) {
         const heightVal = heightInput ? Number(heightInput.value) : null;
 
         if (!validateFields()) {
-            errorDiv.textContent = 'Please fix the errors above.'; errorDiv.hidden = false; Utils.vibrate(50); return;
+            errorDiv.textContent = t('calc.fixErrors'); errorDiv.hidden = false; Utils.vibrate(50); return;
         }
         errorDiv.hidden = true; Utils.vibrate();
 
@@ -454,7 +458,7 @@ export function renderCalcUI(drugId, container) {
             const volVal = parseFloat(container.querySelector('.conc-vol').value);
 
             if (isNaN(mgVal) || isNaN(volVal) || mgVal <= 0 || volVal <= 0) {
-                errorDiv.textContent = 'Please enter valid positive numbers for concentration.';
+                errorDiv.textContent = t('calc.badConc');
                 errorDiv.hidden = false;
                 Utils.vibrate(50);
                 return;
@@ -506,36 +510,36 @@ export function renderCalcUI(drugId, container) {
                 ivHTML = `
                     <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-left: 4px solid #0ea5e9; padding: 10px; border-radius: 6px; margin-bottom: 12px;">
                         <strong style="color: #0369a1; display:flex; align-items: center; gap: 6px; font-size: 0.75rem; margin-bottom: 6px;"><i class="fas fa-syringe"></i> ${esc(ivGuide.title)}</strong>
-                        <div style="font-size: 0.7rem; color: #334155; margin-bottom: 3px;"><strong>Infusion Rate:</strong> ${esc(ivGuide.rate)}</div>
-                        <div style="font-size: 0.7rem; color: #334155;"><strong>Max Concentration:</strong> ${esc(ivGuide.maxConc)}</div>
-                        ${ivGuide.warning ? `<div style="font-size: 0.65rem; color: #b91c1c; margin-top: 6px; font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> Warning: ${esc(ivGuide.warning)}</div>` : ''}
+                        <div style="font-size: 0.7rem; color: #334155; margin-bottom: 3px;"><strong>${esc(t('iv.rate'))}</strong> ${esc(ivGuide.rate)}</div>
+                        <div style="font-size: 0.7rem; color: #334155;"><strong>${esc(t('iv.maxConc'))}</strong> ${esc(ivGuide.maxConc)}</div>
+                        ${ivGuide.warning ? `<div style="font-size: 0.65rem; color: #b91c1c; margin-top: 6px; font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> ${esc(t('iv.warning'))} ${esc(ivGuide.warning)}</div>` : ''}
                     </div>
                 `;
             }
         }
 
         let safetyBadge = doseResult.isValid
-            ? `<span class="safety-badge safe"><i class="fas fa-check-circle"></i> No Known Interaction</span>`
+            ? `<span class="safety-badge safe"><i class="fas fa-check-circle"></i> ${esc(t('badge.noInteraction'))}</span>`
             : (doseResult.severity === 'high'
-                ? `<span class="safety-badge dangerous"><i class="fas fa-exclamation-triangle"></i> Caution</span>`
-                : `<span class="safety-badge caution"><i class="fas fa-shield-alt"></i> Monitor</span>`);
+                ? `<span class="safety-badge dangerous"><i class="fas fa-exclamation-triangle"></i> ${esc(t('badge.caution'))}</span>`
+                : `<span class="safety-badge caution"><i class="fas fa-shield-alt"></i> ${esc(t('badge.monitor'))}</span>`);
 
         resultArea.innerHTML = `
             <div class="calc-final-result ${warningClass}">
-                <div class="cfr-header">Per Dose Amount: ${safetyBadge}</div>
+                <div class="cfr-header">${esc(t('calc.perDose'))} ${safetyBadge}</div>
                 <div class="cfr-amount">${esc(doseResult.displayResult)}</div>
-                <div class="cfr-interval">Frequency: <strong>${esc(Utils.getIntervalText(doseResult.appliedInterval))}</strong></div>
+                <div class="cfr-interval">${esc(t('calc.frequency'))} <strong>${esc(Utils.getIntervalText(doseResult.appliedInterval))}</strong></div>
             </div>
             ${calculator.getFormulaHTML(doseResult)}
 
             <div style="margin-top: 15px;">
                 ${patientWarningsHTML}
                 ${validationHTML}
-                ${drug.warning ? `<div class="drug-warning"><i class="fas fa-exclamation-triangle"></i> ${esc(drug.warning)}</div>` : ''}
+                ${drug.warning ? `<div class="drug-warning"><i class="fas fa-exclamation-triangle"></i> ${esc(resolveFa('clinical', drug.warning))}</div>` : ''}
                 ${ivHTML}
             </div>
 
-            ${showHomeGuide ? `<div class="drug-home-guide" style="margin-top: 10px;"><div class="home-guide-label">Administration Guide</div><div class="home-guide-text">${Utils.generateHomeGuide(drug, minDose, maxDose, doseResult, customConc)}</div></div>` : ''}
+            ${showHomeGuide ? `<div class="drug-home-guide" style="margin-top: 10px;"><div class="home-guide-label">${esc(t('calc.adminGuide'))}</div><div class="home-guide-text">${Utils.generateHomeGuide(drug, minDose, maxDose, doseResult, customConc)}</div></div>` : ''}
         `;
         resultArea.hidden = false;
         setTimeout(() => container.parentElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);

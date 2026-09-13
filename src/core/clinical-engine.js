@@ -5,6 +5,19 @@
 // src/data/clinical-rules.data.js.
 
 import { ClinicalRulesDB } from '../data/clinical-rules.data.js';
+import { t } from './i18n.js';
+import { resolveFa } from '../data/translations.fa.js';
+
+/** Localized label for an allergy class name used inside allergy sentences. */
+function allergyClassLabel(allergyClass) {
+    const key = {
+        'Penicillin': 'adv.penicillins',
+        'Cephalosporin': 'adv.cephalosporins',
+        'NSAID': 'adv.nsaids',
+        'Macrolide': 'adv.macrolides'
+    }[allergyClass];
+    return key ? t(key) : allergyClass;
+}
 
 /** Strip a parenthetical brand/qualifier suffix, e.g. "Acetaminophen (Apotel)" -> "Acetaminophen". */
 function getBaseName(name) {
@@ -28,10 +41,10 @@ export const AdvancedClinicalEngine = {
         const guideline = ClinicalRulesDB.ivGuidelines[drugName];
         if (!guideline) return null;
         return {
-            title: 'IV Infusion Guidelines',
-            rate: guideline.rate || 'Standard',
+            title: t('iv.title'),
+            rate: guideline.rate || 'Standard',       // rate/conc keep units → not translated
             maxConc: guideline.maxConcentration || 'N/A',
-            warning: guideline.warning || ''
+            warning: guideline.warning ? resolveFa('clinical', guideline.warning) : ''
         };
     },
 
@@ -39,8 +52,8 @@ export const AdvancedClinicalEngine = {
         const adjustment = ClinicalRulesDB.adjustments[drugName];
         if (adjustment && adjustment.type === impairmentType) {
             return {
-                alert: `Requires ${impairmentType === 'renal' ? 'Renal' : 'Hepatic'} Dose Adjustment`,
-                message: adjustment.warning
+                alert: t(impairmentType === 'renal' ? 'dyn.renalAdjust' : 'dyn.hepaticAdjust'),
+                message: resolveFa('clinical', adjustment.warning)
             };
         }
         return null;
@@ -50,20 +63,21 @@ export const AdvancedClinicalEngine = {
         const risks = [];
         patientAllergies.forEach(allergyClass => {
             const drugsInClass = ClinicalRulesDB.crossAllergies[allergyClass];
+            const drugFa = resolveFa('drug', drugName);
             if (drugsInClass && drugsInClass.includes(drugName)) {
                 risks.push({
                     severity: 'critical',
-                    message: `Absolute Contraindication! Patient is allergic to ${allergyClass} class.`
+                    message: t('allergy.absolute', { class: allergyClassLabel(allergyClass) })
                 });
             } else if (allergyClass === 'Penicillin' && ClinicalRulesDB.crossAllergies['Cephalosporin'].includes(drugName)) {
                 risks.push({
                     severity: 'high',
-                    message: `Caution: Patient is allergic to Penicillin. There is a 3-5% risk of cross-reactivity with Cephalosporins (${drugName}).`
+                    message: t('allergy.penToCeph', { drug: drugFa })
                 });
             } else if (allergyClass === 'Cephalosporin' && ClinicalRulesDB.crossAllergies['Penicillin'].includes(drugName)) {
                 risks.push({
                     severity: 'high',
-                    message: `Caution: Patient is allergic to Cephalosporins. There is a risk of cross-reactivity with Penicillins (${drugName}).`
+                    message: t('allergy.cephToPen', { drug: drugFa })
                 });
             }
         });
@@ -88,10 +102,11 @@ export const AdvancedClinicalEngine = {
 
             if (interactingActiveDrug) {
                 const activeOriginalName = activePrescriptionList.find(d => getBaseName(d) === interactingActiveDrug);
+                const displayName = activeOriginalName || interactingActiveDrug;
                 foundInteractions.push({
-                    interactingWith: activeOriginalName || interactingActiveDrug,
+                    interactingWith: resolveFa('drug', displayName),
                     severity: interaction.severity,
-                    message: interaction.message
+                    message: resolveFa('clinical', interaction.message)
                 });
             }
         });
