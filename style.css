@@ -2,6 +2,7 @@
 :root {
     --primary-50: #f0f9ff;
     --primary-100: #e0f2fe;
+    --primary-200: #bae6fd;
     --primary-300: #7dd3fc; /* متغیر اضافه‌شده */
     --primary-500: #0ea5e9;
     --primary-600: #0284c7;
@@ -151,6 +152,47 @@ body {
 }
 .header-btn:hover { color: var(--primary-600); }
 .header-btn:active { transform: scale(0.92); }
+
+/* ---- Language toggle (pill) ---- */
+.lang-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px 5px 10px;
+    border: 1.5px solid var(--primary-200, #bae6fd);
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--primary-50) 0%, #ffffff 100%);
+    color: var(--primary-700);
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 0.78rem;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast);
+    -webkit-tap-highlight-color: transparent;
+}
+.lang-toggle:hover {
+    border-color: var(--primary-500);
+    background: linear-gradient(135deg, var(--primary-100) 0%, var(--primary-50) 100%);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+.lang-toggle:active { transform: scale(0.94); }
+
+.lang-toggle-globe {
+    font-size: 0.95rem;
+    color: var(--primary-500);
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.lang-toggle:hover .lang-toggle-globe { transform: rotate(180deg); }
+
+.lang-toggle-label {
+    letter-spacing: 0.2px;
+    /* Latin label stays LTR even inside an RTL page */
+    direction: ltr;
+    unicode-bidi: isolate;
+}
 
 .main-content {
     flex: 1;
@@ -704,6 +746,10 @@ body {
     border-radius: var(--radius-sm);
     padding: 10px;
     margin-bottom: var(--space-2);
+    /* Formulas contain English units/math (mg/kg, ×, =, numbers), so they
+       always read left-to-right and are left-aligned, even in Persian mode. */
+    direction: ltr;
+    text-align: left;
 }
 
 .formula-title {
@@ -1341,8 +1387,9 @@ body {
 [dir="rtl"] .drug-contraindication.medium { border-left: none; border-right: 3px solid var(--warning-600); }
 [dir="rtl"] .drug-home-guide { border-left: none; border-right: 3px solid var(--accent-500); }
 
-/* Formula/description lines read right-to-left */
-[dir="rtl"] .f-desc { text-align: right; }
+/* Formula box always reads left-to-right (English units/math), even in RTL */
+[dir="rtl"] .formula-box { direction: ltr; text-align: left; }
+[dir="rtl"] .f-desc { text-align: left; }
 
 /* Side navigation slides in from the right in RTL */
 [dir="rtl"] .side-nav { left: auto; right: 0; transform: translateX(100%); }
