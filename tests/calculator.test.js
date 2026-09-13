@@ -167,3 +167,27 @@ test('custom concentration does not change mg dose (only volume)', () => {
     // formula HTML should include a volume line
     assert.match(drug ? new DrugDoseCalculator(drug, 10, null, 24).getFormulaHTML(r) : '', /Volume to Administer/);
 });
+
+
+test('float-safe equality: min/max that differ only by rounding collapse to one value', () => {
+    // 0.1 + 0.2 !== 0.3 in IEEE-754; a naive === would render a bogus range.
+    const drug = {
+        name: 'TestFloat', form: 'Syrup', category: 'syrup',
+        minMgPerKg: 0.1 + 0.2, maxMgPerKg: 0.3, intervalHours: 8, doseUnit: 'mg',
+        baseDose: 100, baseVolume: 5
+    };
+    const r = new DrugDoseCalculator(drug, 10).calculate();
+    // Should be treated as a single value, not "X to Y"
+    assert.ok(!/ to /.test(r.displayResult), `expected single value, got "${r.displayResult}"`);
+});
+
+test('unit-neutral aliases minDosePerKg/maxDosePerKg are honoured', () => {
+    const drug = {
+        name: 'TestAlias', form: 'Ampoule', category: 'ampoule',
+        minDosePerKg: 2, maxDosePerKg: 4, intervalHours: 8, doseUnit: 'mg', baseDose: 40, baseVolume: 1
+    };
+    const r = new DrugDoseCalculator(drug, 10).calculate();
+    assert.equal(r.minDose, 20);
+    assert.equal(r.maxDose, 40);
+    assert.equal(r.displayResult, '20 mg to 40 mg');
+});

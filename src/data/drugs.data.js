@@ -1,6 +1,15 @@
 // src/data/drugs.data.js
 // Pure data module: drug categories and the pediatric drug database.
 // Exported as ES modules; also mirrored onto `window` for the Android WebView bridge.
+//
+// ⚠️ FIELD-NAMING CAVEAT — READ BEFORE ADDING A DRUG:
+//   `minMgPerKg` / `maxMgPerKg` hold the per-kilogram dose expressed in the
+//   drug's OWN `doseUnit` (mg, mcg, Units, mEq, g) — despite the "Mg" in the
+//   name they are NOT always milligrams. For example Fentanyl uses
+//   { minMgPerKg: 1, maxMgPerKg: 2, doseUnit: 'mcg' } meaning 1–2 mcg/kg.
+//   New entries may instead use the unit-neutral aliases `minDosePerKg` /
+//   `maxDosePerKg`; the calculator reads either. Always set `doseUnit`
+//   explicitly so the value's unit is unambiguous.
 
 export const categoriesDB = [
     { id: 'all', name: 'All', icon: 'fa-layer-group', image: 'assets/categories/all.png' },
