@@ -264,6 +264,13 @@
 
 </div>
 
-<script type="module" src="src/main.js"></script>
+<!--
+    Android WebView build: load the generated single-file bundle (a classic,
+    non-module script) so the app works when served from file:///android_asset/,
+    where ES-module imports are blocked. Regenerate with: node build/bundle.mjs
+    For development over HTTP you may instead use:
+    <script type="module" src="src/main.js"></script>
+-->
+<script src="dist/app.bundle.js"></script>
 </body>
 </html>

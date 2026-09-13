@@ -65,20 +65,79 @@ that touches the DOM. Data modules also mirror their exports onto `window`
 (`window.drugsDB`, `window.AdvancedClinicalEngine`, …) so the Android WebView
 bridge and any non-module consumers keep working.
 
-## Running locally
+## Two ways to run the app
 
-Because the app uses ES modules, it must be served over HTTP (opening
-`index.html` via `file://` will be blocked by the browser's module CORS policy).
+The same UI can load in two forms:
+
+| Target | Script tag in `index.html` | Notes |
+|--------|----------------------------|-------|
+| **Android WebView / offline** | `<script src="dist/app.bundle.js">` (default) | A single classic script. Works from `file:///android_asset/`. |
+| **Development over HTTP** | `<script type="module" src="src/main.js">` | Native ES modules; requires an HTTP server. |
+
+`index.html` ships wired to the **bundle** so it works inside an Android
+WebView out of the box. The module tag is kept, commented out, right above it.
+
+### Running locally over HTTP (module mode)
+
+Native ES modules must be served over HTTP (opening `index.html` via `file://`
+is blocked by the browser's module CORS policy). Switch `index.html` to the
+module tag, then:
 
 ```bash
-# any static server works, e.g.:
-python3 -m http.server 8000
-# then open http://localhost:8000
+python3 -m http.server 8000   # any static server works
+# open http://localhost:8000
 ```
 
 The `assets/` images (icons, category art) are provided by the host app/build
 and are referenced by path; missing images degrade gracefully to Font Awesome
 icons.
+
+## Building the WebView bundle
+
+The bundle is a generated single classic script (no ES modules) so it runs in
+an Android WebView loaded from `file:///android_asset/`, where module imports
+are blocked and would otherwise leave a blank screen.
+
+```bash
+npm run build          # node build/bundle.mjs  ->  dist/app.bundle.js
+npm run smoke:bundle   # rebuild + boot-test the bundle in a stubbed DOM
+```
+
+Re-run `npm run build` whenever you change anything under `src/`.
+`dist/app.bundle.js` is committed so the app is usable without a build step.
+
+## Using it in Android Studio
+
+1. Put the whole project folder inside your app's assets, e.g.
+   `app/src/main/assets/pedicalc/` (include `index.html`, `dist/`, `style.css`,
+   `assets/`, and the `fontawesome/` + `vazirmatn/` font folders).
+2. Load it in your `WebView`:
+
+   ```java
+   WebView webView = findViewById(R.id.webView);
+   WebSettings s = webView.getSettings();
+   s.setJavaScriptEnabled(true);            // required — the app is all JS
+   s.setDomStorageEnabled(true);            // required — disclaimer uses localStorage
+   s.setAllowFileAccess(true);
+   webView.loadUrl("file:///android_asset/pedicalc/index.html");
+   ```
+
+3. The optional native bridge is used if present. Expose it via
+   `addJavascriptInterface(obj, "Android")` implementing:
+   - `isPremium()` → boolean (unlocks all drugs / advanced settings)
+   - `purchasePremium()` → starts your in-app purchase flow
+
+   Without the bridge the app runs in free mode (Acetaminophen & Ibuprofen
+   unlocked) and simply never calls it.
+
+**All paths are relative** (`dist/app.bundle.js`, `style.css`, `assets/…`,
+`fontawesome/…`, `vazirmatn/…`), so everything resolves correctly under
+`file:///android_asset/…` with no code changes needed.
+
+> Blank screen troubleshooting: it almost always means either (a) `index.html`
+> was pointing at the `type="module"` tag instead of the bundle, or (b)
+> JavaScript / DOM storage is disabled in `WebSettings`. Both are handled by
+> the steps above.
 
 ## Testing
 
