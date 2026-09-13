@@ -5,8 +5,10 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "build": "node build/bundle.mjs",
     "test": "node --test",
-    "smoke": "node tests/boot.smoke.mjs"
+    "smoke": "node tests/boot.smoke.mjs",
+    "smoke:bundle": "node build/bundle.mjs && node tests/bundle.smoke.mjs"
   },
   "license": "MIT"
 }
