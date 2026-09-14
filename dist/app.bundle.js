@@ -323,6 +323,63 @@
 
     // --- Drug names (transliterated per common Iranian pharmacy usage) ---
     const DRUG_NAME_FA = {
+        // --- Newly added drugs ---
+        'Albendazole': 'آلبندازول',
+        'Amitriptyline': 'آمی‌تریپتیلین',
+        'Amlodipine': 'آملودیپین',
+        'Amphotericin B (Conventional)': 'آمفوتریسین B (معمولی)',
+        'Atomoxetine (Strattera)': 'اتوموکستین (استراترا)',
+        'B-Complex': 'ب-کمپلکس',
+        'Baclofen': 'باکلوفن',
+        'Captopril': 'کاپتوپریل',
+        'Celecoxib': 'سلکوکسیب',
+        'Chlorothiazide': 'کلروتیازید',
+        'Clonidine': 'کلونیدین',
+        'Cromolyn Sodium': 'کرومولین سدیم',
+        'Cyproheptadine': 'سیپروهپتادین',
+        'Desmopressin (DDAVP)': 'دسموپرسین (DDAVP)',
+        'Dimenhydrinate': 'دیمن‌هیدرینات',
+        'Enalapril': 'انالاپریل',
+        'Enoxaparin (Clexane)': 'انوکساپارین (کلگزان)',
+        'Esomeprazole': 'ازومپرازول',
+        'Ethosuximide': 'اتوسوکسیماید',
+        'Fluoxetine': 'فلوکستین',
+        'Folic Acid': 'اسید فولیک',
+        'Fusidic Acid': 'اسید فوسیدیک',
+        'Glucagon': 'گلوکاگون',
+        'Griseofulvin': 'گریزئوفولوین',
+        'Haloperidol': 'هالوپریدول',
+        'Hydralazine': 'هیدرالازین',
+        'Hydrochlorothiazide': 'هیدروکلروتیازید',
+        'Itraconazole': 'ایتراکونازول',
+        'Ketoconazole': 'کتوکونازول',
+        'L-Carnitine': 'ال-کارنیتین',
+        'Labetalol': 'لابتالول',
+        'Lansoprazole': 'لانزوپرازول',
+        'Levocetirizine': 'لووستیریزین',
+        'Loperamide': 'لوپرامید',
+        'Mebendazole': 'مبندازول',
+        'Mebeverine': 'مبورین',
+        'Melatonin': 'ملاتونین',
+        'Mesalazine': 'مسالازین',
+        'Methadone': 'متادون',
+        'Mometasone Nasal Spray': 'اسپری بینی مومتازون',
+        'Naproxen': 'ناپروکسن',
+        'Permethrin': 'پرمترین',
+        'Polymyxin/Neomycin': 'پلی‌میکسین/نئومایسین',
+        'Pyrantel Pamoate': 'پیرانتل پاموآت',
+        'Rufinamide': 'روفینامید',
+        'Senna': 'سنا',
+        'Sertraline': 'سرترالین',
+        'Tetracaine': 'تتراکائین',
+        'Tobramycin': 'توبرامایسین',
+        'Tramadol': 'ترامادول',
+        'Tranexamic Acid (Transid)': 'ترانگزامیک اسید (ترانسید)',
+        'Ursodeoxycholic Acid': 'اورسودئوکسی‌کولیک اسید',
+        'Vitamin B12 (Cyanocobalamin)': 'ویتامین B12 (سیانوکوبالامین)',
+        'Vitamin C (Ascorbic Acid)': 'ویتامین C (اسید اسکوربیک)',
+        'Vitamin K (Phytomenadione)': 'ویتامین K (فیتومنادیون)',
+
         'Acetaminophen': 'استامینوفن',
         'Acetaminophen (Apotel)': 'استامینوفن (آپوتل)',
         'Acetylcysteine': 'استیل‌سیستئین',
@@ -484,6 +541,58 @@
 
     // --- Indications (chips shown on each drug card) ---
     const INDICATION_FA = {
+        // --- Newly added indications ---
+        'ADHD adjunct': 'کمکی در بیش‌فعالی (ADHD)',
+        'Absence Seizures': 'تشنج ابسنس',
+        'Acute Diarrhea': 'اسهال حاد',
+        'Appetite Stimulant': 'محرک اشتها',
+        'B12 Deficiency Anemia': 'کم‌خونی ناشی از کمبود B12',
+        'Bacterial Conjunctivitis': 'ورم ملتحمه باکتریایی',
+        'Carnitine Deficiency': 'کمبود کارنیتین',
+        'Cholestasis': 'کلستاز',
+        "Crohn's Disease": 'بیماری کرون',
+        'DVT Treatment': 'درمان ترومبوز ورید عمقی (DVT)',
+        'Depression': 'افسردگی',
+        'Diabetes Insipidus': 'دیابت بی‌مزه',
+        'Diuresis in CHF': 'ادرارآوری در نارسایی احتقانی قلب',
+        'Erosive Esophagitis': 'ازوفاژیت اروزیو',
+        'Fungal Infections': 'عفونت‌های قارچی',
+        'Fungal Skin Infections': 'عفونت‌های قارچی پوست',
+        'GI Bleeding': 'خونریزی گوارشی',
+        'Gallstones': 'سنگ کیسه صفرا',
+        'HDN Prophylaxis (Neonates)': 'پیشگیری از بیماری خونریزی‌دهنده نوزادان (HDN)',
+        'Hemorrhage': 'خونریزی',
+        'Hookworm': 'کرم قلابدار',
+        'Hypertensive Crisis': 'بحران فشار خون',
+        'Hypertensive Emergency': 'اورژانس فشار خون',
+        'IBS': 'سندرم روده تحریک‌پذیر (IBS)',
+        'Insomnia': 'بی‌خوابی',
+        'Lennox-Gastaut Syndrome': 'سندرم لنوکس-گاستو',
+        'Megaloblastic Anemia': 'کم‌خونی مگالوبلاستیک',
+        'Metabolic Disorders': 'اختلالات متابولیک',
+        'Motion Sickness': 'بیماری حرکت (سفر)',
+        'NAS (Neonatal Abstinence)': 'سندرم ترک نوزادی (NAS)',
+        'Nocturnal Enuresis': 'شب‌ادراری',
+        'OCD': 'اختلال وسواسی-جبری (OCD)',
+        'Otitis Externa': 'عفونت گوش خارجی',
+        'Prophylaxis': 'پیشگیری',
+        'Psychosis': 'سایکوز (روان‌پریشی)',
+        'Scabies': 'گال',
+        'Scurvy Prophylaxis': 'پیشگیری از اسکوربوت',
+        'Severe Behavioral Disorders': 'اختلالات رفتاری شدید',
+        'Severe Hypoglycemia': 'هیپوگلیسمی شدید',
+        'Severe Pain (>12 yrs)': 'درد شدید (بالای ۱۲ سال)',
+        'Severe Systemic Fungal Infection': 'عفونت قارچی سیستمیک شدید',
+        'Sleep Disorders in Neurodevelopmental delay': 'اختلالات خواب در تأخیر تکاملی-عصبی',
+        'Spasticity': 'اسپاستیسیتی (سفتی عضلانی)',
+        'Staphylococcal Skin Infections': 'عفونت‌های پوستی استافیلوکوکی',
+        'Tinea Capitis': 'کچلی سر',
+        'Tinea Corporis': 'کچلی بدن',
+        'Topical Ocular Anesthesia': 'بی‌حسی موضعی چشم',
+        'Tourette Syndrome': 'سندرم تورت',
+        'Trauma': 'تروما',
+        'Vitamin B Deficiency': 'کمبود ویتامین B',
+
         'ADHD': 'بیش‌فعالی/کم‌توجهی (ADHD)',
         'AOM': 'عفونت گوش میانی حاد (AOM)',
         'Abdominal Cramps': 'دل‌پیچه شکمی',
@@ -718,6 +827,51 @@
     //     organ-impairment adjustments, and drug-drug interaction messages.
     //     Keyed by the exact English source string. ⚠️ Verify clinically. ---
     const CLINICAL_MSG_FA = {
+        // --- Newly added clinical messages (warnings + interactions) ---
+        '10-25kg: 50mg BID | >25kg: 100mg BID.': '۱۰ تا ۲۵kg: ۵۰mg دو بار در روز | بالای ۲۵kg: ۱۰۰mg دو بار در روز.',
+        '6mo-5yr: 1.25mg | 6-11yr: 2.5mg | >12yr: 5mg once daily.': '۶ ماه تا ۵ سال: ۱.۲۵mg | ۶ تا ۱۱ سال: ۲.۵mg | بالای ۱۲ سال: ۵mg روزی یک‌بار.',
+        'Administer SubQ. Prophylaxis dose is usually 0.5 mg/kg.': 'به‌صورت زیرجلدی تجویز شود. دوز پیشگیری معمولاً ۰.۵ mg/kg است.',
+        'Administer with fatty food.': 'همراه با غذای چرب تجویز شود.',
+        'CONTRAINDICATED in children under 2 years. High risk of toxic megacolon.': 'در کودکان زیر ۲ سال منع مصرف دارد. خطر بالای مگاکولون توکسیک.',
+        'CONTRAINDICATED under 12 years!': 'زیر ۱۲ سال منع مصرف دارد!',
+        'Children >3 years: 2.5 to 5 ml twice daily.': 'کودکان بالای ۳ سال: روزی دو بار ۲.۵ تا ۵ میلی‌لیتر.',
+        'Critical Risk: Absolute contraindication. High risk of fatal Serotonin Syndrome.': 'خطر بحرانی: منع مصرف مطلق. خطر بالای سندرم سروتونین کشنده.',
+        'Critical Risk: Additive QT prolongation leading to life-threatening Torsades de Pointes.': 'خطر بحرانی: طولانی‌شدن تجمعی QT که به تورساد دو پوانت تهدیدکننده حیات منجر می‌شود.',
+        'Critical Risk: Extremely high risk of major bleeding. Combination is generally contraindicated.': 'خطر بحرانی: خطر بسیار بالای خونریزی شدید. این ترکیب عموماً منع مصرف دارد.',
+        'Critical Risk: High risk of Serotonin Syndrome and increased seizure risk.': 'خطر بحرانی: خطر بالای سندرم سروتونین و افزایش خطر تشنج.',
+        'Dose in micrograms (mcg) originally, equivalent to 5-10 mcg/kg/day. Taper to avoid rebound hypertension.': 'دوز در اصل به میکروگرم (mcg)، معادل ۵ تا ۱۰ mcg/kg/day. برای جلوگیری از فشار خون برگشتی به‌تدریج قطع شود.',
+        'Dose titration required. Monitor for suicidal ideation in adolescents.': 'تنظیم تدریجی دوز لازم است. از نظر افکار خودکشی در نوجوانان پایش شود.',
+        'For examination or procedure only. Not for home use.': 'فقط برای معاینه یا پروسیجر. برای مصرف خانگی نیست.',
+        'High Risk: Esomeprazole inhibits CYP2C19, decreasing Diazepam clearance and prolonging its effects.': 'خطر بالا: ازومپرازول CYP2C19 را مهار می‌کند و کلیرانس دیازپام را کاهش و اثر آن را طولانی می‌کند.',
+        'High Risk: Fluconazole inhibits methadone metabolism; increased risk of severe respiratory depression and QT prolongation.': 'خطر بالا: فلوکونازول متابولیسم متادون را مهار می‌کند؛ افزایش خطر دپرسیون تنفسی شدید و طولانی‌شدن QT.',
+        'High Risk: Increased risk of severe bleeding and epidural/spinal hematoma.': 'خطر بالا: افزایش خطر خونریزی شدید و هماتوم اپیدورال/نخاعی.',
+        'High Risk: Increased risk of severe bleeding.': 'خطر بالا: افزایش خطر خونریزی شدید.',
+        'High Risk: Itraconazole strongly inhibits CYP3A4, significantly increasing Midazolam levels and prolonging sedation.': 'خطر بالا: ایتراکونازول CYP3A4 را به‌شدت مهار می‌کند و سطح میدازولام را به‌طور قابل‌توجهی افزایش و آرام‌بخشی را طولانی می‌کند.',
+        'High Risk: May cause paradoxical hypertension or severe bradycardia. Rebound hypertension upon withdrawal is exacerbated.': 'خطر بالا: ممکن است فشار خون پارادوکسیکال یا برادی‌کاردی شدید ایجاد کند. فشار خون برگشتی هنگام قطع تشدید می‌شود.',
+        'High Risk: Phenobarbital significantly decreases the absorption and serum levels of Griseofulvin.': 'خطر بالا: فنوباربیتال جذب و سطح سرمی گریزئوفولوین را به‌طور قابل‌توجهی کاهش می‌دهد.',
+        'High risk of QT prolongation and respiratory depression.': 'خطر بالای طولانی‌شدن QT و دپرسیون تنفسی.',
+        'Highly nephrotoxic. Pre-medicate to prevent infusion reactions.': 'به‌شدت سمی برای کلیه. برای جلوگیری از واکنش‌های انفوزیون، پیش‌دارو تجویز شود.',
+        'Highly nephrotoxic. Requires close monitoring of renal function and electrolytes.': 'به‌شدت سمی برای کلیه. نیازمند پایش دقیق عملکرد کلیه و الکترولیت‌ها.',
+        'In severe hepatic impairment, do not exceed 20 mg daily.': 'در نارسایی شدید کبدی، از ۲۰ میلی‌گرم در روز تجاوز نشود.',
+        'Leave on for 8-14 hours, then wash off. Repeat in 1 week if needed.': '۸ تا ۱۴ ساعت روی پوست بماند، سپس شسته شود. در صورت نیاز پس از ۱ هفته تکرار شود.',
+        'Maximum 1g/dose. Repeat in 2 weeks for pinworms.': 'حداکثر ۱ گرم در هر دوز. برای کرمک پس از ۲ هفته تکرار شود.',
+        'Metabolized primarily by the liver. Use with caution in significant hepatic impairment.': 'عمدتاً توسط کبد متابولیزه می‌شود. در نارسایی قابل‌توجه کبدی با احتیاط مصرف شود.',
+        'Monitor blood pressure continuously. Patient must be supine.': 'فشار خون به‌طور مداوم پایش شود. بیمار باید به‌پشت خوابیده باشد.',
+        'Monitor for Extrapyramidal Symptoms (EPS).': 'از نظر علائم اکستراپیرامیدال (EPS) پایش شود.',
+        'Monitor liver enzymes closely. Use with caution in patients with hepatic impairment.': 'آنزیم‌های کبدی به‌دقت پایش شوند. در بیماران با نارسایی کبدی با احتیاط مصرف شود.',
+        'Not recommended under 1 year.': 'زیر ۱ سال توصیه نمی‌شود.',
+        'Pre-medicate to avoid infusion reactions. Highly nephrotoxic.': 'برای جلوگیری از واکنش‌های انفوزیون پیش‌دارو تجویز شود. به‌شدت سمی برای کلیه.',
+        'Push slowly over 10 minutes.': 'به‌آهستگی طی ۱۰ دقیقه تزریق شود.',
+        "Reconstitute only with 0.9% Sodium Chloride, Lactated Ringer's, or 5% Dextrose. Use within 12 hours.": 'فقط با کلرید سدیم ۰.۹٪، رینگر لاکتات یا دکستروز ۵٪ حل شود. ظرف ۱۲ ساعت مصرف شود.',
+        'Reduce dose or monitor Anti-Xa levels carefully if CrCl < 30 ml/min.': 'در صورت CrCl کمتر از ۳۰ ml/min، دوز کاهش یابد یا سطح Anti-Xa به‌دقت پایش شود.',
+        'STRICTLY CONTRAINDICATED in children under 12 years (FDA Warning) due to ultra-rapid metabolism risk and severe respiratory depression.': 'در کودکان زیر ۱۲ سال اکیداً منع مصرف دارد (هشدار FDA) به‌دلیل خطر متابولیسم فوق‌سریع و دپرسیون تنفسی شدید.',
+        'Start low and titrate up. Do not withdraw abruptly.': 'با دوز پایین شروع و به‌تدریج افزایش یابد. به‌طور ناگهانی قطع نشود.',
+        'Starting dose 10 mg/kg/day, titrated up to 45 mg/kg/day.': 'دوز شروع ۱۰ mg/kg/day، به‌تدریج تا ۴۵ mg/kg/day افزایش می‌یابد.',
+        'Test dose required for infants.': 'برای شیرخواران دوز آزمایشی لازم است.',
+        'Typically 2.5-5 ml for 2-5 yrs; 5-10 ml for 6-12 yrs at bedtime.': 'معمولاً ۲.۵ تا ۵ میلی‌لیتر برای ۲ تا ۵ سال؛ ۵ تا ۱۰ میلی‌لیتر برای ۶ تا ۱۲ سال هنگام خواب.',
+        'Use a lower dose or increase dosing interval in hepatic impairment.': 'در نارسایی کبدی دوز کمتر مصرف شود یا فاصله دوز افزایش یابد.',
+        'Use with caution in hepatic impairment due to reduced first-pass metabolism.': 'در نارسایی کبدی به‌دلیل کاهش متابولیسم عبور اول با احتیاط مصرف شود.',
+
         // Drug `warning` fields
         '6-11mo: 1mg | 1-5yr: 1.25mg | 6-11yr: 2.5mg once daily.': '۶ تا ۱۱ ماه: ۱mg | ۱ تا ۵ سال: ۱.۲۵mg | ۶ تا ۱۱ سال: ۲.۵mg روزی یک‌بار.',
         '<15kg: 30mg | 15-23kg: 45mg | 23-40kg: 60mg | >40kg: 75mg twice daily.': 'زیر ۱۵kg: ۳۰mg | ۱۵ تا ۲۳kg: ۴۵mg | ۲۳ تا ۴۰kg: ۶۰mg | بالای ۴۰kg: ۷۵mg دو بار در روز.',
@@ -1042,6 +1196,29 @@
     //     powders, etc.) — the `fixedDose` field shown as the result for drugs that
     //     are not weight/age calculated. Numbers/units kept; wording translated. ---
     const FIXED_DOSE_FA = {
+        // --- Newly added fixed-dose instructions ---
+        '0.5 - 1 ml daily': 'روزی ۰.۵ تا ۱ میلی‌لیتر',
+        '1 - 5 mg at bedtime': '۱ تا ۵ میلی‌گرم هنگام خواب',
+        '1 mg IM single dose': '۱ میلی‌گرم عضلانی، دوز منفرد',
+        '1 mg daily': 'روزی ۱ میلی‌گرم',
+        '1 spray each nostril daily': 'روزی ۱ اسپری در هر سوراخ بینی',
+        '1-2 drops': '۱ تا ۲ قطره',
+        '1-2 drops q4h': '۱ تا ۲ قطره هر ۴ ساعت',
+        '10-20 mcg at bedtime': '۱۰ تا ۲۰ میکروگرم هنگام خواب',
+        '10-20 mg/day': 'روزانه ۱۰ تا ۲۰ میلی‌گرم',
+        '100mg single dose or BID for 3 days': '۱۰۰ میلی‌گرم دوز منفرد یا روزی دو بار به‌مدت ۳ روز',
+        '2 puffs QID': 'روزی ۴ بار، ۲ پاف',
+        '2.5 - 5 ml daily': 'روزی ۲.۵ تا ۵ میلی‌لیتر',
+        '3-4 drops TID': 'روزی ۳ بار، ۳ تا ۴ قطره',
+        'Age & deficiency dependent (IM)': 'بسته به سن و شدت کمبود (عضلانی)',
+        'Apply 3 times daily': 'روزی ۳ بار بمالید',
+        'Apply once daily': 'روزی ۱ بار بمالید',
+        'Apply to whole body': 'به تمام بدن بمالید',
+        'CONTRAINDICATED < 12 YRS': 'در کودکان زیر ۱۲ سال منع مصرف دارد',
+        'Start 10 mg daily': 'شروع با روزی ۱۰ میلی‌گرم',
+        'Start 25 mg daily': 'شروع با روزی ۲۵ میلی‌گرم',
+        'Weight-Based (>2 yrs)': 'بر اساس وزن (بالای ۲ سال)',
+
         'Apply thin layer': 'لایه نازک بمالید',
         'Apply 5 times daily': 'روزی ۵ بار بمالید',
         'Apply small amount': 'مقدار کمی بمالید',
@@ -1242,7 +1419,7 @@
     //   New entries may instead use the unit-neutral aliases `minDosePerKg` /
     //   `maxDosePerKg`; the calculator reads either. Always set `doseUnit`
     //   explicitly so the value's unit is unambiguous.
-
+    
     const categoriesDB = [
         { id: 'all', name: 'All', nameFa: 'همه', icon: 'fa-layer-group', image: 'assets/categories/all.png' },
         { id: 'syrup', name: 'Syrup', nameFa: 'شربت', icon: 'fa-wine-bottle', image: 'assets/categories/syrup.png' },
@@ -1390,6 +1567,9 @@
             ]
         },
         { id: 131, name: 'Valproic Acid', form: 'Syrup 250mg/5ml', category: 'syrup', minMgPerKg: 15, maxMgPerKg: 15, intervalHours: 24, baseDose: 250, baseVolume: 5, doseUnit: 'mg', maxDailyDoseMg: 3000, indications: ['Seizures'], warning: 'Starting dose 10-15 mg/kg/day. Monitor LFTs.' },
+        { id: 132, name: 'Pyrantel Pamoate', form: 'Suspension 250mg/5ml', category: 'syrup', minMgPerKg: 11, maxMgPerKg: 11, intervalHours: 0, baseDose: 250, baseVolume: 5, doseUnit: 'mg', maxSingleDoseMg: 1000, indications: ['Pinworm', 'Hookworm'], warning: 'Maximum 1g/dose. Repeat in 2 weeks for pinworms.' },
+        { id: 133, name: 'Griseofulvin', form: 'Suspension 125mg/5ml', category: 'syrup', minMgPerKg: 10, maxMgPerKg: 20, intervalHours: 12, baseDose: 125, baseVolume: 5, doseUnit: 'mg', indications: ['Tinea Capitis', 'Tinea Corporis'], warning: 'Administer with fatty food.' },
+        { id: 134, name: 'B-Complex', form: 'Syrup', category: 'syrup', minMgPerKg: 0, maxMgPerKg: 0, intervalHours: 24, doseUnit: 'mg', fixedDose: '2.5 - 5 ml daily', indications: ['Vitamin B Deficiency', 'Appetite Stimulant'] },
         {
             id: 1401, name: 'Domperidone', form: 'Suspension 1mg/ml', category: 'syrup',
             minMgPerKg: 0.25, maxMgPerKg: 0.25, intervalHours: 8, baseDose: 1, baseVolume: 1, doseUnit: 'mg', maxSingleDoseMg: 10, maxDailyDoseMg: 30,
@@ -1584,6 +1764,7 @@
             ],
             ageAlert: { minAgeRequired: 0.5, message: 'Not recommended under 6 months.', severity: 'medium' }
         },
+        { id: 212, name: 'Vitamin C (Ascorbic Acid)', form: 'Drop 100mg/ml', category: 'drop', minMgPerKg: 0, maxMgPerKg: 0, intervalHours: 24, doseUnit: 'mg', baseDose: 100, baseVolume: 1, fixedDose: '0.5 - 1 ml daily', indications: ['Scurvy Prophylaxis', 'Supplementation'] },
         {
             id: 1406, name: 'Pediatric Multivitamin', form: 'Drop', category: 'drop',
             minMgPerKg: 0, maxMgPerKg: 0, intervalHours: 24, doseUnit: 'mg',
@@ -1702,6 +1883,7 @@
         { id: 312, name: 'Atropine', form: 'Ampoule 0.5mg/ml', category: 'ampoule', minMgPerKg: 0.02, maxMgPerKg: 0.02, intervalHours: 0, baseDose: 0.5, baseVolume: 1, doseUnit: 'mg', maxSingleDoseMg: 0.5, indications: ['Bradycardia'], warning: 'Emergency use only.' },
         { id: 313, name: 'Flumazenil', form: 'Ampoule 0.1mg/ml', category: 'ampoule', minMgPerKg: 0.01, maxMgPerKg: 0.01, intervalHours: 0, baseDose: 0.1, baseVolume: 1, doseUnit: 'mg', maxSingleDoseMg: 0.2, indications: ['Benzodiazepine Overdose'], warning: 'Emergency use only.' },
         { id: 314, name: 'Ondansetron', form: 'Ampoule 4mg/2ml', category: 'ampoule', minMgPerKg: 0.15, maxMgPerKg: 0.15, intervalHours: 8, baseDose: 4, baseVolume: 2, doseUnit: 'mg', maxSingleDoseMg: 8, indications: ['Vomiting'], warning: 'Safe and effective antiemetic.' },
+        { id: 315, name: 'Vitamin B12 (Cyanocobalamin)', form: 'Ampoule 1000mcg/ml', category: 'ampoule', minMgPerKg: 0, maxMgPerKg: 0, intervalHours: 0, baseDose: 1000, baseVolume: 1, doseUnit: 'mcg', fixedDose: 'Age & deficiency dependent (IM)', indications: ['B12 Deficiency Anemia'] },
         {
             id: 1411, name: 'Midazolam', form: 'Ampoule 15mg/3ml', category: 'ampoule',
             minMgPerKg: 0.1, maxMgPerKg: 0.2, intervalHours: 0, baseDose: 15, baseVolume: 3, doseUnit: 'mg', maxSingleDoseMg: 5,
@@ -1829,6 +2011,11 @@
         { id: 409, name: 'Doxycycline', form: 'Tablet 100mg', category: 'tablet', minMgPerKg: 2.2, maxMgPerKg: 2.2, intervalHours: 12, doseUnit: 'mg', maxSingleDoseMg: 100, indications: ['Bacterial Infection', 'Acne'], requiresAge: true },
         { id: 410, name: 'Prednisolone', form: 'Tablet 5mg', category: 'tablet', minMgPerKg: 1, maxMgPerKg: 2, intervalHours: 24, doseUnit: 'mg', maxDailyDoseMg: 60, indications: ['Inflammation', 'Asthma'], warning: 'Taper when discontinuing.' },
         { id: 411, name: 'Montelukast', form: 'Chewable Tablet 5mg', category: 'tablet', fixedDose: '5 mg daily', intervalHours: 24, doseUnit: 'mg', maxDailyDoseMg: 10, indications: ['Asthma', 'Allergic Rhinitis'], warning: 'For children 6 to 14 years.' },
+        { id: 412, name: 'Ursodeoxycholic Acid', form: 'Capsule 250mg', category: 'tablet', minMgPerKg: 10, maxMgPerKg: 15, intervalHours: 12, doseUnit: 'mg', indications: ['Gallstones', 'Cholestasis'] },
+        { id: 413, name: 'Albendazole', form: 'Tablet 400mg', category: 'tablet', minMgPerKg: 0, maxMgPerKg: 0, intervalHours: 24, doseUnit: 'mg', fixedDose: 'Age-Based Dose', requiresAge: true, ageDoses: [{minAge:1, maxAge:2, minDose:200, maxDose:200}, {minAge:2, maxAge:999, minDose:400, maxDose:400}], ageAlert: {minAgeRequired:1, message:'Not recommended under 1 year.', severity:'medium'}, indications: ['Pinworm', 'Roundworm'] },
+        { id: 414, name: 'Mebendazole', form: 'Tablet 100mg', category: 'tablet', minMgPerKg: 0, maxMgPerKg: 0, intervalHours: 12, doseUnit: 'mg', fixedDose: '100mg single dose or BID for 3 days', indications: ['Pinworm', 'Roundworm'] },
+        { id: 415, name: 'Itraconazole', form: 'Capsule 100mg', category: 'tablet', minMgPerKg: 5, maxMgPerKg: 5, intervalHours: 24, doseUnit: 'mg', indications: ['Fungal Infections'] },
+        { id: 416, name: 'Folic Acid', form: 'Tablet 1mg', category: 'tablet', minMgPerKg: 0, maxMgPerKg: 0, intervalHours: 24, doseUnit: 'mg', fixedDose: '1 mg daily', indications: ['Megaloblastic Anemia', 'Supplementation'] },
         {
             id: 1506, name: 'Vitamin D3', form: 'Pearl 50000 IU', category: 'tablet',
             minMgPerKg: 0, maxMgPerKg: 0, intervalHours: 0, doseUnit: 'Units', fixedDose: '1 pearl weekly/monthly (Based on deficiency)',
@@ -1878,7 +2065,7 @@
             indications: ['Edema', 'Heart Failure', 'Hypertension'],
             warning: 'Potassium-sparing diuretic. Monitor serum potassium; risk of hyperkalemia, especially with KCl or other potassium-sparing agents.'
         },
-
+    
         // ==========================================
         // SUPPOSITORIES
         // ==========================================
@@ -2063,6 +2250,17 @@
             minMgPerKg: 1, maxMgPerKg: 1, intervalHours: 24, baseDose: 40, doseUnit: 'mg', maxSingleDoseMg: 40, maxDailyDoseMg: 80,
             indications: ['GERD', 'GI Bleeding (NPO)']
         },
+        {
+            id: 2015, name: 'Esomeprazole', form: 'Vial 40mg', category: 'vial',
+            minMgPerKg: 0.5, maxMgPerKg: 1, intervalHours: 24, baseDose: 40, baseVolume: 1, doseUnit: 'mg',
+            indications: ['GERD', 'GI Bleeding']
+        },
+        {
+            id: 2016, name: 'Amphotericin B (Conventional)', form: 'Vial 50mg', category: 'vial',
+            minMgPerKg: 0.5, maxMgPerKg: 1.5, intervalHours: 24, baseDose: 50, baseVolume: 1, doseUnit: 'mg',
+            indications: ['Severe Systemic Fungal Infection'],
+            warning: 'Highly nephrotoxic. Pre-medicate to prevent infusion reactions.'
+        },
     
         // ==========================================
         // POWDER
@@ -2134,10 +2332,85 @@
         { id: 1302, name: 'Probiotic', form: 'Sachet', category: 'sachet', fixedDose: '1 sachet daily', intervalHours: 24, doseUnit: 'mg', indications: ['Diarrhea', 'Gut Health'], warning: 'Dissolve in water or milk.' },
         { id: 1303, name: 'Zinc', form: 'Sachet', category: 'sachet', fixedDose: '10-20 mg daily', intervalHours: 24, doseUnit: 'mg', indications: ['Diarrhea', 'Zinc Deficiency'] },
         { id: 1304, name: 'Montelukast', form: 'Sachet 4mg', category: 'sachet', fixedDose: '4 mg daily', intervalHours: 24, doseUnit: 'mg', indications: ['Asthma', 'Allergic Rhinitis'], warning: 'For children 6 months to 5 years.' },
-        { id: 1607, name: 'Omeprazole', form: 'Sachet 10mg / Capsule', category: 'sachet', minMgPerKg: 1, maxMgPerKg: 1, intervalHours: 24, doseUnit: 'mg', maxSingleDoseMg: 40, maxDailyDoseMg: 40, indications: ['GERD', 'Peptic Ulcer'] }
+        { id: 1305, name: 'Esomeprazole', form: 'Sachet 10mg', category: 'sachet', minMgPerKg: 0.5, maxMgPerKg: 1, intervalHours: 24, doseUnit: 'mg', maxSingleDoseMg: 40, indications: ['GERD', 'Erosive Esophagitis'] },
+        { id: 1607, name: 'Omeprazole', form: 'Sachet 10mg / Capsule', category: 'sachet', minMgPerKg: 1, maxMgPerKg: 1, intervalHours: 24, doseUnit: 'mg', maxSingleDoseMg: 40, maxDailyDoseMg: 40, indications: ['GERD', 'Peptic Ulcer'] },
+    
+        // ==========================================
+        // NEWLY ADDED DRUGS (Gastrointestinal & Metabolic)
+        // ==========================================
+        { id: 2500, name: 'Lansoprazole', form: 'Capsule 15mg', category: 'tablet', minMgPerKg: 1, maxMgPerKg: 2, intervalHours: 24, doseUnit: 'mg', maxDailyDoseMg: 30, indications: ['GERD', 'Peptic Ulcer'] },
+        { id: 2501, name: 'Loperamide', form: 'Syrup 1mg/5ml', category: 'syrup', minMgPerKg: 0.1, maxMgPerKg: 0.2, intervalHours: 8, doseUnit: 'mg', baseDose: 1, baseVolume: 5, indications: ['Acute Diarrhea'], warning: 'CONTRAINDICATED in children under 2 years. High risk of toxic megacolon.', requiresAge: true, ageAlert: { minAgeRequired: 2, message: 'Not recommended under 2 years.', severity: 'high' } },
+        { id: 2502, name: 'Dimenhydrinate', form: 'Syrup 12.5mg/4ml', category: 'syrup', minMgPerKg: 1.25, maxMgPerKg: 1.25, intervalHours: 6, doseUnit: 'mg', baseDose: 12.5, baseVolume: 4, maxSingleDoseMg: 50, maxDailyDoseMg: 150, indications: ['Motion Sickness', 'Vomiting'] },
+        { id: 2503, name: 'Senna', form: 'Syrup', category: 'syrup', fixedDose: 'Age-Based Dose', intervalHours: 24, doseUnit: 'mg', indications: ['Constipation'], warning: 'Typically 2.5-5 ml for 2-5 yrs; 5-10 ml for 6-12 yrs at bedtime.' },
+        { id: 2504, name: 'Mebeverine', form: 'Suspension 50mg/5ml', category: 'syrup', fixedDose: 'Age-Based Dose', intervalHours: 12, doseUnit: 'mg', indications: ['IBS', 'GI Spasm'], warning: 'Children >3 years: 2.5 to 5 ml twice daily.' },
+        { id: 2505, name: 'Mesalazine', form: 'Tablet 400mg', category: 'tablet', minMgPerKg: 30, maxMgPerKg: 50, intervalHours: 12, doseUnit: 'mg', maxDailyDoseMg: 2400, indications: ['Ulcerative Colitis', 'Crohn\'s Disease'] },
+        { id: 2506, name: 'L-Carnitine', form: 'Syrup 1g/10ml', category: 'syrup', minMgPerKg: 50, maxMgPerKg: 100, intervalHours: 8, doseUnit: 'mg', baseDose: 1000, baseVolume: 10, indications: ['Carnitine Deficiency', 'Metabolic Disorders'] },
+    
+        // ==========================================
+        // NEWLY ADDED DRUGS (Neuro, Psych, & Seizure)
+        // ==========================================
+        { id: 2507, name: 'Baclofen', form: 'Tablet 10mg', category: 'tablet', minMgPerKg: 0.5, maxMgPerKg: 1, intervalHours: 8, doseUnit: 'mg', maxDailyDoseMg: 40, indications: ['Spasticity', 'Muscle Spasm'], warning: 'Start low and titrate up. Do not withdraw abruptly.' },
+        { id: 2508, name: 'Melatonin', form: 'Tablet 3mg', category: 'tablet', fixedDose: '1 - 5 mg at bedtime', intervalHours: 24, doseUnit: 'mg', indications: ['Insomnia', 'Sleep Disorders in Neurodevelopmental delay'] },
+        { id: 2509, name: 'Haloperidol', form: 'Drop 2mg/ml', category: 'drop', minMgPerKg: 0.025, maxMgPerKg: 0.05, intervalHours: 12, doseUnit: 'mg', baseDose: 2, baseVolume: 1, indications: ['Psychosis', 'Severe Behavioral Disorders'], warning: 'Monitor for Extrapyramidal Symptoms (EPS).' },
+        { id: 2510, name: 'Sertraline', form: 'Tablet 50mg', category: 'tablet', fixedDose: 'Start 25 mg daily', intervalHours: 24, doseUnit: 'mg', indications: ['OCD', 'Depression', 'Anxiety'], warning: 'Dose titration required. Monitor for suicidal ideation in adolescents.' },
+        { id: 2511, name: 'Fluoxetine', form: 'Syrup 20mg/5ml', category: 'syrup', fixedDose: 'Start 10 mg daily', intervalHours: 24, doseUnit: 'mg', baseDose: 20, baseVolume: 5, indications: ['Depression', 'OCD'] },
+        { id: 2512, name: 'Atomoxetine (Strattera)', form: 'Capsule 10mg', category: 'tablet', minMgPerKg: 0.5, maxMgPerKg: 1.2, intervalHours: 24, doseUnit: 'mg', maxDailyDoseMg: 100, indications: ['ADHD'] },
+        { id: 2513, name: 'Clonidine', form: 'Tablet 0.2mg', category: 'tablet', minMgPerKg: 0.005, maxMgPerKg: 0.01, intervalHours: 8, doseUnit: 'mg', indications: ['ADHD adjunct', 'Tourette Syndrome', 'Hypertension'], warning: 'Dose in micrograms (mcg) originally, equivalent to 5-10 mcg/kg/day. Taper to avoid rebound hypertension.' },
+        { id: 2514, name: 'Ethosuximide', form: 'Syrup 250mg/5ml', category: 'syrup', minMgPerKg: 15, maxMgPerKg: 20, intervalHours: 12, doseUnit: 'mg', baseDose: 250, baseVolume: 5, maxDailyDoseMg: 1000, indications: ['Absence Seizures'] },
+        { id: 2515, name: 'Amitriptyline', form: 'Tablet 10mg', category: 'tablet', minMgPerKg: 1, maxMgPerKg: 1, intervalHours: 24, doseUnit: 'mg', maxDailyDoseMg: 50, indications: ['Migraine Prophylaxis', 'Neuropathic Pain'] },
+        { id: 2516, name: 'Rufinamide', form: 'Tablet 200mg', category: 'tablet', minMgPerKg: 10, maxMgPerKg: 10, intervalHours: 12, doseUnit: 'mg', maxDailyDoseMg: 3200, indications: ['Lennox-Gastaut Syndrome'], warning: 'Starting dose 10 mg/kg/day, titrated up to 45 mg/kg/day.' },
+    
+        // ==========================================
+        // NEWLY ADDED DRUGS (Cardio & Renal)
+        // ==========================================
+        { id: 2517, name: 'Captopril', form: 'Tablet 25mg', category: 'tablet', minMgPerKg: 0.1, maxMgPerKg: 0.3, intervalHours: 8, doseUnit: 'mg', maxSingleDoseMg: 25, indications: ['Hypertension', 'Heart Failure'], warning: 'Test dose required for infants.' },
+        { id: 2518, name: 'Enalapril', form: 'Tablet 5mg', category: 'tablet', minMgPerKg: 0.08, maxMgPerKg: 0.08, intervalHours: 24, doseUnit: 'mg', maxDailyDoseMg: 40, indications: ['Hypertension', 'Heart Failure'] },
+        { id: 2519, name: 'Amlodipine', form: 'Tablet 5mg', category: 'tablet', minMgPerKg: 0.1, maxMgPerKg: 0.2, intervalHours: 24, doseUnit: 'mg', maxDailyDoseMg: 10, indications: ['Hypertension'] },
+        { id: 2520, name: 'Labetalol', form: 'Ampoule 5mg/ml', category: 'ampoule', minMgPerKg: 0.2, maxMgPerKg: 1, intervalHours: 0, doseUnit: 'mg', baseDose: 5, baseVolume: 1, maxSingleDoseMg: 20, indications: ['Hypertensive Emergency'] },
+        { id: 2521, name: 'Hydralazine', form: 'Ampoule 20mg/ml', category: 'ampoule', minMgPerKg: 0.1, maxMgPerKg: 0.2, intervalHours: 6, doseUnit: 'mg', baseDose: 20, baseVolume: 1, indications: ['Hypertensive Crisis'] },
+        { id: 2522, name: 'Hydrochlorothiazide', form: 'Tablet 25mg', category: 'tablet', minMgPerKg: 1, maxMgPerKg: 2, intervalHours: 12, doseUnit: 'mg', maxDailyDoseMg: 50, indications: ['Edema', 'Hypertension'] },
+        { id: 2523, name: 'Chlorothiazide', form: 'Suspension 250mg/5ml', category: 'syrup', minMgPerKg: 10, maxMgPerKg: 20, intervalHours: 12, doseUnit: 'mg', baseDose: 250, baseVolume: 5, indications: ['Diuresis in CHF'] },
+    
+        // ==========================================
+        // NEWLY ADDED DRUGS (Respiratory & Allergy)
+        // ==========================================
+        { id: 2524, name: 'Mometasone Nasal Spray', form: 'Spray 50mcg', category: 'spray', fixedDose: '1 spray each nostril daily', intervalHours: 24, doseUnit: 'mcg', indications: ['Allergic Rhinitis'] },
+        { id: 2525, name: 'Cyproheptadine', form: 'Syrup 2mg/5ml', category: 'syrup', minMgPerKg: 0.25, maxMgPerKg: 0.25, intervalHours: 8, doseUnit: 'mg', baseDose: 2, baseVolume: 5, indications: ['Allergy', 'Appetite Stimulant'], warning: 'Contraindicated under 2 years.' },
+        { id: 2526, name: 'Levocetirizine', form: 'Syrup 2.5mg/5ml', category: 'syrup', fixedDose: 'Age-Based Dose', intervalHours: 24, doseUnit: 'mg', baseDose: 2.5, baseVolume: 5, indications: ['Allergic Rhinitis', 'Urticaria'], warning: '6mo-5yr: 1.25mg | 6-11yr: 2.5mg | >12yr: 5mg once daily.' },
+        { id: 2527, name: 'Cromolyn Sodium', form: 'Inhaler', category: 'inhaler', fixedDose: '2 puffs QID', intervalHours: 6, doseUnit: 'mcg', indications: ['Asthma Prophylaxis'] },
+    
+        // ==========================================
+        // NEWLY ADDED DRUGS (Analgesics & Anti-inflammatory)
+        // ==========================================
+        { id: 2528, name: 'Tramadol', form: 'Ampoule 50mg/ml', category: 'ampoule', fixedDose: 'CONTRAINDICATED < 12 YRS', intervalHours: 6, doseUnit: 'mg', indications: ['Severe Pain (>12 yrs)'], requiresAge: true, warning: 'STRICTLY CONTRAINDICATED in children under 12 years (FDA Warning) due to ultra-rapid metabolism risk and severe respiratory depression.', ageAlert: { minAgeRequired: 12, message: 'CONTRAINDICATED under 12 years!', severity: 'critical' } },
+        { id: 2529, name: 'Naproxen', form: 'Suspension 125mg/5ml', category: 'syrup', minMgPerKg: 5, maxMgPerKg: 10, intervalHours: 12, doseUnit: 'mg', baseDose: 125, baseVolume: 5, maxDailyDoseMg: 1000, indications: ['JIA', 'Pain', 'Inflammation'], warning: 'Take with food.' },
+        { id: 2530, name: 'Celecoxib', form: 'Capsule 100mg', category: 'tablet', fixedDose: 'Weight-Based (>2 yrs)', intervalHours: 12, doseUnit: 'mg', indications: ['JIA'], warning: '10-25kg: 50mg BID | >25kg: 100mg BID.' },
+        { id: 2531, name: 'Methadone', form: 'Syrup 5mg/5ml', category: 'syrup', minMgPerKg: 0.1, maxMgPerKg: 0.2, intervalHours: 6, doseUnit: 'mg', baseDose: 5, baseVolume: 5, indications: ['Severe Pain', 'NAS (Neonatal Abstinence)'], warning: 'High risk of QT prolongation and respiratory depression.' },
+    
+        // ==========================================
+        // NEWLY ADDED DRUGS (Vitamins & Endocrine)
+        // ==========================================
+        { id: 2532, name: 'Vitamin K (Phytomenadione)', form: 'Ampoule 1mg/0.5ml', category: 'ampoule', fixedDose: '1 mg IM single dose', intervalHours: 0, doseUnit: 'mg', baseDose: 1, baseVolume: 0.5, indications: ['HDN Prophylaxis (Neonates)'] },
+        { id: 2533, name: 'Desmopressin (DDAVP)', form: 'Nasal Spray 10mcg', category: 'spray', fixedDose: '10-20 mcg at bedtime', intervalHours: 24, doseUnit: 'mcg', indications: ['Nocturnal Enuresis', 'Diabetes Insipidus'] },
+        { id: 2534, name: 'Glucagon', form: 'Vial 1mg', category: 'vial', minMgPerKg: 0.02, maxMgPerKg: 0.03, intervalHours: 0, doseUnit: 'mg', baseDose: 1, baseVolume: 1, maxSingleDoseMg: 1, indications: ['Severe Hypoglycemia'] },
+    
+        // ==========================================
+        // NEWLY ADDED DRUGS (Blood & Coagulation)
+        // ==========================================
+        { id: 2535, name: 'Tranexamic Acid (Transid)', form: 'Ampoule 500mg/5ml', category: 'ampoule', minMgPerKg: 10, maxMgPerKg: 15, intervalHours: 8, doseUnit: 'mg', baseDose: 500, baseVolume: 5, maxSingleDoseMg: 1000, indications: ['Hemorrhage', 'Trauma'], warning: 'Push slowly over 10 minutes.' },
+        { id: 2536, name: 'Enoxaparin (Clexane)', form: 'Prefilled Syringe 4000 IU (40mg/0.4ml)', category: 'ampoule', minMgPerKg: 1, maxMgPerKg: 1.5, intervalHours: 12, doseUnit: 'mg', indications: ['DVT Treatment', 'Prophylaxis'], warning: 'Administer SubQ. Prophylaxis dose is usually 0.5 mg/kg.' },
+    
+        // ==========================================
+        // NEWLY ADDED DRUGS (Anti-parasitic & Topical)
+        // ==========================================
+        { id: 2537, name: 'Permethrin', form: 'Cream 5%', category: 'cream', fixedDose: 'Apply to whole body', intervalHours: 0, doseUnit: 'mg', indications: ['Scabies'], warning: 'Leave on for 8-14 hours, then wash off. Repeat in 1 week if needed.' },
+        { id: 2538, name: 'Fusidic Acid', form: 'Ointment 2%', category: 'ointment', fixedDose: 'Apply 3 times daily', intervalHours: 8, doseUnit: 'mg', indications: ['Staphylococcal Skin Infections'] },
+        { id: 2539, name: 'Ketoconazole', form: 'Cream 2%', category: 'cream', fixedDose: 'Apply once daily', intervalHours: 24, doseUnit: 'mg', indications: ['Fungal Skin Infections'] },
+        { id: 2540, name: 'Tobramycin', form: 'Eye Drop 0.3%', category: 'drop', fixedDose: '1-2 drops q4h', intervalHours: 4, doseUnit: 'mg', indications: ['Bacterial Conjunctivitis'] },
+        { id: 2541, name: 'Polymyxin/Neomycin', form: 'Ear Drop', category: 'drop', fixedDose: '3-4 drops TID', intervalHours: 8, doseUnit: 'mg', indications: ['Otitis Externa'] },
+        { id: 2542, name: 'Tetracaine', form: 'Eye Drop 0.5%', category: 'drop', fixedDose: '1-2 drops', intervalHours: 0, doseUnit: 'mg', indications: ['Topical Ocular Anesthesia'], warning: 'For examination or procedure only. Not for home use.' }
     ];
-
-
+    
     // Backward-compatible globals for the Android WebView bridge and any non-module consumers.
     if (typeof window !== 'undefined') {
         window.categoriesDB = categoriesDB;
@@ -2149,7 +2422,7 @@
     // Pure data module: the clinical rules database (IV guidelines, organ-impairment
     // adjustments, cross-allergy classes, drug-interaction matrix, neonatal PMA protocols).
     // The behavioural logic that consumes this data lives in src/core/clinical-engine.js.
-
+    
     // ============================================================
     //  CLINICAL RULES DATABASE (Comprehensive Local Edition)
     // ============================================================
@@ -2231,6 +2504,21 @@
                     maxConcentration: '0.1 mEq/ml (peripheral) to 0.4 mEq/ml (central)',
                     rate: 'Max 0.5 - 1 mEq/kg/hour',
                     warning: 'ABSOLUTE CONTRAINDICATION FOR IV PUSH! Must be diluted and infused slowly. Continuous ECG monitoring required.'
+                },
+                'Esomeprazole': {
+                    maxConcentration: '8 mg/ml',
+                    rate: 'Infusion over 10-30 minutes OR slow IV injection over 3 minutes',
+                    warning: 'Reconstitute only with 0.9% Sodium Chloride, Lactated Ringer\'s, or 5% Dextrose. Use within 12 hours.'
+                },
+                'Amphotericin B (Conventional)': {
+                    maxConcentration: '0.1 mg/ml',
+                    rate: 'Infusion over 2-6 hours',
+                    warning: 'Pre-medicate to avoid infusion reactions. Highly nephrotoxic.'
+                },
+                'Labetalol': {
+                    maxConcentration: '5 mg/ml',
+                    rate: 'IV push over 2 minutes',
+                    warning: 'Monitor blood pressure continuously. Patient must be supine.'
                 }
             },
     
@@ -2245,14 +2533,21 @@
                 'Acetaminophen': { type: 'hepatic', warning: 'Use with extreme caution or reduce dose in severe hepatic impairment.' },
                 'Metronidazole': { type: 'hepatic', warning: 'Reduce dose by up to 50% in severe hepatic impairment.' },
                 'Ciprofloxacin': { type: 'renal', warning: 'Reduce dose or extend interval if GFR < 30 ml/min.' },
-                'Meropenem': { type: 'renal', warning: 'Adjust dose and interval if GFR < 50 ml/min.' }
+                'Meropenem': { type: 'renal', warning: 'Adjust dose and interval if GFR < 50 ml/min.' },
+                'Esomeprazole': { type: 'hepatic', warning: 'In severe hepatic impairment, do not exceed 20 mg daily.' },
+                'Amphotericin B (Conventional)': { type: 'renal', warning: 'Highly nephrotoxic. Requires close monitoring of renal function and electrolytes.' },
+                'Albendazole': { type: 'hepatic', warning: 'Monitor liver enzymes closely. Use with caution in patients with hepatic impairment.' },
+                'Mebendazole': { type: 'hepatic', warning: 'Metabolized primarily by the liver. Use with caution in significant hepatic impairment.' },
+                'Enoxaparin': { type: 'renal', warning: 'Reduce dose or monitor Anti-Xa levels carefully if CrCl < 30 ml/min.' },
+                'Sertraline': { type: 'hepatic', warning: 'Use a lower dose or increase dosing interval in hepatic impairment.' },
+                'Loperamide': { type: 'hepatic', warning: 'Use with caution in hepatic impairment due to reduced first-pass metabolism.' }
             },
     
             // 3. Allergy Cross-Reactivity
             crossAllergies: {
                 'Penicillin': ['Amoxicillin', 'Ampicillin', 'Co-Amoxiclav', 'Penicillin V', 'Penicillin 6.3.3', 'Penicillin', 'Piperacillin-Tazobactam (Zosyn)', 'Ampicillin-Sulbactam (Unasyn)'],
                 'Cephalosporin': ['Cefixime', 'Cephalexin', 'Ceftriaxone', 'Cefazoline', 'Cefotaxime', 'Ceftizoxim', 'Cefdinir', 'Cefuroxime', 'Cefadroxil', 'Ceftazidime', 'Cefepime'],
-                'NSAID': ['Ibuprofen', 'Mefenamic Acid', 'Indomethacin', 'Diclofenac', 'Ketorolac'],
+                'NSAID': ['Ibuprofen', 'Mefenamic Acid', 'Indomethacin', 'Diclofenac', 'Ketorolac', 'Naproxen', 'Celecoxib'],
                 'Macrolide': ['Azithromycin', 'Clarithromycin', 'Erythromycin']
             },
     
@@ -2323,6 +2618,11 @@
                     drugs: ['Fluconazole', 'Domperidone'],
                     severity: 'critical',
                     message: 'Critical Risk: Severe QT prolongation and risk of Torsades de Pointes.'
+                },
+                {
+                    drugs: ['Itraconazole', 'Ondansetron'],
+                    severity: 'critical',
+                    message: 'Critical Risk: Additive QT prolongation leading to life-threatening arrhythmias.'
                 },
     
                 // --- HIGH SEVERITY INTERACTIONS (Major Clinical Safety Risk) ---
@@ -2631,6 +2931,21 @@
                     severity: 'high',
                     message: 'High Risk: Additive QT prolongation risk.'
                 },
+                {
+                    drugs: ['Esomeprazole', 'Diazepam'],
+                    severity: 'high',
+                    message: 'High Risk: Esomeprazole inhibits CYP2C19, decreasing Diazepam clearance and prolonging its effects.'
+                },
+                {
+                    drugs: ['Itraconazole', 'Midazolam'],
+                    severity: 'high',
+                    message: 'High Risk: Itraconazole strongly inhibits CYP3A4, significantly increasing Midazolam levels and prolonging sedation.'
+                },
+                {
+                    drugs: ['Griseofulvin', 'Phenobarbital'],
+                    severity: 'high',
+                    message: 'High Risk: Phenobarbital significantly decreases the absorption and serum levels of Griseofulvin.'
+                },
     
                 // --- MEDIUM SEVERITY INTERACTIONS ---
                 {
@@ -2669,7 +2984,17 @@
                     message: 'Moderate Risk: Decreased gastric acidity lowers absorption of elemental iron.'
                 },
                 {
+                    drugs: ['Ferrous Sulfate', 'Esomeprazole'],
+                    severity: 'medium',
+                    message: 'Moderate Risk: Decreased gastric acidity lowers absorption of elemental iron.'
+                },
+                {
                     drugs: ['Omeprazole', 'Cefuroxime'],
+                    severity: 'medium',
+                    message: 'Moderate Risk: Increased gastric pH decreases absorption of oral Cefuroxime.'
+                },
+                {
+                    drugs: ['Esomeprazole', 'Cefuroxime'],
                     severity: 'medium',
                     message: 'Moderate Risk: Increased gastric pH decreases absorption of oral Cefuroxime.'
                 },
@@ -2677,6 +3002,11 @@
                     drugs: ['Pantoprazole', 'Cefuroxime'],
                     severity: 'medium',
                     message: 'Moderate Risk: Increased gastric pH decreases absorption of oral Cefuroxime.'
+                },
+                {
+                    drugs: ['Esomeprazole', 'Levothyroxine'],
+                    severity: 'medium',
+                    message: 'Moderate Risk: PPIs increase gastric pH, which may decrease the absorption of Levothyroxine.'
                 },
     
                 // ============================================================
@@ -3159,6 +3489,60 @@
                     drugs: ['Valproic Acid', 'Ibuprofen'],
                     severity: 'medium',
                     message: 'Moderate Risk: Ibuprofen may displace Valproic Acid from protein binding, altering its free levels.'
+                },
+    
+                // ============================================================
+                //  NEWLY ADDED INTERACTIONS (Psychiatric, Analgesics, Coagulation)
+                // ============================================================
+                {
+                    drugs: ['Tramadol', 'Sertraline'],
+                    severity: 'critical',
+                    message: 'Critical Risk: High risk of Serotonin Syndrome and increased seizure risk.'
+                },
+                {
+                    drugs: ['Tramadol', 'Fluoxetine'],
+                    severity: 'critical',
+                    message: 'Critical Risk: High risk of Serotonin Syndrome and increased seizure risk.'
+                },
+                {
+                    drugs: ['Methadone', 'Fluconazole'],
+                    severity: 'high',
+                    message: 'High Risk: Fluconazole inhibits methadone metabolism; increased risk of severe respiratory depression and QT prolongation.'
+                },
+                {
+                    drugs: ['Sertraline', 'Linezolid'],
+                    severity: 'critical',
+                    message: 'Critical Risk: Absolute contraindication. High risk of fatal Serotonin Syndrome.'
+                },
+                {
+                    drugs: ['Fluoxetine', 'Linezolid'],
+                    severity: 'critical',
+                    message: 'Critical Risk: Absolute contraindication. High risk of fatal Serotonin Syndrome.'
+                },
+                {
+                    drugs: ['Enoxaparin', 'Naproxen'],
+                    severity: 'high',
+                    message: 'High Risk: Increased risk of severe bleeding and epidural/spinal hematoma.'
+                },
+                {
+                    drugs: ['Enoxaparin', 'Ibuprofen'],
+                    severity: 'high',
+                    message: 'High Risk: Increased risk of severe bleeding.'
+                },
+                {
+                    drugs: ['Enoxaparin', 'Ketorolac'],
+                    severity: 'critical',
+                    message: 'Critical Risk: Extremely high risk of major bleeding. Combination is generally contraindicated.'
+                },
+                {
+                    drugs: ['Methadone', 'Amiodarone'],
+                    severity: 'critical',
+                    message: 'Critical Risk: Additive QT prolongation leading to life-threatening Torsades de Pointes.'
+                },
+                {
+                    drugs: ['Clonidine', 'Propranolol'],
+                    severity: 'high',
+                    message: 'High Risk: May cause paradoxical hypertension or severe bradycardia. Rebound hypertension upon withdrawal is exacerbated.'
                 }
             ],
     
@@ -3181,7 +3565,7 @@
                 ]
             }
         };
-
+    
         // Backward-compatible global for any non-module consumers.
         if (typeof window !== 'undefined') {
             window.ClinicalRulesDB = ClinicalRulesDB;
