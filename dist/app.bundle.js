@@ -120,7 +120,9 @@
         // Formula box
         'formula.title':        { en: 'Formula:', fa: 'فرمول:' },
         'formula.volume':       { en: 'Volume to Administer:', fa: 'حجم قابل تجویز:' },
-        'formula.dailyMax':     { en: 'Daily Max:', fa: 'حداکثر روزانه:' },
+        // Kept in English on purpose: this label sits inside the LTR formula box
+        // next to English units/numbers, per product decision.
+        'formula.dailyMax':     { en: 'Daily Max:', fa: 'Daily Max:' },
         'formula.fixedDesc':    { en: 'Age-based, Topical, or Standard Dose', fa: 'دوز بر اساس سن، موضعی یا استاندارد' },
         'formula.capped':       { en: '(Capped)', fa: '(محدودشده)' },
 
@@ -207,6 +209,15 @@
     function interpolate(template, vars) {
         if (!vars) return template;
         return template.replace(/\{(\w+)\}/g, (m, key) => (key in vars ? String(vars[key]) : m));
+    }
+
+    /**
+     * Join a low/high range with the language-appropriate word: "to" (en) / "تا" (fa).
+     * The numeric parts stay as given; only the connecting word is localized.
+     */
+    function joinRange(low, high) {
+        const sep = currentLang === 'fa' ? 'تا' : 'to';
+        return `${low} ${sep} ${high}`;
     }
 
     /** Current language code ('en' | 'fa'). */
@@ -1009,12 +1020,55 @@
     };
 
 
+    // --- Fixed-dose administration instructions (topical, sprays, drops, sachets,
+    //     powders, etc.) — the `fixedDose` field shown as the result for drugs that
+    //     are not weight/age calculated. Numbers/units kept; wording translated. ---
+    const FIXED_DOSE_FA = {
+        'Apply thin layer': 'لایه نازک بمالید',
+        'Apply 5 times daily': 'روزی ۵ بار بمالید',
+        'Apply small amount': 'مقدار کمی بمالید',
+        'Apply as needed': 'در صورت نیاز بمالید',
+        '1 spray each nostril': '۱ اسپری در هر سوراخ بینی',
+        '1-2 sprays': '۱ تا ۲ اسپری',
+        '1 suppository PRN': '۱ شیاف در صورت نیاز',
+        '5-10 mg (for children over 6 years)': '۵ تا ۱۰ میلی‌گرم (برای کودکان بالای ۶ سال)',
+        '10-20 mg/dose': '۱۰ تا ۲۰ میلی‌گرم در هر دوز',
+        '1 ml daily': 'روزی ۱ میلی‌لیتر',
+        '1 ml (400 IU) daily': 'روزی ۱ میلی‌لیتر (۴۰۰ واحد)',
+        '1-2 ml (100000-200000U) 4 times daily': 'روزی ۴ بار، ۱ تا ۲ میلی‌لیتر (۱۰۰۰۰۰ تا ۲۰۰۰۰۰ واحد)',
+        '0.3-0.6 ml': '۰.۳ تا ۰.۶ میلی‌لیتر',
+        '1 Sachet': '۱ ساشه',
+        'As per weight': 'بر اساس وزن',
+        '1 sachet in 200ml water': '۱ ساشه در ۲۰۰ میلی‌لیتر آب',
+        '1 sachet daily': 'روزی ۱ ساشه',
+        '10-20 mg daily': 'روزی ۱۰ تا ۲۰ میلی‌گرم',
+        '4 mg daily': 'روزی ۴ میلی‌گرم',
+        '5 mg daily': 'روزی ۵ میلی‌گرم',
+        'Based on Age/Weight': 'بر اساس سن/وزن',
+        'Age-Based Dose': 'دوز بر اساس سن',
+        'Weight-based tier': 'رده بر اساس وزن',
+        '2 puffs (as needed)': '۲ پاف (در صورت نیاز)',
+        '200-400 mcg twice daily': 'روزی دو بار ۲۰۰ تا ۴۰۰ میکروگرم',
+        '2 puffs 4 times daily': 'روزی ۴ بار، ۲ پاف',
+        '125-250 mcg twice daily': 'روزی دو بار ۱۲۵ تا ۲۵۰ میکروگرم',
+        '50-100 mcg twice daily': 'روزی دو بار ۵۰ تا ۱۰۰ میکروگرم',
+        '1-2 puffs twice daily': 'روزی دو بار ۱ تا ۲ پاف',
+        '0.25 - 1 mg/dose (Asthma) / 2 mg (Croup)': '۰.۲۵ تا ۱ میلی‌گرم در هر دوز (آسم) / ۲ میلی‌گرم (کروپ)',
+        '250 mcg (<20kg) | 500 mcg (>20kg)': '۲۵۰ میکروگرم (زیر ۲۰kg) | ۵۰۰ میکروگرم (بالای ۲۰kg)',
+        '3 to 4 ml via nebulizer': '۳ تا ۴ میلی‌لیتر با نبولایزر',
+        'Single IM injection': 'یک تزریق عضلانی منفرد',
+        '0.15 mg IM (for 15-30 kg weight)': '۰.۱۵ میلی‌گرم عضلانی (برای وزن ۱۵ تا ۳۰ کیلوگرم)',
+        '1 pearl weekly/monthly (Based on deficiency)': '۱ پرل هفتگی/ماهانه (بر اساس شدت کمبود)',
+        '1 pearl daily': 'روزی ۱ پرل',
+        '10-15 mg/kg (max 1000mg)': '۱۰ تا ۱۵ mg/kg (حداکثر ۱۰۰۰ میلی‌گرم)'
+    };
+
     /**
      * Resolve a localized version of a data string. In Persian mode it looks the
      * exact English source up in the relevant map and returns the Persian text if
      * present; in English mode (or when no translation exists) it returns the
      * original English string unchanged — so English is always a safe fallback.
-     * @param {'drug'|'indication'|'indicationDose'|'clinical'} kind
+     * @param {'drug'|'indication'|'indicationDose'|'clinical'|'fixedDose'} kind
      * @param {string} en the exact English source string
      */
     function resolveFa(kind, en) {
@@ -1023,6 +1077,7 @@
             : kind === 'indication' ? INDICATION_FA
             : kind === 'indicationDose' ? INDICATION_DOSE_FA
             : kind === 'clinical' ? CLINICAL_MSG_FA
+            : kind === 'fixedDose' ? FIXED_DOSE_FA
             : null;
         if (!map) return en;
         return map[en] ?? en;
@@ -1096,12 +1151,14 @@
 
                 const minCc = parseFloat((minDose / activeConc).toFixed(2)).toString();
                 const maxCc = parseFloat((maxDose / activeConc).toFixed(2)).toString();
-                if (minCc === maxCc) return `<strong>${escapeHtml(minCc)} ml</strong> ${escapeHtml(intervalText)}`;
-                return `<strong>${escapeHtml(minCc)} to ${escapeHtml(maxCc)} ml</strong> ${escapeHtml(intervalText)}`;
+                // The dose value (number + ml) is bidi-isolated so it renders as a
+                // clean LTR unit even inside the RTL Persian guide line.
+                const value = (minCc === maxCc) ? `${minCc} ml` : `${joinRange(minCc, maxCc)} ml`;
+                return `<strong class="dose-value">${escapeHtml(value)}</strong> <span class="dose-freq">${escapeHtml(intervalText)}</span>`;
             }
 
             if (validation.isFixedDose) {
-                return `<strong>${escapeHtml(validation.calculatedFixedDose)}</strong> ${escapeHtml(intervalText)}`;
+                return `<strong class="dose-value">${escapeHtml(validation.calculatedFixedDose)}</strong> <span class="dose-freq">${escapeHtml(intervalText)}</span>`;
             }
 
             return escapeHtml(t('guide.asPrescribed'));
@@ -3530,14 +3587,14 @@
 
         _calculateTopical(result) {
             result.isFixedDose = true;
-            result.calculatedFixedDose = this.drug.fixedDose || t('dyn.applyThin');
+            result.calculatedFixedDose = this.drug.fixedDose ? resolveFa('fixedDose', this.drug.fixedDose) : t('dyn.applyThin');
             result.displayResult = result.calculatedFixedDose;
             return result;
         }
 
         _calculateFixedOrAgeBased(result) {
             result.isFixedDose = true;
-            result.calculatedFixedDose = this.drug.fixedDose;
+            result.calculatedFixedDose = resolveFa('fixedDose', this.drug.fixedDose);
 
             let parsedMin = 0;
             let parsedMax = 0;
@@ -3560,7 +3617,7 @@
                 if (nearlyEqual(parsedMin, parsedMax)) {
                     result.calculatedFixedDose = `${parsedMin} ${unitLabel}`;
                 } else {
-                    result.calculatedFixedDose = `${parsedMin} to ${parsedMax} ${unitLabel}`;
+                    result.calculatedFixedDose = `${joinRange(parsedMin, parsedMax)} ${unitLabel}`;
                 }
             }
 
@@ -3570,7 +3627,7 @@
 
         _calculatePowderFixed(result) {
             result.isFixedDose = true;
-            result.calculatedFixedDose = this.drug.fixedDose;
+            result.calculatedFixedDose = resolveFa('fixedDose', this.drug.fixedDose);
             result.displayResult = result.calculatedFixedDose;
             return result;
         }
@@ -3662,7 +3719,7 @@
             if (nearlyEqual(activeMin, activeMax) || nearlyEqual(result.minDose, result.maxDose)) {
                 result.displayResult = this._formatNum(result.minDose);
             } else {
-                result.displayResult = `${this._formatNum(result.minDose)} to ${this._formatNum(result.maxDose)}`;
+                result.displayResult = joinRange(this._formatNum(result.minDose), this._formatNum(result.maxDose));
             }
 
             this.activeMin = activeMin;
@@ -3706,7 +3763,7 @@
                     const unitLabel = 'ml (cc)';
                     const volStr = (minVol === maxVol) ? `${minVol} ${unitLabel}` : `${minVol} - ${maxVol} ${unitLabel}`;
                     volumeHTML = `
-                        <div class="formula-line" style="background: var(--primary-100); padding: 8px; border-radius: var(--radius-sm); margin-top: 8px; border: 1px solid var(--primary-300);">
+                        <div class="formula-line volume-line" style="background: var(--primary-100); padding: 8px; border-radius: var(--radius-sm); margin-top: 8px; border: 1px solid var(--primary-300);">
                             <span class="f-desc" style="color: var(--primary-800); font-weight: bold;">${escapeHtml(t('formula.volume'))}</span>
                             <span class="f-result" style="color: var(--primary-700); font-size: 0.85rem;"><strong>${escapeHtml(volStr)}</strong></span>
                         </div>
@@ -4324,7 +4381,7 @@
 
         const noInputBoxStyle = (!requiresWeight && !drug.requiresAge) ? 'border-style: dashed; background: var(--primary-50);' : '';
         const buttonStyle = (!requiresWeight && !drug.requiresAge) ? 'width: 100%; padding: 8px; font-size: 0.85rem; justify-content: center; border-radius: var(--radius-md);' : 'padding: 0 10px; min-width: 40px; justify-content: center;';
-        const buttonContent = (!requiresWeight && !drug.requiresAge) ? `<i class="fas fa-file-prescription" style="margin-right: 6px;"></i> ${esc(t('calc.showInstructions'))}` : '<img src="assets/arrow.png" alt="Calculate" style="width: 24px; height: 24px; object-fit: contain; display: block;" />';
+        const buttonContent = (!requiresWeight && !drug.requiresAge) ? `<i class="fas fa-file-prescription" style="margin-right: 6px;"></i> ${esc(t('calc.showInstructions'))}` : '<img src="assets/arrow.png" alt="Calculate" class="calc-arrow-icon" style="width: 24px; height: 24px; object-fit: contain; display: block;" />';
 
         container.innerHTML = `
             <div class="focus-calc-panel">

@@ -1387,9 +1387,25 @@ body {
 [dir="rtl"] .drug-contraindication.medium { border-left: none; border-right: 3px solid var(--warning-600); }
 [dir="rtl"] .drug-home-guide { border-left: none; border-right: 3px solid var(--accent-500); }
 
+/* Administration guide + dose values: keep the number+unit as a clean LTR
+   chunk, let the surrounding Persian text flow RTL, tidy spacing. */
+.dose-value { direction: ltr; unicode-bidi: isolate; }
+[dir="rtl"] .home-guide-text { direction: rtl; text-align: right; }
+[dir="rtl"] .home-guide-label { direction: rtl; text-align: right; }
+.home-guide-text .dose-freq { margin: 0 4px; }
+
 /* Formula box always reads left-to-right (English units/math), even in RTL */
 [dir="rtl"] .formula-box { direction: ltr; text-align: left; }
 [dir="rtl"] .f-desc { text-align: left; }
+
+/* Volume-to-administer row: in Persian the label sits on the right and the
+   numeric value on the left, while the number itself stays LTR. */
+[dir="rtl"] .volume-line { direction: rtl; }
+[dir="rtl"] .volume-line .f-desc { text-align: right; }
+[dir="rtl"] .volume-line .f-result { direction: ltr; unicode-bidi: isolate; }
+
+/* Calculate arrow icon: flip 180° in Persian so it points the RTL way. */
+[dir="rtl"] .calc-arrow-icon { transform: rotate(180deg); }
 
 /* Side navigation slides in from the right in RTL */
 [dir="rtl"] .side-nav { left: auto; right: 0; transform: translateX(100%); }

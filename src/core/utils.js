@@ -3,7 +3,7 @@
 // dose-unit resolution, interval formatting, the home administration guide,
 // and small DOM/UX helpers.
 
-import { t } from './i18n.js';
+import { t, joinRange } from './i18n.js';
 
 /**
  * Escape a value for safe interpolation into innerHTML.
@@ -62,12 +62,14 @@ export const Utils = {
 
             const minCc = parseFloat((minDose / activeConc).toFixed(2)).toString();
             const maxCc = parseFloat((maxDose / activeConc).toFixed(2)).toString();
-            if (minCc === maxCc) return `<strong>${escapeHtml(minCc)} ml</strong> ${escapeHtml(intervalText)}`;
-            return `<strong>${escapeHtml(minCc)} to ${escapeHtml(maxCc)} ml</strong> ${escapeHtml(intervalText)}`;
+            // The dose value (number + ml) is bidi-isolated so it renders as a
+            // clean LTR unit even inside the RTL Persian guide line.
+            const value = (minCc === maxCc) ? `${minCc} ml` : `${joinRange(minCc, maxCc)} ml`;
+            return `<strong class="dose-value">${escapeHtml(value)}</strong> <span class="dose-freq">${escapeHtml(intervalText)}</span>`;
         }
 
         if (validation.isFixedDose) {
-            return `<strong>${escapeHtml(validation.calculatedFixedDose)}</strong> ${escapeHtml(intervalText)}`;
+            return `<strong class="dose-value">${escapeHtml(validation.calculatedFixedDose)}</strong> <span class="dose-freq">${escapeHtml(intervalText)}</span>`;
         }
 
         return escapeHtml(t('guide.asPrescribed'));

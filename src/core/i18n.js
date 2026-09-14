@@ -111,7 +111,9 @@ const STRINGS = {
     // Formula box
     'formula.title':        { en: 'Formula:', fa: 'فرمول:' },
     'formula.volume':       { en: 'Volume to Administer:', fa: 'حجم قابل تجویز:' },
-    'formula.dailyMax':     { en: 'Daily Max:', fa: 'حداکثر روزانه:' },
+    // Kept in English on purpose: this label sits inside the LTR formula box
+    // next to English units/numbers, per product decision.
+    'formula.dailyMax':     { en: 'Daily Max:', fa: 'Daily Max:' },
     'formula.fixedDesc':    { en: 'Age-based, Topical, or Standard Dose', fa: 'دوز بر اساس سن، موضعی یا استاندارد' },
     'formula.capped':       { en: '(Capped)', fa: '(محدودشده)' },
 
@@ -198,6 +200,15 @@ const STRINGS = {
 function interpolate(template, vars) {
     if (!vars) return template;
     return template.replace(/\{(\w+)\}/g, (m, key) => (key in vars ? String(vars[key]) : m));
+}
+
+/**
+ * Join a low/high range with the language-appropriate word: "to" (en) / "تا" (fa).
+ * The numeric parts stay as given; only the connecting word is localized.
+ */
+export function joinRange(low, high) {
+    const sep = currentLang === 'fa' ? 'تا' : 'to';
+    return `${low} ${sep} ${high}`;
 }
 
 /** Current language code ('en' | 'fa'). */
