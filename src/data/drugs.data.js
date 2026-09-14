@@ -158,6 +158,9 @@ export const drugsDB = [
         ]
     },
     { id: 131, name: 'Valproic Acid', form: 'Syrup 250mg/5ml', category: 'syrup', minMgPerKg: 15, maxMgPerKg: 15, intervalHours: 24, baseDose: 250, baseVolume: 5, doseUnit: 'mg', maxDailyDoseMg: 3000, indications: ['Seizures'], warning: 'Starting dose 10-15 mg/kg/day. Monitor LFTs.' },
+    { id: 132, name: 'Pyrantel Pamoate', form: 'Suspension 250mg/5ml', category: 'syrup', minMgPerKg: 11, maxMgPerKg: 11, intervalHours: 0, baseDose: 250, baseVolume: 5, doseUnit: 'mg', maxSingleDoseMg: 1000, indications: ['Pinworm', 'Hookworm'], warning: 'Maximum 1g/dose. Repeat in 2 weeks for pinworms.' },
+    { id: 133, name: 'Griseofulvin', form: 'Suspension 125mg/5ml', category: 'syrup', minMgPerKg: 10, maxMgPerKg: 20, intervalHours: 12, baseDose: 125, baseVolume: 5, doseUnit: 'mg', indications: ['Tinea Capitis', 'Tinea Corporis'], warning: 'Administer with fatty food.' },
+    { id: 134, name: 'B-Complex', form: 'Syrup', category: 'syrup', minMgPerKg: 0, maxMgPerKg: 0, intervalHours: 24, doseUnit: 'mg', fixedDose: '2.5 - 5 ml daily', indications: ['Vitamin B Deficiency', 'Appetite Stimulant'] },
     {
         id: 1401, name: 'Domperidone', form: 'Suspension 1mg/ml', category: 'syrup',
         minMgPerKg: 0.25, maxMgPerKg: 0.25, intervalHours: 8, baseDose: 1, baseVolume: 1, doseUnit: 'mg', maxSingleDoseMg: 10, maxDailyDoseMg: 30,
@@ -352,6 +355,7 @@ export const drugsDB = [
         ],
         ageAlert: { minAgeRequired: 0.5, message: 'Not recommended under 6 months.', severity: 'medium' }
     },
+    { id: 212, name: 'Vitamin C (Ascorbic Acid)', form: 'Drop 100mg/ml', category: 'drop', minMgPerKg: 0, maxMgPerKg: 0, intervalHours: 24, doseUnit: 'mg', baseDose: 100, baseVolume: 1, fixedDose: '0.5 - 1 ml daily', indications: ['Scurvy Prophylaxis', 'Supplementation'] },
     {
         id: 1406, name: 'Pediatric Multivitamin', form: 'Drop', category: 'drop',
         minMgPerKg: 0, maxMgPerKg: 0, intervalHours: 24, doseUnit: 'mg',
@@ -470,6 +474,7 @@ export const drugsDB = [
     { id: 312, name: 'Atropine', form: 'Ampoule 0.5mg/ml', category: 'ampoule', minMgPerKg: 0.02, maxMgPerKg: 0.02, intervalHours: 0, baseDose: 0.5, baseVolume: 1, doseUnit: 'mg', maxSingleDoseMg: 0.5, indications: ['Bradycardia'], warning: 'Emergency use only.' },
     { id: 313, name: 'Flumazenil', form: 'Ampoule 0.1mg/ml', category: 'ampoule', minMgPerKg: 0.01, maxMgPerKg: 0.01, intervalHours: 0, baseDose: 0.1, baseVolume: 1, doseUnit: 'mg', maxSingleDoseMg: 0.2, indications: ['Benzodiazepine Overdose'], warning: 'Emergency use only.' },
     { id: 314, name: 'Ondansetron', form: 'Ampoule 4mg/2ml', category: 'ampoule', minMgPerKg: 0.15, maxMgPerKg: 0.15, intervalHours: 8, baseDose: 4, baseVolume: 2, doseUnit: 'mg', maxSingleDoseMg: 8, indications: ['Vomiting'], warning: 'Safe and effective antiemetic.' },
+    { id: 315, name: 'Vitamin B12 (Cyanocobalamin)', form: 'Ampoule 1000mcg/ml', category: 'ampoule', minMgPerKg: 0, maxMgPerKg: 0, intervalHours: 0, baseDose: 1000, baseVolume: 1, doseUnit: 'mcg', fixedDose: 'Age & deficiency dependent (IM)', indications: ['B12 Deficiency Anemia'] },
     {
         id: 1411, name: 'Midazolam', form: 'Ampoule 15mg/3ml', category: 'ampoule',
         minMgPerKg: 0.1, maxMgPerKg: 0.2, intervalHours: 0, baseDose: 15, baseVolume: 3, doseUnit: 'mg', maxSingleDoseMg: 5,
@@ -597,6 +602,11 @@ export const drugsDB = [
     { id: 409, name: 'Doxycycline', form: 'Tablet 100mg', category: 'tablet', minMgPerKg: 2.2, maxMgPerKg: 2.2, intervalHours: 12, doseUnit: 'mg', maxSingleDoseMg: 100, indications: ['Bacterial Infection', 'Acne'], requiresAge: true },
     { id: 410, name: 'Prednisolone', form: 'Tablet 5mg', category: 'tablet', minMgPerKg: 1, maxMgPerKg: 2, intervalHours: 24, doseUnit: 'mg', maxDailyDoseMg: 60, indications: ['Inflammation', 'Asthma'], warning: 'Taper when discontinuing.' },
     { id: 411, name: 'Montelukast', form: 'Chewable Tablet 5mg', category: 'tablet', fixedDose: '5 mg daily', intervalHours: 24, doseUnit: 'mg', maxDailyDoseMg: 10, indications: ['Asthma', 'Allergic Rhinitis'], warning: 'For children 6 to 14 years.' },
+    { id: 412, name: 'Ursodeoxycholic Acid', form: 'Capsule 250mg', category: 'tablet', minMgPerKg: 10, maxMgPerKg: 15, intervalHours: 12, doseUnit: 'mg', indications: ['Gallstones', 'Cholestasis'] },
+    { id: 413, name: 'Albendazole', form: 'Tablet 400mg', category: 'tablet', minMgPerKg: 0, maxMgPerKg: 0, intervalHours: 24, doseUnit: 'mg', fixedDose: 'Age-Based Dose', requiresAge: true, ageDoses: [{minAge:1, maxAge:2, minDose:200, maxDose:200}, {minAge:2, maxAge:999, minDose:400, maxDose:400}], ageAlert: {minAgeRequired:1, message:'Not recommended under 1 year.', severity:'medium'}, indications: ['Pinworm', 'Roundworm'] },
+    { id: 414, name: 'Mebendazole', form: 'Tablet 100mg', category: 'tablet', minMgPerKg: 0, maxMgPerKg: 0, intervalHours: 12, doseUnit: 'mg', fixedDose: '100mg single dose or BID for 3 days', indications: ['Pinworm', 'Roundworm'] },
+    { id: 415, name: 'Itraconazole', form: 'Capsule 100mg', category: 'tablet', minMgPerKg: 5, maxMgPerKg: 5, intervalHours: 24, doseUnit: 'mg', indications: ['Fungal Infections'] },
+    { id: 416, name: 'Folic Acid', form: 'Tablet 1mg', category: 'tablet', minMgPerKg: 0, maxMgPerKg: 0, intervalHours: 24, doseUnit: 'mg', fixedDose: '1 mg daily', indications: ['Megaloblastic Anemia', 'Supplementation'] },
     {
         id: 1506, name: 'Vitamin D3', form: 'Pearl 50000 IU', category: 'tablet',
         minMgPerKg: 0, maxMgPerKg: 0, intervalHours: 0, doseUnit: 'Units', fixedDose: '1 pearl weekly/monthly (Based on deficiency)',
@@ -831,6 +841,17 @@ export const drugsDB = [
         minMgPerKg: 1, maxMgPerKg: 1, intervalHours: 24, baseDose: 40, doseUnit: 'mg', maxSingleDoseMg: 40, maxDailyDoseMg: 80,
         indications: ['GERD', 'GI Bleeding (NPO)']
     },
+    {
+        id: 2015, name: 'Esomeprazole', form: 'Vial 40mg', category: 'vial',
+        minMgPerKg: 0.5, maxMgPerKg: 1, intervalHours: 24, baseDose: 40, baseVolume: 1, doseUnit: 'mg',
+        indications: ['GERD', 'GI Bleeding']
+    },
+    {
+        id: 2016, name: 'Amphotericin B (Conventional)', form: 'Vial 50mg', category: 'vial',
+        minMgPerKg: 0.5, maxMgPerKg: 1.5, intervalHours: 24, baseDose: 50, baseVolume: 1, doseUnit: 'mg',
+        indications: ['Severe Systemic Fungal Infection'],
+        warning: 'Highly nephrotoxic. Pre-medicate to prevent infusion reactions.'
+    },
 
     // ==========================================
     // POWDER
@@ -902,9 +923,84 @@ export const drugsDB = [
     { id: 1302, name: 'Probiotic', form: 'Sachet', category: 'sachet', fixedDose: '1 sachet daily', intervalHours: 24, doseUnit: 'mg', indications: ['Diarrhea', 'Gut Health'], warning: 'Dissolve in water or milk.' },
     { id: 1303, name: 'Zinc', form: 'Sachet', category: 'sachet', fixedDose: '10-20 mg daily', intervalHours: 24, doseUnit: 'mg', indications: ['Diarrhea', 'Zinc Deficiency'] },
     { id: 1304, name: 'Montelukast', form: 'Sachet 4mg', category: 'sachet', fixedDose: '4 mg daily', intervalHours: 24, doseUnit: 'mg', indications: ['Asthma', 'Allergic Rhinitis'], warning: 'For children 6 months to 5 years.' },
-    { id: 1607, name: 'Omeprazole', form: 'Sachet 10mg / Capsule', category: 'sachet', minMgPerKg: 1, maxMgPerKg: 1, intervalHours: 24, doseUnit: 'mg', maxSingleDoseMg: 40, maxDailyDoseMg: 40, indications: ['GERD', 'Peptic Ulcer'] }
-];
+    { id: 1305, name: 'Esomeprazole', form: 'Sachet 10mg', category: 'sachet', minMgPerKg: 0.5, maxMgPerKg: 1, intervalHours: 24, doseUnit: 'mg', maxSingleDoseMg: 40, indications: ['GERD', 'Erosive Esophagitis'] },
+    { id: 1607, name: 'Omeprazole', form: 'Sachet 10mg / Capsule', category: 'sachet', minMgPerKg: 1, maxMgPerKg: 1, intervalHours: 24, doseUnit: 'mg', maxSingleDoseMg: 40, maxDailyDoseMg: 40, indications: ['GERD', 'Peptic Ulcer'] },
 
+    // ==========================================
+    // NEWLY ADDED DRUGS (Gastrointestinal & Metabolic)
+    // ==========================================
+    { id: 2500, name: 'Lansoprazole', form: 'Capsule 15mg', category: 'tablet', minMgPerKg: 1, maxMgPerKg: 2, intervalHours: 24, doseUnit: 'mg', maxDailyDoseMg: 30, indications: ['GERD', 'Peptic Ulcer'] },
+    { id: 2501, name: 'Loperamide', form: 'Syrup 1mg/5ml', category: 'syrup', minMgPerKg: 0.1, maxMgPerKg: 0.2, intervalHours: 8, doseUnit: 'mg', baseDose: 1, baseVolume: 5, indications: ['Acute Diarrhea'], warning: 'CONTRAINDICATED in children under 2 years. High risk of toxic megacolon.', requiresAge: true, ageAlert: { minAgeRequired: 2, message: 'Not recommended under 2 years.', severity: 'high' } },
+    { id: 2502, name: 'Dimenhydrinate', form: 'Syrup 12.5mg/4ml', category: 'syrup', minMgPerKg: 1.25, maxMgPerKg: 1.25, intervalHours: 6, doseUnit: 'mg', baseDose: 12.5, baseVolume: 4, maxSingleDoseMg: 50, maxDailyDoseMg: 150, indications: ['Motion Sickness', 'Vomiting'] },
+    { id: 2503, name: 'Senna', form: 'Syrup', category: 'syrup', fixedDose: 'Age-Based Dose', intervalHours: 24, doseUnit: 'mg', indications: ['Constipation'], warning: 'Typically 2.5-5 ml for 2-5 yrs; 5-10 ml for 6-12 yrs at bedtime.' },
+    { id: 2504, name: 'Mebeverine', form: 'Suspension 50mg/5ml', category: 'syrup', fixedDose: 'Age-Based Dose', intervalHours: 12, doseUnit: 'mg', indications: ['IBS', 'GI Spasm'], warning: 'Children >3 years: 2.5 to 5 ml twice daily.' },
+    { id: 2505, name: 'Mesalazine', form: 'Tablet 400mg', category: 'tablet', minMgPerKg: 30, maxMgPerKg: 50, intervalHours: 12, doseUnit: 'mg', maxDailyDoseMg: 2400, indications: ['Ulcerative Colitis', 'Crohn\'s Disease'] },
+    { id: 2506, name: 'L-Carnitine', form: 'Syrup 1g/10ml', category: 'syrup', minMgPerKg: 50, maxMgPerKg: 100, intervalHours: 8, doseUnit: 'mg', baseDose: 1000, baseVolume: 10, indications: ['Carnitine Deficiency', 'Metabolic Disorders'] },
+
+    // ==========================================
+    // NEWLY ADDED DRUGS (Neuro, Psych, & Seizure)
+    // ==========================================
+    { id: 2507, name: 'Baclofen', form: 'Tablet 10mg', category: 'tablet', minMgPerKg: 0.5, maxMgPerKg: 1, intervalHours: 8, doseUnit: 'mg', maxDailyDoseMg: 40, indications: ['Spasticity', 'Muscle Spasm'], warning: 'Start low and titrate up. Do not withdraw abruptly.' },
+    { id: 2508, name: 'Melatonin', form: 'Tablet 3mg', category: 'tablet', fixedDose: '1 - 5 mg at bedtime', intervalHours: 24, doseUnit: 'mg', indications: ['Insomnia', 'Sleep Disorders in Neurodevelopmental delay'] },
+    { id: 2509, name: 'Haloperidol', form: 'Drop 2mg/ml', category: 'drop', minMgPerKg: 0.025, maxMgPerKg: 0.05, intervalHours: 12, doseUnit: 'mg', baseDose: 2, baseVolume: 1, indications: ['Psychosis', 'Severe Behavioral Disorders'], warning: 'Monitor for Extrapyramidal Symptoms (EPS).' },
+    { id: 2510, name: 'Sertraline', form: 'Tablet 50mg', category: 'tablet', fixedDose: 'Start 25 mg daily', intervalHours: 24, doseUnit: 'mg', indications: ['OCD', 'Depression', 'Anxiety'], warning: 'Dose titration required. Monitor for suicidal ideation in adolescents.' },
+    { id: 2511, name: 'Fluoxetine', form: 'Syrup 20mg/5ml', category: 'syrup', fixedDose: 'Start 10 mg daily', intervalHours: 24, doseUnit: 'mg', baseDose: 20, baseVolume: 5, indications: ['Depression', 'OCD'] },
+    { id: 2512, name: 'Atomoxetine (Strattera)', form: 'Capsule 10mg', category: 'tablet', minMgPerKg: 0.5, maxMgPerKg: 1.2, intervalHours: 24, doseUnit: 'mg', maxDailyDoseMg: 100, indications: ['ADHD'] },
+    { id: 2513, name: 'Clonidine', form: 'Tablet 0.2mg', category: 'tablet', minMgPerKg: 0.005, maxMgPerKg: 0.01, intervalHours: 8, doseUnit: 'mg', indications: ['ADHD adjunct', 'Tourette Syndrome', 'Hypertension'], warning: 'Dose in micrograms (mcg) originally, equivalent to 5-10 mcg/kg/day. Taper to avoid rebound hypertension.' },
+    { id: 2514, name: 'Ethosuximide', form: 'Syrup 250mg/5ml', category: 'syrup', minMgPerKg: 15, maxMgPerKg: 20, intervalHours: 12, doseUnit: 'mg', baseDose: 250, baseVolume: 5, maxDailyDoseMg: 1000, indications: ['Absence Seizures'] },
+    { id: 2515, name: 'Amitriptyline', form: 'Tablet 10mg', category: 'tablet', minMgPerKg: 1, maxMgPerKg: 1, intervalHours: 24, doseUnit: 'mg', maxDailyDoseMg: 50, indications: ['Migraine Prophylaxis', 'Neuropathic Pain'] },
+    { id: 2516, name: 'Rufinamide', form: 'Tablet 200mg', category: 'tablet', minMgPerKg: 10, maxMgPerKg: 10, intervalHours: 12, doseUnit: 'mg', maxDailyDoseMg: 3200, indications: ['Lennox-Gastaut Syndrome'], warning: 'Starting dose 10 mg/kg/day, titrated up to 45 mg/kg/day.' },
+
+    // ==========================================
+    // NEWLY ADDED DRUGS (Cardio & Renal)
+    // ==========================================
+    { id: 2517, name: 'Captopril', form: 'Tablet 25mg', category: 'tablet', minMgPerKg: 0.1, maxMgPerKg: 0.3, intervalHours: 8, doseUnit: 'mg', maxSingleDoseMg: 25, indications: ['Hypertension', 'Heart Failure'], warning: 'Test dose required for infants.' },
+    { id: 2518, name: 'Enalapril', form: 'Tablet 5mg', category: 'tablet', minMgPerKg: 0.08, maxMgPerKg: 0.08, intervalHours: 24, doseUnit: 'mg', maxDailyDoseMg: 40, indications: ['Hypertension', 'Heart Failure'] },
+    { id: 2519, name: 'Amlodipine', form: 'Tablet 5mg', category: 'tablet', minMgPerKg: 0.1, maxMgPerKg: 0.2, intervalHours: 24, doseUnit: 'mg', maxDailyDoseMg: 10, indications: ['Hypertension'] },
+    { id: 2520, name: 'Labetalol', form: 'Ampoule 5mg/ml', category: 'ampoule', minMgPerKg: 0.2, maxMgPerKg: 1, intervalHours: 0, doseUnit: 'mg', baseDose: 5, baseVolume: 1, maxSingleDoseMg: 20, indications: ['Hypertensive Emergency'] },
+    { id: 2521, name: 'Hydralazine', form: 'Ampoule 20mg/ml', category: 'ampoule', minMgPerKg: 0.1, maxMgPerKg: 0.2, intervalHours: 6, doseUnit: 'mg', baseDose: 20, baseVolume: 1, indications: ['Hypertensive Crisis'] },
+    { id: 2522, name: 'Hydrochlorothiazide', form: 'Tablet 25mg', category: 'tablet', minMgPerKg: 1, maxMgPerKg: 2, intervalHours: 12, doseUnit: 'mg', maxDailyDoseMg: 50, indications: ['Edema', 'Hypertension'] },
+    { id: 2523, name: 'Chlorothiazide', form: 'Suspension 250mg/5ml', category: 'syrup', minMgPerKg: 10, maxMgPerKg: 20, intervalHours: 12, doseUnit: 'mg', baseDose: 250, baseVolume: 5, indications: ['Diuresis in CHF'] },
+
+    // ==========================================
+    // NEWLY ADDED DRUGS (Respiratory & Allergy)
+    // ==========================================
+    { id: 2524, name: 'Mometasone Nasal Spray', form: 'Spray 50mcg', category: 'spray', fixedDose: '1 spray each nostril daily', intervalHours: 24, doseUnit: 'mcg', indications: ['Allergic Rhinitis'] },
+    { id: 2525, name: 'Cyproheptadine', form: 'Syrup 2mg/5ml', category: 'syrup', minMgPerKg: 0.25, maxMgPerKg: 0.25, intervalHours: 8, doseUnit: 'mg', baseDose: 2, baseVolume: 5, indications: ['Allergy', 'Appetite Stimulant'], warning: 'Contraindicated under 2 years.' },
+    { id: 2526, name: 'Levocetirizine', form: 'Syrup 2.5mg/5ml', category: 'syrup', fixedDose: 'Age-Based Dose', intervalHours: 24, doseUnit: 'mg', baseDose: 2.5, baseVolume: 5, indications: ['Allergic Rhinitis', 'Urticaria'], warning: '6mo-5yr: 1.25mg | 6-11yr: 2.5mg | >12yr: 5mg once daily.' },
+    { id: 2527, name: 'Cromolyn Sodium', form: 'Inhaler', category: 'inhaler', fixedDose: '2 puffs QID', intervalHours: 6, doseUnit: 'mcg', indications: ['Asthma Prophylaxis'] },
+
+    // ==========================================
+    // NEWLY ADDED DRUGS (Analgesics & Anti-inflammatory)
+    // ==========================================
+    { id: 2528, name: 'Tramadol', form: 'Ampoule 50mg/ml', category: 'ampoule', fixedDose: 'CONTRAINDICATED < 12 YRS', intervalHours: 6, doseUnit: 'mg', indications: ['Severe Pain (>12 yrs)'], requiresAge: true, warning: 'STRICTLY CONTRAINDICATED in children under 12 years (FDA Warning) due to ultra-rapid metabolism risk and severe respiratory depression.', ageAlert: { minAgeRequired: 12, message: 'CONTRAINDICATED under 12 years!', severity: 'critical' } },
+    { id: 2529, name: 'Naproxen', form: 'Suspension 125mg/5ml', category: 'syrup', minMgPerKg: 5, maxMgPerKg: 10, intervalHours: 12, doseUnit: 'mg', baseDose: 125, baseVolume: 5, maxDailyDoseMg: 1000, indications: ['JIA', 'Pain', 'Inflammation'], warning: 'Take with food.' },
+    { id: 2530, name: 'Celecoxib', form: 'Capsule 100mg', category: 'tablet', fixedDose: 'Weight-Based (>2 yrs)', intervalHours: 12, doseUnit: 'mg', indications: ['JIA'], warning: '10-25kg: 50mg BID | >25kg: 100mg BID.' },
+    { id: 2531, name: 'Methadone', form: 'Syrup 5mg/5ml', category: 'syrup', minMgPerKg: 0.1, maxMgPerKg: 0.2, intervalHours: 6, doseUnit: 'mg', baseDose: 5, baseVolume: 5, indications: ['Severe Pain', 'NAS (Neonatal Abstinence)'], warning: 'High risk of QT prolongation and respiratory depression.' },
+
+    // ==========================================
+    // NEWLY ADDED DRUGS (Vitamins & Endocrine)
+    // ==========================================
+    { id: 2532, name: 'Vitamin K (Phytomenadione)', form: 'Ampoule 1mg/0.5ml', category: 'ampoule', fixedDose: '1 mg IM single dose', intervalHours: 0, doseUnit: 'mg', baseDose: 1, baseVolume: 0.5, indications: ['HDN Prophylaxis (Neonates)'] },
+    { id: 2533, name: 'Desmopressin (DDAVP)', form: 'Nasal Spray 10mcg', category: 'spray', fixedDose: '10-20 mcg at bedtime', intervalHours: 24, doseUnit: 'mcg', indications: ['Nocturnal Enuresis', 'Diabetes Insipidus'] },
+    { id: 2534, name: 'Glucagon', form: 'Vial 1mg', category: 'vial', minMgPerKg: 0.02, maxMgPerKg: 0.03, intervalHours: 0, doseUnit: 'mg', baseDose: 1, baseVolume: 1, maxSingleDoseMg: 1, indications: ['Severe Hypoglycemia'] },
+
+    // ==========================================
+    // NEWLY ADDED DRUGS (Blood & Coagulation)
+    // ==========================================
+    { id: 2535, name: 'Tranexamic Acid (Transid)', form: 'Ampoule 500mg/5ml', category: 'ampoule', minMgPerKg: 10, maxMgPerKg: 15, intervalHours: 8, doseUnit: 'mg', baseDose: 500, baseVolume: 5, maxSingleDoseMg: 1000, indications: ['Hemorrhage', 'Trauma'], warning: 'Push slowly over 10 minutes.' },
+    { id: 2536, name: 'Enoxaparin (Clexane)', form: 'Prefilled Syringe 4000 IU (40mg/0.4ml)', category: 'ampoule', minMgPerKg: 1, maxMgPerKg: 1.5, intervalHours: 12, doseUnit: 'mg', indications: ['DVT Treatment', 'Prophylaxis'], warning: 'Administer SubQ. Prophylaxis dose is usually 0.5 mg/kg.' },
+
+    // ==========================================
+    // NEWLY ADDED DRUGS (Anti-parasitic & Topical)
+    // ==========================================
+    { id: 2537, name: 'Permethrin', form: 'Cream 5%', category: 'cream', fixedDose: 'Apply to whole body', intervalHours: 0, doseUnit: 'mg', indications: ['Scabies'], warning: 'Leave on for 8-14 hours, then wash off. Repeat in 1 week if needed.' },
+    { id: 2538, name: 'Fusidic Acid', form: 'Ointment 2%', category: 'ointment', fixedDose: 'Apply 3 times daily', intervalHours: 8, doseUnit: 'mg', indications: ['Staphylococcal Skin Infections'] },
+    { id: 2539, name: 'Ketoconazole', form: 'Cream 2%', category: 'cream', fixedDose: 'Apply once daily', intervalHours: 24, doseUnit: 'mg', indications: ['Fungal Skin Infections'] },
+    { id: 2540, name: 'Tobramycin', form: 'Eye Drop 0.3%', category: 'drop', fixedDose: '1-2 drops q4h', intervalHours: 4, doseUnit: 'mg', indications: ['Bacterial Conjunctivitis'] },
+    { id: 2541, name: 'Polymyxin/Neomycin', form: 'Ear Drop', category: 'drop', fixedDose: '3-4 drops TID', intervalHours: 8, doseUnit: 'mg', indications: ['Otitis Externa'] },
+    { id: 2542, name: 'Tetracaine', form: 'Eye Drop 0.5%', category: 'drop', fixedDose: '1-2 drops', intervalHours: 0, doseUnit: 'mg', indications: ['Topical Ocular Anesthesia'], warning: 'For examination or procedure only. Not for home use.' }
+];
 
 // Backward-compatible globals for the Android WebView bridge and any non-module consumers.
 if (typeof window !== 'undefined') {
