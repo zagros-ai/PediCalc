@@ -77,7 +77,8 @@ body {
     color: var(--text-primary);
     line-height: 1.6;
     overflow: hidden;
-    height: 100vh;
+    height: 100vh;      /* fallback for old browsers */
+    height: 100dvh;     /* dynamic viewport height: adapts to mobile browser chrome */
 }
 
 .sr-only {
@@ -99,12 +100,17 @@ body {
 .app-container {
     display: flex;
     flex-direction: column;
-    height: 100dvh;
+    height: 100vh;      /* fallback */
+    height: 100dvh;     /* adapts to the actual visible viewport on mobile */
+    width: 100%;
     max-width: 480px;
     margin: 0 auto;
     background-color: var(--surface-bg);
     position: relative;
     box-shadow: var(--shadow-xl);
+    /* Respect notches / rounded corners / home indicator on modern phones. */
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .app-header {
@@ -1003,6 +1009,57 @@ body {
     .category-name { font-size: 0.5rem; }
     .category-count { font-size: 0.45rem; }
     .cfr-amount { font-size: 1.2rem; }
+}
+
+/* ============================================================
+   RESPONSIVE — adapt to every screen size
+   ============================================================ */
+
+/* Very small phones (e.g. 320px): tighten so nothing overflows */
+@media (max-width: 340px) {
+    :root { --space-2: 9px; --space-3: 13px; --space-4: 18px; }
+    .brand-name { font-size: 1rem; }
+    .category-grid { grid-template-columns: repeat(4, 1fr); gap: 3px; }
+    .category-icon { width: 32px; height: 32px; }
+    .category-name { font-size: 0.45rem; }
+    .lang-toggle { padding: 4px 8px; font-size: 0.7rem; }
+    .cfr-amount { font-size: 1.1rem; }
+    .search-box input { font-size: 0.8rem; }
+}
+
+/* Fluid drug/calculator inputs so they wrap gracefully on any width */
+.focus-calc-panel .weight-input-group input { min-width: 0; }
+
+/* Large phones in landscape / small tablets: keep the app a comfortable width
+   and center it, framed so it doesn't look stranded on a wide screen. */
+@media (min-width: 481px) {
+    body { padding: 16px 0; }
+    .app-container {
+        max-width: 460px;
+        height: calc(100dvh - 32px);
+        max-height: 900px;
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+    }
+    /* Side-nav must stay inside the framed container, not span the whole viewport */
+    .side-nav { position: absolute; }
+    .nav-overlay { position: absolute; }
+}
+
+/* Tablets & desktop: a touch wider, still a single readable column */
+@media (min-width: 768px) {
+    .app-container { max-width: 520px; }
+    .category-grid { grid-template-columns: repeat(5, 1fr); }
+}
+
+/* Short/landscape screens: let content scroll instead of clipping */
+@media (max-height: 480px) {
+    .app-container { height: auto; min-height: 100dvh; }
+}
+
+/* Respect users who reduce motion */
+@media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
 
 .main-content::-webkit-scrollbar { width: 3px; }
