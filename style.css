@@ -1408,10 +1408,9 @@ body {
 /* Calculate arrow icon: flip 180° in Persian so it points the RTL way. */
 [dir="rtl"] .calc-arrow-icon { transform: rotate(180deg); }
 
-/* Per-dose amount keeps English units (e.g. mg); isolate as LTR so the unit
-   stays directly after its number and the `تا` separator doesn't scramble the
-   sequence. Centered, so LTR direction is visually neutral. */
-[dir="rtl"] .cfr-amount { direction: ltr; unicode-bidi: isolate; }
+/* Per-dose amount in Persian is fully localized (numbers + تا + میلی‌گرم), so it
+   flows RTL naturally; isolate keeps it a clean self-contained run. */
+[dir="rtl"] .cfr-amount { direction: rtl; unicode-bidi: isolate; }
 
 /* Side navigation slides in from the right in RTL */
 [dir="rtl"] .side-nav { left: auto; right: 0; transform: translateX(100%); }
