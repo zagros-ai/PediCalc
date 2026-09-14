@@ -5084,7 +5084,11 @@
             const showHomeGuide = ['syrup', 'drop', 'powder', 'inhaler'].includes(drug.category) || drug.category === 'sachet';
             // Topical / spray / sachet / powder doses are fixed instructions, not a
             // weight×dose calculation, so the formula box is redundant — hide it.
-            const showFormula = !['ointment', 'cream', 'gel', 'spray', 'sachet', 'powder'].includes(drug.category);
+            // Hide the formula box whenever there is no real weight/age calculation
+            // to show — i.e. fixed-dose drugs (topicals, sprays, fixed inhalers like
+            // Beclomethasone, suppositories like Pedi-Lax Glycerin, sachets, etc.).
+            // A fixed-dose result has no meaningful "weight × dose" formula.
+            const showFormula = !doseResult.isFixedDose;
 
             let patientWarningsHTML = '';
             const patientValidation = ValidationEngine.validatePatient(weightVal, ageVal, requiresWeight);
@@ -5158,7 +5162,7 @@
                 <div style="margin-top: 15px;">
                     ${patientWarningsHTML}
                     ${validationHTML}
-                    ${drug.warning ? `<div class="drug-warning"><i class="fas fa-exclamation-triangle"></i> ${esc(resolveFa('clinical', drug.warning))}</div>` : ''}
+                    ${drug.warning ? `<div class="drug-warning">${esc(resolveFa('clinical', drug.warning))}</div>` : ''}
                     ${ivHTML}
                 </div>
 
