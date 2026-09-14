@@ -84,6 +84,21 @@ export const ClinicalRulesDB = {
                 maxConcentration: '0.1 mEq/ml (peripheral) to 0.4 mEq/ml (central)',
                 rate: 'Max 0.5 - 1 mEq/kg/hour',
                 warning: 'ABSOLUTE CONTRAINDICATION FOR IV PUSH! Must be diluted and infused slowly. Continuous ECG monitoring required.'
+            },
+            'Esomeprazole': {
+                maxConcentration: '8 mg/ml',
+                rate: 'Infusion over 10-30 minutes OR slow IV injection over 3 minutes',
+                warning: 'Reconstitute only with 0.9% Sodium Chloride, Lactated Ringer\'s, or 5% Dextrose. Use within 12 hours.'
+            },
+            'Amphotericin B (Conventional)': {
+                maxConcentration: '0.1 mg/ml',
+                rate: 'Infusion over 2-6 hours',
+                warning: 'Pre-medicate to avoid infusion reactions. Highly nephrotoxic.'
+            },
+            'Labetalol': {
+                maxConcentration: '5 mg/ml',
+                rate: 'IV push over 2 minutes',
+                warning: 'Monitor blood pressure continuously. Patient must be supine.'
             }
         },
 
@@ -98,14 +113,21 @@ export const ClinicalRulesDB = {
             'Acetaminophen': { type: 'hepatic', warning: 'Use with extreme caution or reduce dose in severe hepatic impairment.' },
             'Metronidazole': { type: 'hepatic', warning: 'Reduce dose by up to 50% in severe hepatic impairment.' },
             'Ciprofloxacin': { type: 'renal', warning: 'Reduce dose or extend interval if GFR < 30 ml/min.' },
-            'Meropenem': { type: 'renal', warning: 'Adjust dose and interval if GFR < 50 ml/min.' }
+            'Meropenem': { type: 'renal', warning: 'Adjust dose and interval if GFR < 50 ml/min.' },
+            'Esomeprazole': { type: 'hepatic', warning: 'In severe hepatic impairment, do not exceed 20 mg daily.' },
+            'Amphotericin B (Conventional)': { type: 'renal', warning: 'Highly nephrotoxic. Requires close monitoring of renal function and electrolytes.' },
+            'Albendazole': { type: 'hepatic', warning: 'Monitor liver enzymes closely. Use with caution in patients with hepatic impairment.' },
+            'Mebendazole': { type: 'hepatic', warning: 'Metabolized primarily by the liver. Use with caution in significant hepatic impairment.' },
+            'Enoxaparin': { type: 'renal', warning: 'Reduce dose or monitor Anti-Xa levels carefully if CrCl < 30 ml/min.' },
+            'Sertraline': { type: 'hepatic', warning: 'Use a lower dose or increase dosing interval in hepatic impairment.' },
+            'Loperamide': { type: 'hepatic', warning: 'Use with caution in hepatic impairment due to reduced first-pass metabolism.' }
         },
 
         // 3. Allergy Cross-Reactivity
         crossAllergies: {
             'Penicillin': ['Amoxicillin', 'Ampicillin', 'Co-Amoxiclav', 'Penicillin V', 'Penicillin 6.3.3', 'Penicillin', 'Piperacillin-Tazobactam (Zosyn)', 'Ampicillin-Sulbactam (Unasyn)'],
             'Cephalosporin': ['Cefixime', 'Cephalexin', 'Ceftriaxone', 'Cefazoline', 'Cefotaxime', 'Ceftizoxim', 'Cefdinir', 'Cefuroxime', 'Cefadroxil', 'Ceftazidime', 'Cefepime'],
-            'NSAID': ['Ibuprofen', 'Mefenamic Acid', 'Indomethacin', 'Diclofenac', 'Ketorolac'],
+            'NSAID': ['Ibuprofen', 'Mefenamic Acid', 'Indomethacin', 'Diclofenac', 'Ketorolac', 'Naproxen', 'Celecoxib'],
             'Macrolide': ['Azithromycin', 'Clarithromycin', 'Erythromycin']
         },
 
@@ -176,6 +198,11 @@ export const ClinicalRulesDB = {
                 drugs: ['Fluconazole', 'Domperidone'],
                 severity: 'critical',
                 message: 'Critical Risk: Severe QT prolongation and risk of Torsades de Pointes.'
+            },
+            {
+                drugs: ['Itraconazole', 'Ondansetron'],
+                severity: 'critical',
+                message: 'Critical Risk: Additive QT prolongation leading to life-threatening arrhythmias.'
             },
 
             // --- HIGH SEVERITY INTERACTIONS (Major Clinical Safety Risk) ---
@@ -484,6 +511,21 @@ export const ClinicalRulesDB = {
                 severity: 'high',
                 message: 'High Risk: Additive QT prolongation risk.'
             },
+            {
+                drugs: ['Esomeprazole', 'Diazepam'],
+                severity: 'high',
+                message: 'High Risk: Esomeprazole inhibits CYP2C19, decreasing Diazepam clearance and prolonging its effects.'
+            },
+            {
+                drugs: ['Itraconazole', 'Midazolam'],
+                severity: 'high',
+                message: 'High Risk: Itraconazole strongly inhibits CYP3A4, significantly increasing Midazolam levels and prolonging sedation.'
+            },
+            {
+                drugs: ['Griseofulvin', 'Phenobarbital'],
+                severity: 'high',
+                message: 'High Risk: Phenobarbital significantly decreases the absorption and serum levels of Griseofulvin.'
+            },
 
             // --- MEDIUM SEVERITY INTERACTIONS ---
             {
@@ -522,7 +564,17 @@ export const ClinicalRulesDB = {
                 message: 'Moderate Risk: Decreased gastric acidity lowers absorption of elemental iron.'
             },
             {
+                drugs: ['Ferrous Sulfate', 'Esomeprazole'],
+                severity: 'medium',
+                message: 'Moderate Risk: Decreased gastric acidity lowers absorption of elemental iron.'
+            },
+            {
                 drugs: ['Omeprazole', 'Cefuroxime'],
+                severity: 'medium',
+                message: 'Moderate Risk: Increased gastric pH decreases absorption of oral Cefuroxime.'
+            },
+            {
+                drugs: ['Esomeprazole', 'Cefuroxime'],
                 severity: 'medium',
                 message: 'Moderate Risk: Increased gastric pH decreases absorption of oral Cefuroxime.'
             },
@@ -530,6 +582,11 @@ export const ClinicalRulesDB = {
                 drugs: ['Pantoprazole', 'Cefuroxime'],
                 severity: 'medium',
                 message: 'Moderate Risk: Increased gastric pH decreases absorption of oral Cefuroxime.'
+            },
+            {
+                drugs: ['Esomeprazole', 'Levothyroxine'],
+                severity: 'medium',
+                message: 'Moderate Risk: PPIs increase gastric pH, which may decrease the absorption of Levothyroxine.'
             },
 
             // ============================================================
@@ -1012,6 +1069,60 @@ export const ClinicalRulesDB = {
                 drugs: ['Valproic Acid', 'Ibuprofen'],
                 severity: 'medium',
                 message: 'Moderate Risk: Ibuprofen may displace Valproic Acid from protein binding, altering its free levels.'
+            },
+
+            // ============================================================
+            //  NEWLY ADDED INTERACTIONS (Psychiatric, Analgesics, Coagulation)
+            // ============================================================
+            {
+                drugs: ['Tramadol', 'Sertraline'],
+                severity: 'critical',
+                message: 'Critical Risk: High risk of Serotonin Syndrome and increased seizure risk.'
+            },
+            {
+                drugs: ['Tramadol', 'Fluoxetine'],
+                severity: 'critical',
+                message: 'Critical Risk: High risk of Serotonin Syndrome and increased seizure risk.'
+            },
+            {
+                drugs: ['Methadone', 'Fluconazole'],
+                severity: 'high',
+                message: 'High Risk: Fluconazole inhibits methadone metabolism; increased risk of severe respiratory depression and QT prolongation.'
+            },
+            {
+                drugs: ['Sertraline', 'Linezolid'],
+                severity: 'critical',
+                message: 'Critical Risk: Absolute contraindication. High risk of fatal Serotonin Syndrome.'
+            },
+            {
+                drugs: ['Fluoxetine', 'Linezolid'],
+                severity: 'critical',
+                message: 'Critical Risk: Absolute contraindication. High risk of fatal Serotonin Syndrome.'
+            },
+            {
+                drugs: ['Enoxaparin', 'Naproxen'],
+                severity: 'high',
+                message: 'High Risk: Increased risk of severe bleeding and epidural/spinal hematoma.'
+            },
+            {
+                drugs: ['Enoxaparin', 'Ibuprofen'],
+                severity: 'high',
+                message: 'High Risk: Increased risk of severe bleeding.'
+            },
+            {
+                drugs: ['Enoxaparin', 'Ketorolac'],
+                severity: 'critical',
+                message: 'Critical Risk: Extremely high risk of major bleeding. Combination is generally contraindicated.'
+            },
+            {
+                drugs: ['Methadone', 'Amiodarone'],
+                severity: 'critical',
+                message: 'Critical Risk: Additive QT prolongation leading to life-threatening Torsades de Pointes.'
+            },
+            {
+                drugs: ['Clonidine', 'Propranolol'],
+                severity: 'high',
+                message: 'High Risk: May cause paradoxical hypertension or severe bradycardia. Rebound hypertension upon withdrawal is exacerbated.'
             }
         ],
 
