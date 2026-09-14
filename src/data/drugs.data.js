@@ -640,6 +640,12 @@ export const drugsDB = [
         minMgPerKg: 5, maxMgPerKg: 10, intervalHours: 8, doseUnit: 'mg', maxSingleDoseMg: 300,
         indications: ['Neuropathic Pain', 'Focal Seizures']
     },
+    {
+        id: 2014, name: 'Spironolactone', form: 'Tablet 25mg', category: 'tablet',
+        minMgPerKg: 1, maxMgPerKg: 3, intervalHours: 12, doseUnit: 'mg', maxDailyDoseMg: 100,
+        indications: ['Edema', 'Heart Failure', 'Hypertension'],
+        warning: 'Potassium-sparing diuretic. Monitor serum potassium; risk of hyperkalemia, especially with KCl or other potassium-sparing agents.'
+    },
 
     // ==========================================
     // SUPPOSITORIES
