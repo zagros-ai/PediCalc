@@ -133,6 +133,14 @@
         // guide line reads cleanly right-to-left without Latin/RTL scrambling).
         'unit.ml':              { en: 'ml', fa: 'میلی‌لیتر' },
 
+        // Dose units — localized so the per-dose amount reads cleanly in Persian
+        // (unit written once, in Persian: e.g. «۱۲۰ تا ۱۸۰ میلی‌گرم»).
+        'unit.mg':              { en: 'mg', fa: 'میلی‌گرم' },
+        'unit.g':               { en: 'g', fa: 'گرم' },
+        'unit.mcg':             { en: 'mcg', fa: 'میکروگرم' },
+        'unit.meq':             { en: 'mEq', fa: 'میلی‌اکی‌والان' },
+        'unit.units':           { en: 'Units', fa: 'واحد' },
+
         // Help / App Guide modal
         'help.title':           { en: 'App Guide', fa: 'راهنمای برنامه' },
         'help.item1.title':     { en: 'Scientific Pediatric Dosing', fa: 'دوزبندی علمی کودکان' },
@@ -3720,7 +3728,7 @@
             if (nearlyEqual(activeMin, activeMax) || nearlyEqual(result.minDose, result.maxDose)) {
                 result.displayResult = this._formatNum(result.minDose);
             } else {
-                result.displayResult = joinRange(this._formatNum(result.minDose), this._formatNum(result.maxDose));
+                result.displayResult = this._formatRange(result.minDose, result.maxDose);
             }
 
             this.activeMin = activeMin;
@@ -3801,7 +3809,7 @@
                         <div class="formula-title"><i class="fas fa-square-root-variable"></i> ${escapeHtml(t('formula.title'))}</div>
                         <div class="formula-line">
                             <span class="f-desc">${escapeHtml(weightStr)} × ${escapeHtml(min)} ${perKgUnit} ${isCappedMin ? escapeHtml(t('formula.capped')) : ''}</span>
-                            <span class="f-result">= <strong>${escapeHtml(this._formatNum(result.minDose))}</strong></span>
+                            <span class="f-result">= <strong>${escapeHtml(this._formatNumEn(result.minDose))}</strong></span>
                         </div>
                         ${result.dailyMaxDisplay && result.dailyMax > 0 ? `<div class="formula-line"><span class="f-desc">${escapeHtml(t('formula.dailyMax'))}</span><span class="f-result"><strong>${escapeHtml(result.dailyMax)}${dailyMaxUnit}</strong></span></div>` : ''}
                         ${volumeHTML}
@@ -3814,11 +3822,11 @@
                     <div class="formula-title"><i class="fas fa-square-root-variable"></i> ${escapeHtml(t('formula.title'))}</div>
                     <div class="formula-line">
                         <span class="f-desc">Min: ${escapeHtml(weightStr)} × ${escapeHtml(min)} ${perKgUnit} ${isCappedMin ? escapeHtml(t('formula.capped')) : ''}</span>
-                        <span class="f-result">= <strong>${escapeHtml(this._formatNum(result.minDose))}</strong></span>
+                        <span class="f-result">= <strong>${escapeHtml(this._formatNumEn(result.minDose))}</strong></span>
                     </div>
                     <div class="formula-line">
                         <span class="f-desc">Max: ${escapeHtml(weightStr)} × ${escapeHtml(max)} ${perKgUnit} ${isCappedMax ? escapeHtml(t('formula.capped')) : ''}</span>
-                        <span class="f-result">= <strong>${escapeHtml(this._formatNum(result.maxDose))}</strong></span>
+                        <span class="f-result">= <strong>${escapeHtml(this._formatNumEn(result.maxDose))}</strong></span>
                     </div>
                     ${result.dailyMaxDisplay && result.dailyMax > 0 ? `<div class="formula-line"><span class="f-desc">${escapeHtml(t('formula.dailyMax'))}</span><span class="f-result"><strong>${escapeHtml(result.dailyMax)}${dailyMaxUnit}</strong></span></div>` : ''}
                     ${volumeHTML}
@@ -3826,23 +3834,69 @@
             `;
         }
 
-        _formatNum(n) {
-            let unit = Utils.resolveDoseUnit(this.drug).toLowerCase();
+        /**
+         * Split a formatted dose into its numeric value and its (English) unit token.
+         * Returns e.g. { value: '120', unit: 'mg' } or { value: '1.2', unit: 'g' }.
+         * The unit token is the canonical English label; localize it with _unitLabel().
+         */
+        _formatParts(n) {
+            const unit = Utils.resolveDoseUnit(this.drug).toLowerCase();
 
             if (unit === 'units' || unit === 'iu' || unit === 'u') {
-                return n.toLocaleString() + ' Units';
+                return { value: n.toLocaleString(), unit: 'Units' };
             }
             if (unit === 'meq') {
-                return parseFloat(n.toFixed(2)).toString() + ' mEq';
+                return { value: parseFloat(n.toFixed(2)).toString(), unit: 'mEq' };
             }
             if (unit === 'mcg') {
-                return parseFloat(n.toFixed(1)).toString() + ' mcg';
+                return { value: parseFloat(n.toFixed(1)).toString(), unit: 'mcg' };
             }
 
-            if (n >= 1000) return (n / 1000).toFixed(1) + ' g';
-            if (n < 0.1) return parseFloat(n.toFixed(3)).toString() + ' mg'; // Fix Micro-dosing < 0.1
-            if (n < 1) return parseFloat(n.toFixed(2)).toString() + ' mg';   // Fix Micro-dosing < 1.0
-            return parseFloat(n.toFixed(1)).toString() + ' mg';
+            if (n >= 1000) return { value: (n / 1000).toFixed(1), unit: 'g' };
+            if (n < 0.1) return { value: parseFloat(n.toFixed(3)).toString(), unit: 'mg' }; // micro-dosing < 0.1
+            if (n < 1) return { value: parseFloat(n.toFixed(2)).toString(), unit: 'mg' };   // micro-dosing < 1.0
+            return { value: parseFloat(n.toFixed(1)).toString(), unit: 'mg' };
+        }
+
+        /** Localize an English unit token ('mg','g','mcg','mEq','Units') for display. */
+        _unitLabel(unitToken) {
+            const key = {
+                'mg': 'unit.mg', 'g': 'unit.g', 'mcg': 'unit.mcg',
+                'mEq': 'unit.meq', 'Units': 'unit.units'
+            }[unitToken];
+            return key ? t(key) : unitToken;
+        }
+
+        /** Language-aware "value unit" (localized unit). Used for the per-dose amount. */
+        _formatNum(n) {
+            const { value, unit } = this._formatParts(n);
+            return `${value} ${this._unitLabel(unit)}`;
+        }
+
+        /** Always-English "value unit". Used inside the LTR formula box. */
+        _formatNumEn(n) {
+            const { value, unit } = this._formatParts(n);
+            return `${value} ${unit}`;
+        }
+
+        /**
+         * Build the displayed per-dose amount. In every language the unit is written
+         * once at the end when both bounds share the same unit
+         * (e.g. «۱۲۰ تا ۱۸۰ میلی‌گرم» / "120 to 180 mg"). If the two bounds resolve to
+         * different units (e.g. 800 mg vs 1.2 g) each keeps its own unit.
+         */
+        _formatRange(min, max) {
+            if (nearlyEqual(min, max)) return this._formatNum(min);
+            const a = this._formatParts(min);
+            const b = this._formatParts(max);
+            // In Persian, write the unit ONCE at the end (localized) when both bounds
+            // share it, e.g. «۱۲۰ تا ۱۸۰ میلی‌گرم». In English keep the original
+            // per-value form ("120 mg to 180 mg"). If the two bounds resolve to
+            // different units (e.g. 800 mg vs 1.2 g) always keep the unit on both.
+            if (getLang() === 'fa' && a.unit === b.unit) {
+                return `${joinRange(a.value, b.value)} ${this._unitLabel(a.unit)}`;
+            }
+            return joinRange(this._formatNum(min), this._formatNum(max));
         }
     }
 

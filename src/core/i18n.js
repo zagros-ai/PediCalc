@@ -124,6 +124,14 @@ const STRINGS = {
     // guide line reads cleanly right-to-left without Latin/RTL scrambling).
     'unit.ml':              { en: 'ml', fa: 'میلی‌لیتر' },
 
+    // Dose units — localized so the per-dose amount reads cleanly in Persian
+    // (unit written once, in Persian: e.g. «۱۲۰ تا ۱۸۰ میلی‌گرم»).
+    'unit.mg':              { en: 'mg', fa: 'میلی‌گرم' },
+    'unit.g':               { en: 'g', fa: 'گرم' },
+    'unit.mcg':             { en: 'mcg', fa: 'میکروگرم' },
+    'unit.meq':             { en: 'mEq', fa: 'میلی‌اکی‌والان' },
+    'unit.units':           { en: 'Units', fa: 'واحد' },
+
     // Help / App Guide modal
     'help.title':           { en: 'App Guide', fa: 'راهنمای برنامه' },
     'help.item1.title':     { en: 'Scientific Pediatric Dosing', fa: 'دوزبندی علمی کودکان' },
