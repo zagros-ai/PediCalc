@@ -1387,9 +1387,10 @@ body {
 [dir="rtl"] .drug-contraindication.medium { border-left: none; border-right: 3px solid var(--warning-600); }
 [dir="rtl"] .drug-home-guide { border-left: none; border-right: 3px solid var(--accent-500); }
 
-/* Administration guide + dose values: keep the number+unit as a clean LTR
-   chunk, let the surrounding Persian text flow RTL, tidy spacing. */
-.dose-value { direction: ltr; unicode-bidi: isolate; }
+/* Administration guide: the dose value is isolated so it never scrambles.
+   In Persian the value is fully localized (numbers + تا + میلی‌لیتر) so it flows
+   RTL naturally; isolate (without forcing LTR) keeps it a self-contained run. */
+.dose-value { unicode-bidi: isolate; }
 [dir="rtl"] .home-guide-text { direction: rtl; text-align: right; }
 [dir="rtl"] .home-guide-label { direction: rtl; text-align: right; }
 .home-guide-text .dose-freq { margin: 0 4px; }
@@ -1406,6 +1407,11 @@ body {
 
 /* Calculate arrow icon: flip 180° in Persian so it points the RTL way. */
 [dir="rtl"] .calc-arrow-icon { transform: rotate(180deg); }
+
+/* Per-dose amount keeps English units (e.g. mg); isolate as LTR so the unit
+   stays directly after its number and the `تا` separator doesn't scramble the
+   sequence. Centered, so LTR direction is visually neutral. */
+[dir="rtl"] .cfr-amount { direction: ltr; unicode-bidi: isolate; }
 
 /* Side navigation slides in from the right in RTL */
 [dir="rtl"] .side-nav { left: auto; right: 0; transform: translateX(100%); }

@@ -18,16 +18,11 @@ const STORAGE_KEY = 'pedicalc_lang';
 const DEFAULT_LANG = 'en';
 const SUPPORTED = ['en', 'fa'];
 
+// The app ALWAYS starts in English on launch (product decision). The user can
+// switch to Persian during the session via the toggle; that choice is not
+// restored on the next launch — every fresh start begins in English.
 let currentLang = DEFAULT_LANG;
 const listeners = new Set();
-
-// Read any previously persisted choice (guarded for non-browser/test contexts).
-try {
-    if (typeof localStorage !== 'undefined') {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved && SUPPORTED.includes(saved)) currentLang = saved;
-    }
-} catch { /* ignore storage errors */ }
 
 // ============================================================
 //  UI STRING DICTIONARY  (en is the source of truth / fallback)
@@ -124,6 +119,10 @@ const STRINGS = {
     // Intervals
     'interval.single':      { en: 'Single Dose / As needed', fa: 'دوز منفرد / در صورت نیاز' },
     'interval.hours':       { en: 'Every {h} hours', fa: 'هر {h} ساعت' },
+
+    // Volume unit for the administration guide (translated in fa so the whole
+    // guide line reads cleanly right-to-left without Latin/RTL scrambling).
+    'unit.ml':              { en: 'ml', fa: 'میلی‌لیتر' },
 
     // Help / App Guide modal
     'help.title':           { en: 'App Guide', fa: 'راهنمای برنامه' },

@@ -27,16 +27,11 @@
     const DEFAULT_LANG = 'en';
     const SUPPORTED = ['en', 'fa'];
 
+    // The app ALWAYS starts in English on launch (product decision). The user can
+    // switch to Persian during the session via the toggle; that choice is not
+    // restored on the next launch — every fresh start begins in English.
     let currentLang = DEFAULT_LANG;
     const listeners = new Set();
-
-    // Read any previously persisted choice (guarded for non-browser/test contexts).
-    try {
-        if (typeof localStorage !== 'undefined') {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved && SUPPORTED.includes(saved)) currentLang = saved;
-        }
-    } catch { /* ignore storage errors */ }
 
     // ============================================================
     //  UI STRING DICTIONARY  (en is the source of truth / fallback)
@@ -133,6 +128,10 @@
         // Intervals
         'interval.single':      { en: 'Single Dose / As needed', fa: 'دوز منفرد / در صورت نیاز' },
         'interval.hours':       { en: 'Every {h} hours', fa: 'هر {h} ساعت' },
+
+        // Volume unit for the administration guide (translated in fa so the whole
+        // guide line reads cleanly right-to-left without Latin/RTL scrambling).
+        'unit.ml':              { en: 'ml', fa: 'میلی‌لیتر' },
 
         // Help / App Guide modal
         'help.title':           { en: 'App Guide', fa: 'راهنمای برنامه' },
@@ -1151,9 +1150,11 @@
 
                 const minCc = parseFloat((minDose / activeConc).toFixed(2)).toString();
                 const maxCc = parseFloat((maxDose / activeConc).toFixed(2)).toString();
-                // The dose value (number + ml) is bidi-isolated so it renders as a
-                // clean LTR unit even inside the RTL Persian guide line.
-                const value = (minCc === maxCc) ? `${minCc} ml` : `${joinRange(minCc, maxCc)} ml`;
+                // In the guide, `تا` sits between the two numbers and the volume unit
+                // is localized (ml → میلی‌لیتر) so the whole Persian line reads cleanly
+                // right-to-left with no Latin/RTL scrambling.
+                const mlUnit = t('unit.ml');
+                const value = (minCc === maxCc) ? `${minCc} ${mlUnit}` : `${joinRange(minCc, maxCc)} ${mlUnit}`;
                 return `<strong class="dose-value">${escapeHtml(value)}</strong> <span class="dose-freq">${escapeHtml(intervalText)}</span>`;
             }
 

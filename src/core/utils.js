@@ -62,9 +62,11 @@ export const Utils = {
 
             const minCc = parseFloat((minDose / activeConc).toFixed(2)).toString();
             const maxCc = parseFloat((maxDose / activeConc).toFixed(2)).toString();
-            // The dose value (number + ml) is bidi-isolated so it renders as a
-            // clean LTR unit even inside the RTL Persian guide line.
-            const value = (minCc === maxCc) ? `${minCc} ml` : `${joinRange(minCc, maxCc)} ml`;
+            // In the guide, `تا` sits between the two numbers and the volume unit
+            // is localized (ml → میلی‌لیتر) so the whole Persian line reads cleanly
+            // right-to-left with no Latin/RTL scrambling.
+            const mlUnit = t('unit.ml');
+            const value = (minCc === maxCc) ? `${minCc} ${mlUnit}` : `${joinRange(minCc, maxCc)} ${mlUnit}`;
             return `<strong class="dose-value">${escapeHtml(value)}</strong> <span class="dose-freq">${escapeHtml(intervalText)}</span>`;
         }
 
