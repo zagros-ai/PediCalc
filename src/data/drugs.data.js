@@ -991,16 +991,32 @@ export const drugsDB = [
     { id: 2535, name: 'Tranexamic Acid (Transid)', form: 'Ampoule 500mg/5ml', category: 'ampoule', minMgPerKg: 10, maxMgPerKg: 15, intervalHours: 8, doseUnit: 'mg', baseDose: 500, baseVolume: 5, maxSingleDoseMg: 1000, indications: ['Hemorrhage', 'Trauma'], warning: 'Push slowly over 10 minutes.' },
     { id: 2536, name: 'Enoxaparin (Clexane)', form: 'Prefilled Syringe 4000 IU (40mg/0.4ml)', category: 'ampoule', minMgPerKg: 1, maxMgPerKg: 1.5, intervalHours: 12, doseUnit: 'mg', indications: ['DVT Treatment', 'Prophylaxis'], warning: 'Administer SubQ. Prophylaxis dose is usually 0.5 mg/kg.' },
 
-    // ==========================================
-    // NEWLY ADDED DRUGS (Anti-parasitic & Topical)
-    // ==========================================
-    { id: 2537, name: 'Permethrin', form: 'Cream 5%', category: 'cream', fixedDose: 'Apply to whole body', intervalHours: 0, doseUnit: 'mg', indications: ['Scabies'], warning: 'Leave on for 8-14 hours, then wash off. Repeat in 1 week if needed.' },
-    { id: 2538, name: 'Fusidic Acid', form: 'Ointment 2%', category: 'ointment', fixedDose: 'Apply 3 times daily', intervalHours: 8, doseUnit: 'mg', indications: ['Staphylococcal Skin Infections'] },
-    { id: 2539, name: 'Ketoconazole', form: 'Cream 2%', category: 'cream', fixedDose: 'Apply once daily', intervalHours: 24, doseUnit: 'mg', indications: ['Fungal Skin Infections'] },
-    { id: 2540, name: 'Tobramycin', form: 'Eye Drop 0.3%', category: 'drop', fixedDose: '1-2 drops q4h', intervalHours: 4, doseUnit: 'mg', indications: ['Bacterial Conjunctivitis'] },
-    { id: 2541, name: 'Polymyxin/Neomycin', form: 'Ear Drop', category: 'drop', fixedDose: '3-4 drops TID', intervalHours: 8, doseUnit: 'mg', indications: ['Otitis Externa'] },
-    { id: 2542, name: 'Tetracaine', form: 'Eye Drop 0.5%', category: 'drop', fixedDose: '1-2 drops', intervalHours: 0, doseUnit: 'mg', indications: ['Topical Ocular Anesthesia'], warning: 'For examination or procedure only. Not for home use.' }
-];
+  // ==========================================
+      // NEWLY ADDED DRUGS (Anti-parasitic & Topical)
+      // ==========================================
+      { id: 2537, name: 'Permethrin', form: 'Cream 5%', category: 'cream', fixedDose: 'Apply to whole body', intervalHours: 0, doseUnit: 'mg', indications: ['Scabies'], warning: 'Leave on for 8-14 hours, then wash off. Repeat in 1 week if needed.' },
+      { id: 2538, name: 'Fusidic Acid', form: 'Ointment 2%', category: 'ointment', fixedDose: 'Apply 3 times daily', intervalHours: 8, doseUnit: 'mg', indications: ['Staphylococcal Skin Infections'] },
+      { id: 2539, name: 'Ketoconazole', form: 'Cream 2%', category: 'cream', fixedDose: 'Apply once daily', intervalHours: 24, doseUnit: 'mg', indications: ['Fungal Skin Infections'] },
+      { id: 2540, name: 'Tobramycin', form: 'Eye Drop 0.3%', category: 'drop', fixedDose: '1-2 drops q4h', intervalHours: 4, doseUnit: 'mg', indications: ['Bacterial Conjunctivitis'] },
+      { id: 2541, name: 'Polymyxin/Neomycin', form: 'Ear Drop', category: 'drop', fixedDose: '3-4 drops TID', intervalHours: 8, doseUnit: 'mg', indications: ['Otitis Externa'] },
+      { id: 2542, name: 'Tetracaine', form: 'Eye Drop 0.5%', category: 'drop', fixedDose: '1-2 drops', intervalHours: 0, doseUnit: 'mg', indications: ['Topical Ocular Anesthesia'], warning: 'For examination or procedure only. Not for home use.' },
+      {
+          id: 2543, name: 'Nitrofurantoin', form: 'Capsule 100mg', category: 'tablet',
+          minMgPerKg: 1.25, maxMgPerKg: 1.75, intervalHours: 6, doseUnit: 'mg', maxSingleDoseMg: 100,
+          indications: ['UTI Treatment', 'UTI Prophylaxis'],
+          indicationDoses: [
+              { name: 'Treatment', minMgPerKg: 1.25, maxMgPerKg: 1.75, intervalHours: 6 },
+              { name: 'Prophylaxis', minMgPerKg: 1, maxMgPerKg: 2, intervalHours: 24 }
+          ]
+      },
+      {
+          id: 2544, name: 'Polymyxin NH', form: 'Ear Drop', category: 'drop',
+          fixedDose: '3-4 drops', intervalHours: 8, doseUnit: 'mg',
+          indications: ['Otitis Externa'],
+          warning: 'در صورت پارگی پرده گوش (Tympanic Membrane) منع مصرف دارد.'
+      }
+  ];
+
 
 // Backward-compatible globals for the Android WebView bridge and any non-module consumers.
 if (typeof window !== 'undefined') {
