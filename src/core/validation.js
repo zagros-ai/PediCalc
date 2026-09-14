@@ -26,6 +26,7 @@ export const ValidationEngine = {
         'Penicillin': { minWeight: 0, warning: 'Use with caution in penicillin-allergic patients.', severity: 'medium' },
         'Doxycycline': { minWeight: 0, warning: 'According to AAP/Nelson guidelines, short courses (<21 days) are safe for all ages. Long courses are contraindicated under 8 yrs.', severity: 'medium' },
         'Ciprofloxacin': { minAge: 18, warning: 'Not recommended for routine use in children under 18 years.', severity: 'medium' },
+        'Nitrofurantoin': { minAge: 0.08, warning: 'Contraindicated in neonates (< 1 month) due to the risk of hemolytic anemia.', severity: 'high' },
         'Chloramphenicol': { minWeight: 0, warning: 'Risk of gray baby syndrome in neonates. Monitor blood counts.', severity: 'high' }
     },
 
