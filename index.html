@@ -107,9 +107,13 @@
                     👇 برای فعال‌سازی دکمه تایید، متن را تا انتها اسکرول کنید
                 </p>
             </div>
-            <div style="padding: 12px 16px; background: var(--surface-bg); border-top: 1px solid var(--border-light); flex-shrink: 0;">
+            <div style="padding: 12px 16px; background: var(--surface-bg); border-top: 1px solid var(--border-light); flex-shrink: 0; direction: rtl;">
+                <label id="disclaimerAgreeLabel" for="disclaimerAgreeCheckbox" style="display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px; font-family: 'Vazirmatn', system-ui, sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--text-primary); text-align: right; cursor: pointer;">
+                    <input type="checkbox" id="disclaimerAgreeCheckbox" style="width: 18px; height: 18px; accent-color: var(--success-600); margin-top: 2px; flex-shrink: 0; cursor: pointer;" />
+                    <span>تمامی شرایط و سلب مسئولیت فوق را مطالعه کردم و می‌پذیرم.</span>
+                </label>
                 <button id="acceptDisclaimerBtn" disabled style="width: 100%; padding: 12px; font-size: 0.9rem; font-weight: 800; font-family: inherit; color: white; background: var(--text-tertiary); border: none; border-radius: var(--radius-md); cursor: not-allowed; transition: all 0.3s ease;">
-                    مطالعه کردم و می‌پذیرم
+                    ورود به برنامه
                 </button>
             </div>
         </div>
@@ -176,14 +180,6 @@
                     </div>
                 </div>
 
-                <div class="about-disclaimer">
-                    <h4><i class="fas fa-exclamation-triangle"></i> سلب مسئولیت پزشکی (Medical Disclaimer)</h4>
-                    <p>
-                        این اپلیکیشن صرفاً به عنوان یک ابزار کمک‌آموزشی و راهنمای بالینی برای کادر درمان طراحی شده است و به هیچ عنوان جایگزین قضاوت بالینی، تشخیص و دستورات مستقیم پزشک معالج نمی‌باشد.
-                        با وجود اینکه تمامی داده‌ها، دوزهای دارویی (به‌ویژه محاسبات حساس وزنی و سنی مربوط به کودکان) و قوانین بالینی موجود در این نرم‌افزار بر اساس منابع معتبر علمی گردآوری و تنظیم شده‌اند، اما پیش از هرگونه تجویز، آماده‌سازی یا تزریق دارو، بررسی مجدد مقادیر و تطبیق آن‌ها با شرایط اختصاصی بیمار، عملکرد ارگان‌ها و پروتکل‌های رسمی مرکز درمانی الزامی است.
-                        توسعه‌دهنده و ناظر علمی این اپلیکیشن هیچ‌گونه مسئولیتی در قبال خطاهای احتمالی ناشی از کاربری، تداخلات دارویی پیش‌بینی‌نشده، یا هرگونه آسیب و عواقب ناشی از اتکای صرف به اطلاعات و محاسبات این نرم‌افزار را نمی‌پذیرند. مسئولیت نهایی مدیریت درمان تماماً بر عهده کاربر (کادر درمان) می‌باشد.
-                    </p>
-                </div>
             </div>
         </div>
     </div>

@@ -1420,3 +1420,6 @@ body {
 
 /* Nav link icons: keep natural order, just ensure the row reads RTL */
 [dir="rtl"] .nav-links li a { text-align: right; }
+
+/* "تماس با ما" section title is right-aligned in Persian */
+[dir="rtl"] .nav-section-title { text-align: right; }
