@@ -132,6 +132,13 @@ const STRINGS = {
     'unit.meq':             { en: 'mEq', fa: 'میلی‌اکی‌والان' },
     'unit.units':           { en: 'Units', fa: 'واحد' },
 
+    // Per-kilogram base-dose units (shown under "Base Dose"), localized in fa.
+    'unitkg.mg':            { en: 'mg/kg', fa: 'میلی‌گرم بر کیلوگرم' },
+    'unitkg.g':             { en: 'g/kg', fa: 'گرم بر کیلوگرم' },
+    'unitkg.mcg':           { en: 'mcg/kg', fa: 'میکروگرم بر کیلوگرم' },
+    'unitkg.meq':           { en: 'mEq/kg', fa: 'میلی‌اکی‌والان بر کیلوگرم' },
+    'unitkg.units':         { en: 'Units/kg', fa: 'واحد بر کیلوگرم' },
+
     // Help / App Guide modal
     'help.title':           { en: 'App Guide', fa: 'راهنمای برنامه' },
     'help.item1.title':     { en: 'Scientific Pediatric Dosing', fa: 'دوزبندی علمی کودکان' },

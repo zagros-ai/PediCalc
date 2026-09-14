@@ -11,10 +11,25 @@ import { AdvancedClinicalEngine } from '../core/clinical-engine.js';
 import { categoriesDB, drugsDB } from '../data/drugs.data.js';
 import { showPremiumModal } from './premium-modal.js';
 import { updateCartUI } from './cart.js';
-import { t, localized } from '../core/i18n.js';
+import { t, localized, joinRange } from '../core/i18n.js';
 import { resolveFa } from '../data/translations.fa.js';
 
 const esc = Utils.escapeHtml;
+
+/** Localized "per kg" unit label for a drug's base dose (e.g. mg/kg → میلی‌گرم بر کیلوگرم). */
+function perKgUnitLabel(drug) {
+    const key = {
+        'mg': 'unitkg.mg', 'g': 'unitkg.g', 'mcg': 'unitkg.mcg',
+        'mEq': 'unitkg.meq', 'Units': 'unitkg.units'
+    }[Utils.resolveDoseUnit(drug)];
+    return key ? t(key) : 'mg/kg';
+}
+
+/** Format a base per-kg dose range: "min[ تا max] <localized unit/kg>". */
+function formatBaseDose(min, max, drug) {
+    const range = (min === max) ? `${min}` : joinRange(min, max);
+    return `${range} ${perKgUnitLabel(drug)}`;
+}
 
 function getCategoryImage(categoryId) {
     const category = categoriesDB.find(c => c.id === categoryId);
@@ -181,10 +196,11 @@ export function renderCalcUI(drugId, container) {
         <input type="number" class="calc-height-input" step="1" min="30" max="250" placeholder="${esc(t('calc.height'))}" autocomplete="off" />
     ` : `<input type="hidden" class="calc-weight-input" value="0" />`;
 
-    // Base-dose display keeps units (mg/kg) in English; only "Standard or Age-based" is translated.
+    // Base-dose display: unit is localized (fa: «میلی‌گرم بر کیلوگرم») and the
+    // range uses تا in Persian / to in English; "Standard or Age-based" is translated.
     const baseDoseDisplay = (drug.indicationDoses && drug.indicationDoses.length > 0)
-        ? `${drug.indicationDoses[0].minMgPerKg}${drug.indicationDoses[0].minMgPerKg !== drug.indicationDoses[0].maxMgPerKg ? ` to ${drug.indicationDoses[0].maxMgPerKg}` : ''} mg/kg`
-        : (drug.fixedDose ? t('calc.standardOrAge') : `${drug.minMgPerKg}${drug.minMgPerKg !== drug.maxMgPerKg ? ` to ${drug.maxMgPerKg}` : ''} mg/kg`);
+        ? formatBaseDose(drug.indicationDoses[0].minMgPerKg, drug.indicationDoses[0].maxMgPerKg, drug)
+        : (drug.fixedDose ? t('calc.standardOrAge') : formatBaseDose(drug.minMgPerKg, drug.maxMgPerKg, drug));
 
     const hasConcentration = (drug.baseDose !== undefined && drug.baseVolume !== undefined) || !!drug.mgPerMl;
 
@@ -386,7 +402,7 @@ export function renderCalcUI(drugId, container) {
                 optionsBox.classList.remove('show');
                 selectedBox.classList.remove('open');
                 selectedIndicationObj = drug.indicationDoses[value];
-                dynamicBaseDoseDisplay.textContent = `${selectedIndicationObj.minMgPerKg}${selectedIndicationObj.minMgPerKg !== selectedIndicationObj.maxMgPerKg ? ` to ${selectedIndicationObj.maxMgPerKg}` : ''} mg/kg`;
+                dynamicBaseDoseDisplay.textContent = formatBaseDose(selectedIndicationObj.minMgPerKg, selectedIndicationObj.maxMgPerKg, drug);
 
                 if (calcBtn.disabled === false && !resultArea.hidden) performCalculation();
             });
@@ -481,6 +497,9 @@ export function renderCalcUI(drugId, container) {
         const minDose = doseResult.minDose;
         const maxDose = doseResult.maxDose;
         const showHomeGuide = ['syrup', 'drop', 'powder', 'inhaler'].includes(drug.category) || drug.category === 'sachet';
+        // Topical / spray / sachet / powder doses are fixed instructions, not a
+        // weight×dose calculation, so the formula box is redundant — hide it.
+        const showFormula = !['ointment', 'cream', 'gel', 'spray', 'sachet', 'powder'].includes(drug.category);
 
         let patientWarningsHTML = '';
         const patientValidation = ValidationEngine.validatePatient(weightVal, ageVal, requiresWeight);
@@ -530,7 +549,7 @@ export function renderCalcUI(drugId, container) {
                 <div class="cfr-amount">${esc(doseResult.displayResult)}</div>
                 <div class="cfr-interval">${esc(t('calc.frequency'))} <strong>${esc(Utils.getIntervalText(doseResult.appliedInterval))}</strong></div>
             </div>
-            ${calculator.getFormulaHTML(doseResult)}
+            ${showFormula ? calculator.getFormulaHTML(doseResult) : ''}
 
             <div style="margin-top: 15px;">
                 ${patientWarningsHTML}
