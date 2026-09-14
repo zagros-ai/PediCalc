@@ -8,7 +8,7 @@
 import { Utils, escapeHtml, nearlyEqual } from './utils.js';
 import { ValidationEngine } from './validation.js';
 import { AdvancedClinicalEngine } from './clinical-engine.js';
-import { t } from './i18n.js';
+import { t, joinRange } from './i18n.js';
 import { resolveFa } from '../data/translations.fa.js';
 
 export class DrugDoseCalculator {
@@ -179,14 +179,14 @@ export class DrugDoseCalculator {
 
     _calculateTopical(result) {
         result.isFixedDose = true;
-        result.calculatedFixedDose = this.drug.fixedDose || t('dyn.applyThin');
+        result.calculatedFixedDose = this.drug.fixedDose ? resolveFa('fixedDose', this.drug.fixedDose) : t('dyn.applyThin');
         result.displayResult = result.calculatedFixedDose;
         return result;
     }
 
     _calculateFixedOrAgeBased(result) {
         result.isFixedDose = true;
-        result.calculatedFixedDose = this.drug.fixedDose;
+        result.calculatedFixedDose = resolveFa('fixedDose', this.drug.fixedDose);
 
         let parsedMin = 0;
         let parsedMax = 0;
@@ -209,7 +209,7 @@ export class DrugDoseCalculator {
             if (nearlyEqual(parsedMin, parsedMax)) {
                 result.calculatedFixedDose = `${parsedMin} ${unitLabel}`;
             } else {
-                result.calculatedFixedDose = `${parsedMin} to ${parsedMax} ${unitLabel}`;
+                result.calculatedFixedDose = `${joinRange(parsedMin, parsedMax)} ${unitLabel}`;
             }
         }
 
@@ -219,7 +219,7 @@ export class DrugDoseCalculator {
 
     _calculatePowderFixed(result) {
         result.isFixedDose = true;
-        result.calculatedFixedDose = this.drug.fixedDose;
+        result.calculatedFixedDose = resolveFa('fixedDose', this.drug.fixedDose);
         result.displayResult = result.calculatedFixedDose;
         return result;
     }
@@ -311,7 +311,7 @@ export class DrugDoseCalculator {
         if (nearlyEqual(activeMin, activeMax) || nearlyEqual(result.minDose, result.maxDose)) {
             result.displayResult = this._formatNum(result.minDose);
         } else {
-            result.displayResult = `${this._formatNum(result.minDose)} to ${this._formatNum(result.maxDose)}`;
+            result.displayResult = joinRange(this._formatNum(result.minDose), this._formatNum(result.maxDose));
         }
 
         this.activeMin = activeMin;
@@ -355,7 +355,7 @@ export class DrugDoseCalculator {
                 const unitLabel = 'ml (cc)';
                 const volStr = (minVol === maxVol) ? `${minVol} ${unitLabel}` : `${minVol} - ${maxVol} ${unitLabel}`;
                 volumeHTML = `
-                    <div class="formula-line" style="background: var(--primary-100); padding: 8px; border-radius: var(--radius-sm); margin-top: 8px; border: 1px solid var(--primary-300);">
+                    <div class="formula-line volume-line" style="background: var(--primary-100); padding: 8px; border-radius: var(--radius-sm); margin-top: 8px; border: 1px solid var(--primary-300);">
                         <span class="f-desc" style="color: var(--primary-800); font-weight: bold;">${escapeHtml(t('formula.volume'))}</span>
                         <span class="f-result" style="color: var(--primary-700); font-size: 0.85rem;"><strong>${escapeHtml(volStr)}</strong></span>
                     </div>

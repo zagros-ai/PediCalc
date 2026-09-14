@@ -725,12 +725,55 @@ export const CLINICAL_MSG_FA = {
 
 import { getLang } from '../core/i18n.js';
 
+// --- Fixed-dose administration instructions (topical, sprays, drops, sachets,
+//     powders, etc.) — the `fixedDose` field shown as the result for drugs that
+//     are not weight/age calculated. Numbers/units kept; wording translated. ---
+export const FIXED_DOSE_FA = {
+    'Apply thin layer': 'لایه نازک بمالید',
+    'Apply 5 times daily': 'روزی ۵ بار بمالید',
+    'Apply small amount': 'مقدار کمی بمالید',
+    'Apply as needed': 'در صورت نیاز بمالید',
+    '1 spray each nostril': '۱ اسپری در هر سوراخ بینی',
+    '1-2 sprays': '۱ تا ۲ اسپری',
+    '1 suppository PRN': '۱ شیاف در صورت نیاز',
+    '5-10 mg (for children over 6 years)': '۵ تا ۱۰ میلی‌گرم (برای کودکان بالای ۶ سال)',
+    '10-20 mg/dose': '۱۰ تا ۲۰ میلی‌گرم در هر دوز',
+    '1 ml daily': 'روزی ۱ میلی‌لیتر',
+    '1 ml (400 IU) daily': 'روزی ۱ میلی‌لیتر (۴۰۰ واحد)',
+    '1-2 ml (100000-200000U) 4 times daily': 'روزی ۴ بار، ۱ تا ۲ میلی‌لیتر (۱۰۰۰۰۰ تا ۲۰۰۰۰۰ واحد)',
+    '0.3-0.6 ml': '۰.۳ تا ۰.۶ میلی‌لیتر',
+    '1 Sachet': '۱ ساشه',
+    'As per weight': 'بر اساس وزن',
+    '1 sachet in 200ml water': '۱ ساشه در ۲۰۰ میلی‌لیتر آب',
+    '1 sachet daily': 'روزی ۱ ساشه',
+    '10-20 mg daily': 'روزی ۱۰ تا ۲۰ میلی‌گرم',
+    '4 mg daily': 'روزی ۴ میلی‌گرم',
+    '5 mg daily': 'روزی ۵ میلی‌گرم',
+    'Based on Age/Weight': 'بر اساس سن/وزن',
+    'Age-Based Dose': 'دوز بر اساس سن',
+    'Weight-based tier': 'رده بر اساس وزن',
+    '2 puffs (as needed)': '۲ پاف (در صورت نیاز)',
+    '200-400 mcg twice daily': 'روزی دو بار ۲۰۰ تا ۴۰۰ میکروگرم',
+    '2 puffs 4 times daily': 'روزی ۴ بار، ۲ پاف',
+    '125-250 mcg twice daily': 'روزی دو بار ۱۲۵ تا ۲۵۰ میکروگرم',
+    '50-100 mcg twice daily': 'روزی دو بار ۵۰ تا ۱۰۰ میکروگرم',
+    '1-2 puffs twice daily': 'روزی دو بار ۱ تا ۲ پاف',
+    '0.25 - 1 mg/dose (Asthma) / 2 mg (Croup)': '۰.۲۵ تا ۱ میلی‌گرم در هر دوز (آسم) / ۲ میلی‌گرم (کروپ)',
+    '250 mcg (<20kg) | 500 mcg (>20kg)': '۲۵۰ میکروگرم (زیر ۲۰kg) | ۵۰۰ میکروگرم (بالای ۲۰kg)',
+    '3 to 4 ml via nebulizer': '۳ تا ۴ میلی‌لیتر با نبولایزر',
+    'Single IM injection': 'یک تزریق عضلانی منفرد',
+    '0.15 mg IM (for 15-30 kg weight)': '۰.۱۵ میلی‌گرم عضلانی (برای وزن ۱۵ تا ۳۰ کیلوگرم)',
+    '1 pearl weekly/monthly (Based on deficiency)': '۱ پرل هفتگی/ماهانه (بر اساس شدت کمبود)',
+    '1 pearl daily': 'روزی ۱ پرل',
+    '10-15 mg/kg (max 1000mg)': '۱۰ تا ۱۵ mg/kg (حداکثر ۱۰۰۰ میلی‌گرم)'
+};
+
 /**
  * Resolve a localized version of a data string. In Persian mode it looks the
  * exact English source up in the relevant map and returns the Persian text if
  * present; in English mode (or when no translation exists) it returns the
  * original English string unchanged — so English is always a safe fallback.
- * @param {'drug'|'indication'|'indicationDose'|'clinical'} kind
+ * @param {'drug'|'indication'|'indicationDose'|'clinical'|'fixedDose'} kind
  * @param {string} en the exact English source string
  */
 export function resolveFa(kind, en) {
@@ -739,6 +782,7 @@ export function resolveFa(kind, en) {
         : kind === 'indication' ? INDICATION_FA
         : kind === 'indicationDose' ? INDICATION_DOSE_FA
         : kind === 'clinical' ? CLINICAL_MSG_FA
+        : kind === 'fixedDose' ? FIXED_DOSE_FA
         : null;
     if (!map) return en;
     return map[en] ?? en;

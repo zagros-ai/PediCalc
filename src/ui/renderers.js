@@ -280,7 +280,7 @@ export function renderCalcUI(drugId, container) {
 
     const noInputBoxStyle = (!requiresWeight && !drug.requiresAge) ? 'border-style: dashed; background: var(--primary-50);' : '';
     const buttonStyle = (!requiresWeight && !drug.requiresAge) ? 'width: 100%; padding: 8px; font-size: 0.85rem; justify-content: center; border-radius: var(--radius-md);' : 'padding: 0 10px; min-width: 40px; justify-content: center;';
-    const buttonContent = (!requiresWeight && !drug.requiresAge) ? `<i class="fas fa-file-prescription" style="margin-right: 6px;"></i> ${esc(t('calc.showInstructions'))}` : '<img src="assets/arrow.png" alt="Calculate" style="width: 24px; height: 24px; object-fit: contain; display: block;" />';
+    const buttonContent = (!requiresWeight && !drug.requiresAge) ? `<i class="fas fa-file-prescription" style="margin-right: 6px;"></i> ${esc(t('calc.showInstructions'))}` : '<img src="assets/arrow.png" alt="Calculate" class="calc-arrow-icon" style="width: 24px; height: 24px; object-fit: contain; display: block;" />';
 
     container.innerHTML = `
         <div class="focus-calc-panel">
