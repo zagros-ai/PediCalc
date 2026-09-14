@@ -366,6 +366,7 @@
         'Mometasone Nasal Spray': 'اسپری بینی مومتازون',
         'Naproxen': 'ناپروکسن',
         'Permethrin': 'پرمترین',
+        'Polymyxin NH': 'پلی‌میکسین NH',
         'Polymyxin/Neomycin': 'پلی‌میکسین/نئومایسین',
         'Pyrantel Pamoate': 'پیرانتل پاموآت',
         'Rufinamide': 'روفینامید',
@@ -828,6 +829,9 @@
     //     Keyed by the exact English source string. ⚠️ Verify clinically. ---
     const CLINICAL_MSG_FA = {
         // --- Newly added clinical messages (warnings + interactions) ---
+        'Contraindicated if the tympanic membrane is perforated.': 'در صورت پارگی پرده گوش (Tympanic Membrane) منع مصرف دارد.',
+        'Contraindicated in significant renal impairment (CrCl < 30 ml/min).': 'در نارسایی قابل‌توجه کلیوی (CrCl < 30 ml/min) منع مصرف دارد.',
+        'Contraindicated in neonates (< 1 month) due to the risk of hemolytic anemia.': 'در نوزادان (زیر ۱ ماه) به‌دلیل خطر کم‌خونی همولیتیک منع مصرف دارد.',
         '10-25kg: 50mg BID | >25kg: 100mg BID.': '۱۰ تا ۲۵kg: ۵۰mg دو بار در روز | بالای ۲۵kg: ۱۰۰mg دو بار در روز.',
         '6mo-5yr: 1.25mg | 6-11yr: 2.5mg | >12yr: 5mg once daily.': '۶ ماه تا ۵ سال: ۱.۲۵mg | ۶ تا ۱۱ سال: ۲.۵mg | بالای ۱۲ سال: ۵mg روزی یک‌بار.',
         'Administer SubQ. Prophylaxis dose is usually 0.5 mg/kg.': 'به‌صورت زیرجلدی تجویز شود. دوز پیشگیری معمولاً ۰.۵ mg/kg است.',
@@ -1209,6 +1213,7 @@
         '100mg single dose or BID for 3 days': '۱۰۰ میلی‌گرم دوز منفرد یا روزی دو بار به‌مدت ۳ روز',
         '2 puffs QID': 'روزی ۴ بار، ۲ پاف',
         '2.5 - 5 ml daily': 'روزی ۲.۵ تا ۵ میلی‌لیتر',
+        '3-4 drops': '۳ تا ۴ قطره',
         '3-4 drops TID': 'روزی ۳ بار، ۳ تا ۴ قطره',
         'Age & deficiency dependent (IM)': 'بسته به سن و شدت کمبود (عضلانی)',
         'Apply 3 times daily': 'روزی ۳ بار بمالید',
@@ -2400,16 +2405,32 @@
         { id: 2535, name: 'Tranexamic Acid (Transid)', form: 'Ampoule 500mg/5ml', category: 'ampoule', minMgPerKg: 10, maxMgPerKg: 15, intervalHours: 8, doseUnit: 'mg', baseDose: 500, baseVolume: 5, maxSingleDoseMg: 1000, indications: ['Hemorrhage', 'Trauma'], warning: 'Push slowly over 10 minutes.' },
         { id: 2536, name: 'Enoxaparin (Clexane)', form: 'Prefilled Syringe 4000 IU (40mg/0.4ml)', category: 'ampoule', minMgPerKg: 1, maxMgPerKg: 1.5, intervalHours: 12, doseUnit: 'mg', indications: ['DVT Treatment', 'Prophylaxis'], warning: 'Administer SubQ. Prophylaxis dose is usually 0.5 mg/kg.' },
     
-        // ==========================================
-        // NEWLY ADDED DRUGS (Anti-parasitic & Topical)
-        // ==========================================
-        { id: 2537, name: 'Permethrin', form: 'Cream 5%', category: 'cream', fixedDose: 'Apply to whole body', intervalHours: 0, doseUnit: 'mg', indications: ['Scabies'], warning: 'Leave on for 8-14 hours, then wash off. Repeat in 1 week if needed.' },
-        { id: 2538, name: 'Fusidic Acid', form: 'Ointment 2%', category: 'ointment', fixedDose: 'Apply 3 times daily', intervalHours: 8, doseUnit: 'mg', indications: ['Staphylococcal Skin Infections'] },
-        { id: 2539, name: 'Ketoconazole', form: 'Cream 2%', category: 'cream', fixedDose: 'Apply once daily', intervalHours: 24, doseUnit: 'mg', indications: ['Fungal Skin Infections'] },
-        { id: 2540, name: 'Tobramycin', form: 'Eye Drop 0.3%', category: 'drop', fixedDose: '1-2 drops q4h', intervalHours: 4, doseUnit: 'mg', indications: ['Bacterial Conjunctivitis'] },
-        { id: 2541, name: 'Polymyxin/Neomycin', form: 'Ear Drop', category: 'drop', fixedDose: '3-4 drops TID', intervalHours: 8, doseUnit: 'mg', indications: ['Otitis Externa'] },
-        { id: 2542, name: 'Tetracaine', form: 'Eye Drop 0.5%', category: 'drop', fixedDose: '1-2 drops', intervalHours: 0, doseUnit: 'mg', indications: ['Topical Ocular Anesthesia'], warning: 'For examination or procedure only. Not for home use.' }
-    ];
+      // ==========================================
+          // NEWLY ADDED DRUGS (Anti-parasitic & Topical)
+          // ==========================================
+          { id: 2537, name: 'Permethrin', form: 'Cream 5%', category: 'cream', fixedDose: 'Apply to whole body', intervalHours: 0, doseUnit: 'mg', indications: ['Scabies'], warning: 'Leave on for 8-14 hours, then wash off. Repeat in 1 week if needed.' },
+          { id: 2538, name: 'Fusidic Acid', form: 'Ointment 2%', category: 'ointment', fixedDose: 'Apply 3 times daily', intervalHours: 8, doseUnit: 'mg', indications: ['Staphylococcal Skin Infections'] },
+          { id: 2539, name: 'Ketoconazole', form: 'Cream 2%', category: 'cream', fixedDose: 'Apply once daily', intervalHours: 24, doseUnit: 'mg', indications: ['Fungal Skin Infections'] },
+          { id: 2540, name: 'Tobramycin', form: 'Eye Drop 0.3%', category: 'drop', fixedDose: '1-2 drops q4h', intervalHours: 4, doseUnit: 'mg', indications: ['Bacterial Conjunctivitis'] },
+          { id: 2541, name: 'Polymyxin/Neomycin', form: 'Ear Drop', category: 'drop', fixedDose: '3-4 drops TID', intervalHours: 8, doseUnit: 'mg', indications: ['Otitis Externa'] },
+          { id: 2542, name: 'Tetracaine', form: 'Eye Drop 0.5%', category: 'drop', fixedDose: '1-2 drops', intervalHours: 0, doseUnit: 'mg', indications: ['Topical Ocular Anesthesia'], warning: 'For examination or procedure only. Not for home use.' },
+          {
+              id: 2543, name: 'Nitrofurantoin', form: 'Capsule 100mg', category: 'tablet',
+              minMgPerKg: 1.25, maxMgPerKg: 1.75, intervalHours: 6, doseUnit: 'mg', maxSingleDoseMg: 100,
+              indications: ['UTI Treatment', 'UTI Prophylaxis'],
+              indicationDoses: [
+                  { name: 'Treatment', minMgPerKg: 1.25, maxMgPerKg: 1.75, intervalHours: 6 },
+                  { name: 'Prophylaxis', minMgPerKg: 1, maxMgPerKg: 2, intervalHours: 24 }
+              ]
+          },
+          {
+              id: 2544, name: 'Polymyxin NH', form: 'Ear Drop', category: 'drop',
+              fixedDose: '3-4 drops', intervalHours: 8, doseUnit: 'mg',
+              indications: ['Otitis Externa'],
+              warning: 'Contraindicated if the tympanic membrane is perforated.'
+          }
+      ];
+    
     
     // Backward-compatible globals for the Android WebView bridge and any non-module consumers.
     if (typeof window !== 'undefined') {
@@ -2540,6 +2561,7 @@
                 'Mebendazole': { type: 'hepatic', warning: 'Metabolized primarily by the liver. Use with caution in significant hepatic impairment.' },
                 'Enoxaparin': { type: 'renal', warning: 'Reduce dose or monitor Anti-Xa levels carefully if CrCl < 30 ml/min.' },
                 'Sertraline': { type: 'hepatic', warning: 'Use a lower dose or increase dosing interval in hepatic impairment.' },
+                'Nitrofurantoin': { type: 'renal', warning: 'Contraindicated in significant renal impairment (CrCl < 30 ml/min).' },
                 'Loperamide': { type: 'hepatic', warning: 'Use with caution in hepatic impairment due to reduced first-pass metabolism.' }
             },
     
@@ -3598,6 +3620,7 @@
             'Penicillin': { minWeight: 0, warning: 'Use with caution in penicillin-allergic patients.', severity: 'medium' },
             'Doxycycline': { minWeight: 0, warning: 'According to AAP/Nelson guidelines, short courses (<21 days) are safe for all ages. Long courses are contraindicated under 8 yrs.', severity: 'medium' },
             'Ciprofloxacin': { minAge: 18, warning: 'Not recommended for routine use in children under 18 years.', severity: 'medium' },
+            'Nitrofurantoin': { minAge: 0.08, warning: 'Contraindicated in neonates (< 1 month) due to the risk of hemolytic anemia.', severity: 'high' },
             'Chloramphenicol': { minWeight: 0, warning: 'Risk of gray baby syndrome in neonates. Monitor blood counts.', severity: 'high' }
         },
 

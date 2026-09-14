@@ -1013,7 +1013,7 @@ export const drugsDB = [
           id: 2544, name: 'Polymyxin NH', form: 'Ear Drop', category: 'drop',
           fixedDose: '3-4 drops', intervalHours: 8, doseUnit: 'mg',
           indications: ['Otitis Externa'],
-          warning: 'در صورت پارگی پرده گوش (Tympanic Membrane) منع مصرف دارد.'
+          warning: 'Contraindicated if the tympanic membrane is perforated.'
       }
   ];
 
