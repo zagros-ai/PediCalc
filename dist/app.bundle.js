@@ -467,6 +467,7 @@
         'Salbutamol': 'سالبوتامول',
         'Saline': 'سالین (نمکی)',
         'Silver Sulfadiazine': 'سیلور سولفادیازین',
+        'Spironolactone': 'اسپیرونولاکتون',
         'Sodium Bicarbonate 7.5%': 'بی‌کربنات سدیم ۷.۵٪',
         'Theophylline-G': 'تئوفیلین-G',
         'Topiramate': 'توپیرامات',
@@ -553,6 +554,7 @@
         'Heart Failure': 'نارسایی قلبی',
         'Hemangioma': 'همانژیوم',
         'Herpes Simplex': 'تبخال (هرپس سیمپلکس)',
+        'Hypertension': 'فشار خون بالا',
         'Hypocalcemia': 'هیپوکلسمی',
         'Hypokalemia': 'هیپوکالمی',
         'Hypomagnesemia': 'هیپومنیزیمی',
@@ -844,6 +846,8 @@
         'Use with caution in severe diarrhea.': 'در اسهال شدید با احتیاط مصرف شود.',
         'Used in acute poisoning. Administer within 1 hour of ingestion.': 'در مسمومیت حاد استفاده می‌شود. ظرف ۱ ساعت پس از بلع تجویز شود.',
         'Used in neonates only under specialist supervision.': 'در نوزادان فقط تحت نظر متخصص استفاده شود.',
+
+        'Potassium-sparing diuretic. Monitor serum potassium; risk of hyperkalemia, especially with KCl or other potassium-sparing agents.': 'مدر نگهدارنده پتاسیم. پتاسیم سرم پایش شود؛ خطر هایپرکالمی، به‌ویژه همراه با KCl یا سایر داروهای نگهدارنده پتاسیم.',
 
         // IV guideline warnings
         'ABSOLUTE CONTRAINDICATION FOR IV PUSH! Must be diluted and infused slowly. Continuous ECG monitoring required.': 'منع مصرف مطلق برای تزریق سریع وریدی! باید رقیق و به‌آهستگی انفوزیون شود. پایش مداوم ECG لازم است.',
@@ -1868,7 +1872,13 @@
             minMgPerKg: 5, maxMgPerKg: 10, intervalHours: 8, doseUnit: 'mg', maxSingleDoseMg: 300,
             indications: ['Neuropathic Pain', 'Focal Seizures']
         },
-    
+        {
+            id: 2014, name: 'Spironolactone', form: 'Tablet 25mg', category: 'tablet',
+            minMgPerKg: 1, maxMgPerKg: 3, intervalHours: 12, doseUnit: 'mg', maxDailyDoseMg: 100,
+            indications: ['Edema', 'Heart Failure', 'Hypertension'],
+            warning: 'Potassium-sparing diuretic. Monitor serum potassium; risk of hyperkalemia, especially with KCl or other potassium-sparing agents.'
+        },
+
         // ==========================================
         // SUPPOSITORIES
         // ==========================================

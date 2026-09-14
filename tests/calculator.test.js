@@ -191,3 +191,46 @@ test('unit-neutral aliases minDosePerKg/maxDosePerKg are honoured', () => {
     assert.equal(r.maxDose, 40);
     assert.equal(r.displayResult, '20 mg to 40 mg');
 });
+
+
+// ---- Interaction-system integrity (guards the clinical safety engine) ----
+import { AdvancedClinicalEngine } from '../src/core/clinical-engine.js';
+import { ClinicalRulesDB } from '../src/data/clinical-rules.data.js';
+
+test('every interaction rule fires when both of its drugs are present', () => {
+    const failed = [];
+    for (const it of ClinicalRulesDB.interactions) {
+        const [a, b] = it.drugs;
+        const found = AdvancedClinicalEngine.checkInteractions(a, [b]);
+        if (!found.some(r => r.message === it.message)) failed.push(`${a} + ${b}`);
+    }
+    assert.equal(failed.length, 0, `these interaction rules did not fire: ${failed.join('; ')}`);
+});
+
+test('every drug referenced in an interaction exists in the drug database', () => {
+    const base = n => n.split(' (')[0].trim();
+    const known = new Set(drugsDB.map(d => d.name));
+    const knownBases = new Set([...known].map(base));
+    const missing = new Set();
+    for (const it of ClinicalRulesDB.interactions) {
+        for (const d of it.drugs) {
+            if (!known.has(d) && !knownBases.has(base(d))) missing.add(d);
+        }
+    }
+    assert.equal(missing.size, 0, `interactions reference drugs not in drugsDB (unreachable warnings): ${[...missing].join(', ')}`);
+});
+
+test('critical/high interactions become alerts and invalidate the result', () => {
+    // Ceftriaxone + Calcium Gluconate is a critical interaction.
+    const drug = findDrug('Ceftriaxone', 'vial');
+    const r = new DrugDoseCalculator(drug, 10, 5, null, null, { activePrescriptions: ['Calcium Gluconate'] }).calculate();
+    assert.ok(r.alerts.length >= 1);
+    assert.equal(r.severity, 'high');
+    assert.equal(r.isValid, false);
+});
+
+test('medium interactions surface as warnings, not alerts', () => {
+    // Ibuprofen + Prednisolone is a moderate interaction.
+    const r = new DrugDoseCalculator(findDrug('Ibuprofen', 'syrup'), 10, 5, null, null, { activePrescriptions: ['Prednisolone'] }).calculate();
+    assert.ok(r.warnings.some(w => /Prednisolone/.test(w)));
+});
