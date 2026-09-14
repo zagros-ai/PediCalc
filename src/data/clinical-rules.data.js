@@ -120,6 +120,7 @@ export const ClinicalRulesDB = {
             'Mebendazole': { type: 'hepatic', warning: 'Metabolized primarily by the liver. Use with caution in significant hepatic impairment.' },
             'Enoxaparin': { type: 'renal', warning: 'Reduce dose or monitor Anti-Xa levels carefully if CrCl < 30 ml/min.' },
             'Sertraline': { type: 'hepatic', warning: 'Use a lower dose or increase dosing interval in hepatic impairment.' },
+            'Nitrofurantoin': { type: 'renal', warning: 'Contraindicated in significant renal impairment (CrCl < 30 ml/min).' },
             'Loperamide': { type: 'hepatic', warning: 'Use with caution in hepatic impairment due to reduced first-pass metabolism.' }
         },
 
