@@ -56,6 +56,7 @@ export const DRUG_NAME_FA = {
     'Mometasone Nasal Spray': 'اسپری بینی مومتازون',
     'Naproxen': 'ناپروکسن',
     'Permethrin': 'پرمترین',
+    'Polymyxin NH': 'پلی‌میکسین NH',
     'Polymyxin/Neomycin': 'پلی‌میکسین/نئومایسین',
     'Pyrantel Pamoate': 'پیرانتل پاموآت',
     'Rufinamide': 'روفینامید',
@@ -518,6 +519,9 @@ export const INDICATION_DOSE_FA = {
 //     Keyed by the exact English source string. ⚠️ Verify clinically. ---
 export const CLINICAL_MSG_FA = {
     // --- Newly added clinical messages (warnings + interactions) ---
+    'Contraindicated if the tympanic membrane is perforated.': 'در صورت پارگی پرده گوش (Tympanic Membrane) منع مصرف دارد.',
+    'Contraindicated in significant renal impairment (CrCl < 30 ml/min).': 'در نارسایی قابل‌توجه کلیوی (CrCl < 30 ml/min) منع مصرف دارد.',
+    'Contraindicated in neonates (< 1 month) due to the risk of hemolytic anemia.': 'در نوزادان (زیر ۱ ماه) به‌دلیل خطر کم‌خونی همولیتیک منع مصرف دارد.',
     '10-25kg: 50mg BID | >25kg: 100mg BID.': '۱۰ تا ۲۵kg: ۵۰mg دو بار در روز | بالای ۲۵kg: ۱۰۰mg دو بار در روز.',
     '6mo-5yr: 1.25mg | 6-11yr: 2.5mg | >12yr: 5mg once daily.': '۶ ماه تا ۵ سال: ۱.۲۵mg | ۶ تا ۱۱ سال: ۲.۵mg | بالای ۱۲ سال: ۵mg روزی یک‌بار.',
     'Administer SubQ. Prophylaxis dose is usually 0.5 mg/kg.': 'به‌صورت زیرجلدی تجویز شود. دوز پیشگیری معمولاً ۰.۵ mg/kg است.',
@@ -900,6 +904,7 @@ export const FIXED_DOSE_FA = {
     '100mg single dose or BID for 3 days': '۱۰۰ میلی‌گرم دوز منفرد یا روزی دو بار به‌مدت ۳ روز',
     '2 puffs QID': 'روزی ۴ بار، ۲ پاف',
     '2.5 - 5 ml daily': 'روزی ۲.۵ تا ۵ میلی‌لیتر',
+    '3-4 drops': '۳ تا ۴ قطره',
     '3-4 drops TID': 'روزی ۳ بار، ۳ تا ۴ قطره',
     'Age & deficiency dependent (IM)': 'بسته به سن و شدت کمبود (عضلانی)',
     'Apply 3 times daily': 'روزی ۳ بار بمالید',
