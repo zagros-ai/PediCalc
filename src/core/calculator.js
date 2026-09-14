@@ -435,7 +435,7 @@ export class DrugDoseCalculator {
             return { value: parseFloat(n.toFixed(1)).toString(), unit: 'mcg' };
         }
 
-        if (n >= 1000) return { value: (n / 1000).toFixed(1), unit: 'g' };
+        if (n >= 1000) return { value: parseFloat((n / 1000).toFixed(1)).toString(), unit: 'g' }; // 12.0 -> 12, 1.5 -> 1.5
         if (n < 0.1) return { value: parseFloat(n.toFixed(3)).toString(), unit: 'mg' }; // micro-dosing < 0.1
         if (n < 1) return { value: parseFloat(n.toFixed(2)).toString(), unit: 'mg' };   // micro-dosing < 1.0
         return { value: parseFloat(n.toFixed(1)).toString(), unit: 'mg' };

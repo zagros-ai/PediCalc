@@ -3869,7 +3869,7 @@
                 return { value: parseFloat(n.toFixed(1)).toString(), unit: 'mcg' };
             }
 
-            if (n >= 1000) return { value: (n / 1000).toFixed(1), unit: 'g' };
+            if (n >= 1000) return { value: parseFloat((n / 1000).toFixed(1)).toString(), unit: 'g' }; // 12.0 -> 12, 1.5 -> 1.5
             if (n < 0.1) return { value: parseFloat(n.toFixed(3)).toString(), unit: 'mg' }; // micro-dosing < 0.1
             if (n < 1) return { value: parseFloat(n.toFixed(2)).toString(), unit: 'mg' };   // micro-dosing < 1.0
             return { value: parseFloat(n.toFixed(1)).toString(), unit: 'mg' };
@@ -4727,12 +4727,31 @@
             if (AdvancedClinicalEngine && (drug.category === 'ampoule' || drug.category === 'vial')) {
                 const ivGuide = AdvancedClinicalEngine.checkIVGuidelines(drug.name);
                 if (ivGuide) {
+                    // The rate / max-concentration VALUES are English clinical phrases
+                    // (e.g. "Over 60 minutes"). In Persian, putting them inline after a
+                    // Persian label scrambles under RTL, so render the value on its own
+                    // LTR line below the label. In English, keep the compact inline form.
+                    const ivRow = (labelKey, value) => {
+                        if (!value) return '';
+                        if (isRTL()) {
+                            return `<div style="font-size: 0.7rem; color: #334155; margin-bottom: 5px;">
+                                <strong>${esc(t(labelKey))}</strong>
+                                <div dir="ltr" style="text-align: left; margin-top: 2px; color: #0369a1;">${esc(value)}</div>
+                            </div>`;
+                        }
+                        return `<div style="font-size: 0.7rem; color: #334155; margin-bottom: 3px;"><strong>${esc(t(labelKey))}</strong> ${esc(value)}</div>`;
+                    };
+                    const ivWarn = ivGuide.warning
+                        ? (isRTL()
+                            ? `<div style="font-size: 0.65rem; color: #b91c1c; margin-top: 6px; font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> ${esc(t('iv.warning'))}<div style="margin-top: 2px;">${esc(ivGuide.warning)}</div></div>`
+                            : `<div style="font-size: 0.65rem; color: #b91c1c; margin-top: 6px; font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> ${esc(t('iv.warning'))} ${esc(ivGuide.warning)}</div>`)
+                        : '';
                     ivHTML = `
                         <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-left: 4px solid #0ea5e9; padding: 10px; border-radius: 6px; margin-bottom: 12px;">
                             <strong style="color: #0369a1; display:flex; align-items: center; gap: 6px; font-size: 0.75rem; margin-bottom: 6px;"><i class="fas fa-syringe"></i> ${esc(ivGuide.title)}</strong>
-                            <div style="font-size: 0.7rem; color: #334155; margin-bottom: 3px;"><strong>${esc(t('iv.rate'))}</strong> ${esc(ivGuide.rate)}</div>
-                            <div style="font-size: 0.7rem; color: #334155;"><strong>${esc(t('iv.maxConc'))}</strong> ${esc(ivGuide.maxConc)}</div>
-                            ${ivGuide.warning ? `<div style="font-size: 0.65rem; color: #b91c1c; margin-top: 6px; font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> ${esc(t('iv.warning'))} ${esc(ivGuide.warning)}</div>` : ''}
+                            ${ivRow('iv.rate', ivGuide.rate)}
+                            ${ivRow('iv.maxConc', ivGuide.maxConc)}
+                            ${ivWarn}
                         </div>
                     `;
                 }

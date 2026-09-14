@@ -11,7 +11,7 @@ import { AdvancedClinicalEngine } from '../core/clinical-engine.js';
 import { categoriesDB, drugsDB } from '../data/drugs.data.js';
 import { showPremiumModal } from './premium-modal.js';
 import { updateCartUI } from './cart.js';
-import { t, localized, joinRange } from '../core/i18n.js';
+import { t, localized, joinRange, isRTL } from '../core/i18n.js';
 import { resolveFa } from '../data/translations.fa.js';
 
 const esc = Utils.escapeHtml;
@@ -526,12 +526,31 @@ export function renderCalcUI(drugId, container) {
         if (AdvancedClinicalEngine && (drug.category === 'ampoule' || drug.category === 'vial')) {
             const ivGuide = AdvancedClinicalEngine.checkIVGuidelines(drug.name);
             if (ivGuide) {
+                // The rate / max-concentration VALUES are English clinical phrases
+                // (e.g. "Over 60 minutes"). In Persian, putting them inline after a
+                // Persian label scrambles under RTL, so render the value on its own
+                // LTR line below the label. In English, keep the compact inline form.
+                const ivRow = (labelKey, value) => {
+                    if (!value) return '';
+                    if (isRTL()) {
+                        return `<div style="font-size: 0.7rem; color: #334155; margin-bottom: 5px;">
+                            <strong>${esc(t(labelKey))}</strong>
+                            <div dir="ltr" style="text-align: left; margin-top: 2px; color: #0369a1;">${esc(value)}</div>
+                        </div>`;
+                    }
+                    return `<div style="font-size: 0.7rem; color: #334155; margin-bottom: 3px;"><strong>${esc(t(labelKey))}</strong> ${esc(value)}</div>`;
+                };
+                const ivWarn = ivGuide.warning
+                    ? (isRTL()
+                        ? `<div style="font-size: 0.65rem; color: #b91c1c; margin-top: 6px; font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> ${esc(t('iv.warning'))}<div style="margin-top: 2px;">${esc(ivGuide.warning)}</div></div>`
+                        : `<div style="font-size: 0.65rem; color: #b91c1c; margin-top: 6px; font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> ${esc(t('iv.warning'))} ${esc(ivGuide.warning)}</div>`)
+                    : '';
                 ivHTML = `
                     <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-left: 4px solid #0ea5e9; padding: 10px; border-radius: 6px; margin-bottom: 12px;">
                         <strong style="color: #0369a1; display:flex; align-items: center; gap: 6px; font-size: 0.75rem; margin-bottom: 6px;"><i class="fas fa-syringe"></i> ${esc(ivGuide.title)}</strong>
-                        <div style="font-size: 0.7rem; color: #334155; margin-bottom: 3px;"><strong>${esc(t('iv.rate'))}</strong> ${esc(ivGuide.rate)}</div>
-                        <div style="font-size: 0.7rem; color: #334155;"><strong>${esc(t('iv.maxConc'))}</strong> ${esc(ivGuide.maxConc)}</div>
-                        ${ivGuide.warning ? `<div style="font-size: 0.65rem; color: #b91c1c; margin-top: 6px; font-weight: 700;"><i class="fas fa-exclamation-triangle"></i> ${esc(t('iv.warning'))} ${esc(ivGuide.warning)}</div>` : ''}
+                        ${ivRow('iv.rate', ivGuide.rate)}
+                        ${ivRow('iv.maxConc', ivGuide.maxConc)}
+                        ${ivWarn}
                     </div>
                 `;
             }
