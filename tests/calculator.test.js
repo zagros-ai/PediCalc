@@ -102,7 +102,17 @@ test('gram conversion: doses ≥ 1000 mg display in grams', () => {
         highDoseSafe: true, baseDose: 1000
     };
     const r = new DrugDoseCalculator(drug, 20).calculate(); // 2000 mg
-    assert.equal(r.displayResult, '2.0 g');
+    assert.equal(r.displayResult, '2 g'); // whole grams: no trailing ".0"
+});
+
+test('gram conversion keeps a meaningful decimal (1500 mg → 1.5 g)', () => {
+    const drug = {
+        name: 'TestGram2', form: 'Vial', category: 'vial',
+        minMgPerKg: 75, maxMgPerKg: 75, intervalHours: 12, doseUnit: 'mg',
+        highDoseSafe: true, baseDose: 1000
+    };
+    const r = new DrugDoseCalculator(drug, 20).calculate(); // 1500 mg
+    assert.equal(r.displayResult, '1.5 g');
 });
 
 test('contraindication triggers on low weight (Ibuprofen < 6 kg)', () => {
